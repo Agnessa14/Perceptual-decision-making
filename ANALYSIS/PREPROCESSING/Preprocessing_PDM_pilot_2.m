@@ -5,7 +5,7 @@ function Preprocessing_PDM_pilot_2(subn)
 %Steps include:
 %-removing extra EEG data
 %-removing the paperclip trials and response triggers
-%-filtering
+%-filtering 
 %-downsampling
 %-getting rid of jump artifacts
 %-transform into timelock.m
@@ -16,9 +16,10 @@ if subn < 10
 else
     subnum = num2str(subn);
 end
-
+addpath(genpath('/home/agnek95/SMST/'));
 addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
+
 ft_defaults;
 
 %%  Specify input file and read events
@@ -34,24 +35,28 @@ cfg.trialdef.poststim=0.8;
 cfg=ft_definetrial(cfg);
 
 %load behavioural data
-mainDirectoryBeh = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA/',subnum,'/Behavioural/','*.mat')); 
+mainDirectoryBeh = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum,'/Behavioural/','*.mat')); 
 
 %% Fix order of blocks since they do not load in the correct order
 for m = 1:numel(mainDirectoryBeh)
     filename = extractfield(mainDirectoryBeh(m),'name');
     filename = filename{1}; %in string format
     parsedName = split(filename,'_');
-    mainDirectoryBeh(m).blockNum = str2double(parsedName{4});     
+    parsedBlocknum = split(parsedName{4},'.');
+    mainDirectoryBeh(m).blockNum = str2double(parsedBlocknum{1});     
 end
 
+%reorder by block number
 T = struct2table(mainDirectoryBeh); 
 sortedT = sortrows(T, 'blockNum'); 
 mainDirectoryBeh = table2struct(sortedT); 
 
-%double-check that the order is correct: the problem would occur at block 9
-% if mainDirectoryBeh(9).blockNum ~= 9
-%     error('Incorrect block order: Check and fix manually')
-% end
+%double check that the order is correct
+blocks = 1:numel(mainDirectoryBeh);
+blockorderarray = arrayfun(@(x) mainDirectoryBeh(x).blockNum,blocks);
+if ~isequal(blockorderarray,blocks)
+    error('Incorrect block order: Check and fix manually');
+end
 
 %% Remove unnecessary triggers
 %Create list of triggers from the behavioural data
@@ -59,7 +64,7 @@ filenamesArray = extractfield(mainDirectoryBeh, 'name')';
 triggers = [];
 for n = 1:numel(filenamesArray)
     load(char(filenamesArray{n}));
-    triggers = [triggers;blockData.samples];
+    triggers = [triggers;data.triggers];
 end
 
 %Compare eeg triggers with behavioural triggers
