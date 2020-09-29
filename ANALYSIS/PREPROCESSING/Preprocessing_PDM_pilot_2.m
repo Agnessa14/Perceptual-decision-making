@@ -1,10 +1,9 @@
-function Preprocessing_PDM_pilot_2(subn,task_num) 
+function Preprocessing_PDM_pilot_2(subn) 
 % PREPROCESSING_PDM_pilot_2 Preprocess the EEG data for the PDM experiment for one
 % participant.
 %
 %Steps include:
 %-removing extra EEG data
-%-parsing into tasks
 %-removing the paperclip trials and response triggers
 %-filtering
 %-downsampling
@@ -18,13 +17,13 @@ else
     subnum = num2str(subn);
 end
 
-addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA/',subnum)));
+addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
 %%  Specify input file and read events
-mainDirectoryEEG = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA/',subnum,'/EEG/','*.eeg')); 
-fileName = fullfile('/scratch/agnek95/PDM/DATA/DATA/', subnum,'/EEG/', mainDirectoryEEG.name); 
+mainDirectoryEEG = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum,'/EEG/','*.eeg')); 
+fileName = fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/', subnum,'/EEG/', mainDirectoryEEG.name); 
 
 %Define Events
 cfg=[];
@@ -97,34 +96,15 @@ else
     keyboard;
 end
 
-%% Separate data into categorization and fixation tasks
-%create an array indicating which task each trial belongs to
-task = NaN(numel(triggers),1);
-for b = 1:numel(mainDirectoryBeh)
-    parsedName = split(filenamesArray{b},'_');
-    load(filenamesArray{b});
-    trialsBlock = numel(blockData.samples); %264
-    if contains(parsedName{6},'Categorization') 
-        task((b-1)*trialsBlock + 1:b*trialsBlock) = 1;
-    elseif contains(parsedName{6}, 'Fixation') 
-        task((b-1)*trialsBlock + 1:b*trialsBlock) = 2;
-    end
-end
-
-taskspecific_triggers = eegtriggers(task == task_num); 
-beginningEpoch = beginningEpoch(task == task_num);
-endEpoch = endEpoch(task == task_num);
-offsetTrigger = offsetTrigger(task == task_num);
-
 %Remove the paperclip trials
-paperclipEeg = find(taskspecific_triggers==999);
-taskspecific_triggers(taskspecific_triggers==999)=[];
+paperclipEeg = find(eegtriggers==999);
+eegtriggers(eegtriggers==999)=[];
 beginningEpoch(paperclipEeg)=[];
 endEpoch(paperclipEeg)=[];
 offsetTrigger(paperclipEeg)=[];
 
 %put back into the configuration file
-cfg.trl = [beginningEpoch endEpoch offsetTrigger taskspecific_triggers];
+cfg.trl = [beginningEpoch endEpoch offsetTrigger eegtriggers];
 %maybe also remove those trials from cfg.event
 
 %% Rest of preprocessing
@@ -167,12 +147,6 @@ cfg.method='summary';
 data=ft_rejectvisual(cfg,data);
 
 %Transform to "timelocked" data and save the output
-cfg=[];
-if task_num == 1
-    task_name = 'categorization';
-elseif task_num == 2
-    task_name = 'fixation';
-end
-cfg.outputfile= sprintf('/scratch/agnek95/PDM/DATA/DATA/%s/timelock_%s',subnum,task_name); 
+cfg.outputfile= sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/timelock',subnum); 
 cfg.keeptrials='yes';
 data=ft_timelockanalysis(cfg,data);
