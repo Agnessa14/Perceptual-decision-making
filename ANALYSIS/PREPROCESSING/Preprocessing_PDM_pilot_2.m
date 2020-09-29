@@ -131,8 +131,9 @@ cfg.trl = [beginningEpoch endEpoch offsetTrigger taskspecific_triggers];
 
 %Filter and read
 cfg.dataset=fileName;
-cfg.bsfilter='no';
-cfg.demean='yes';
+cfg.lpfilter = 'yes';
+cfg.lpfreq = 50;
+cfg.demean='yes'; %apply baseline correction
 cfg.baselinewindow=[-0.2,0];
 data=ft_preprocessing(cfg);
 
