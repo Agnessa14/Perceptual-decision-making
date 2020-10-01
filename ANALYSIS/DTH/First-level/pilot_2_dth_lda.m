@@ -168,5 +168,8 @@ save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
 save(fullfile(save_path,'dth_lda'),'averaged_decision_values');    
 
 %RTs
-save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
 save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');    
+
+%Number of trials per condition
+save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
+
