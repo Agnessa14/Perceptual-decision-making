@@ -37,7 +37,7 @@ numConditions = 60;
 [numTrials, ~] = minNumberTrials(timelock_data.trialinfo, numConditions); %minimum number of trials per scene
 numElectrodes = size(timelock_data.trial,2); %number of electrodes
 numTimepoints = size(timelock_data.trial,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 data = NaN(numConditions,numTrials,numElectrodes,numTimepoints);
