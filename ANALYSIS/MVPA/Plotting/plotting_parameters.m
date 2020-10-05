@@ -8,4 +8,4 @@ xlabel('Timepoints');
 ylabel('Decoding accuracy');   
 title(plot_title);
 legend(plot_legend);
-xline(onset_time);
+xline(onset_time,'--');
