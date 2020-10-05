@@ -1,61 +1,56 @@
-function plot_object_decoding(taskType,subjects)
-%PLOT_OBJECT_DECODING
+function plot_object_decoding(subjects)
+%PLOT_OBJECT_DECODING Plot the results from object decoding, averaged over
+%all participants and subject-specific.
 %
+%Input: subject IDs
 %
-%
-%
-%Get the task name
-if taskType == 1
-    taskName = 'categorization';  
-elseif taskType == 2
-    taskName = 'fixation';
-end
+%Output: curve of decoding accuracies per timepoint
 
-%Loop: create a matrix containing the decoding accuracy matrices of each subject
+%% Paths
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS/'));
+results_dir = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS/';
+
+%% Preallocate
+numConditions = 60;
+numTimepoints = 200;
+decoding_accuracies_all_subjects = NaN(numel(subjects),numConditions,numConditions,numTimepoints);
+
+%% Set up the figure for plotting
+figure(abs(round(randn*10))); %Random figure number
+set(gcf, 'Position', get(0, 'Screensize'));
+legend_cell = cell(1,4);
+
+%% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
-    if subject < 10
-        subNum = ['0',num2str(subject)];
-    else
-        subNum = num2str(subject);
-    end
-    cd(fullfile('/home/agnek95/SMST/PDM/RESULTS/',subNum)); %change directory to the current subject
-    load(['mvnn_svm_decoding_accuracy_pdm_',taskName,'.mat']);
+    subname = get_subject_name(subject);
+    subject_results_dir = fullfile(results_dir,subname);
+    load(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy.mat')));
     
-    %Random figure number
-    figure(abs(round(randn*10)))
+    %matrix of all subjects
+    decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;
+   
+    %plot the object decoding curve for the participant
+    avg_over_conditions = squeeze(nanmean(decodingAccuracy_avg,[1,2]));
+    plot(avg_over_conditions, 'Linewidth',2);
+    hold on;
     
-    %plot
-    avg = squeeze(nanmean(nanmean(DA_end,1),2));
-    plot(avg,'LineWidth',4);
-    set(gcf, 'Position', get(0, 'Screensize'));
+    %legend
+    legend_cell{subject} = sprintf('Subject %d',subject);
     
-    %Define the domain
-    xlim([0 201]);
-    
-    %Label of x
-    xlabel('Timepoints');
-    
-    %Label of y
-    ylabel('Decoding accuracy');
-    
-    %Title of plot
-    if taskType == 1 
-        title(['Classification accuracy of individual scenes per timepoint in a categorization task, subject ',subNum]);
-    elseif taskType == 2
-        title(['Classification accuracy of individual scenes per timepoint in a distracted task, subject ',subNum]);
-    end
-    
-    % %Legend if needed
-    legend('SVM accuracy');
-    
-    %Grid
-    grid on
-    
-    %Save the plot
-    saveas(gcf,['svm_object_pdm_',taskName]); %save as matlab figure
-    saveas(gcf,['svm_object_pdm_',taskName,'.svg']); %save as svg
-    close(gcf);
-    
-end
+end   
+title = sprintf('Classification accuracy of individual scenes per timepoint in a categorization task (N=%d)',...
+        numel(subjects));
+onset_time = 40; 
+legend_cell{5} = 'Stimulus onset';
+plotting_parameters(title,legend_cell,onset_time);
+
+%save the plot
+saveas(gcf,fullfile(subject_results_dir,'svm_object_decoding')); %save as matlab figure
+saveas(gcf,fullfile(subject_results_dir,'svm_object_decoding.svg')); %save as svg
+close(gcf);    
+
+%% Plot the average of all subjects
+avg_over_conditions_all_subjects = squeeze(nanmean(decoding_accuracies_all_subjects,1:3));
+plot(avg_over_conditions_all_subjects,'Linewidth',2) 
 
 end
