@@ -7,5 +7,5 @@ xlim([0 201]);
 xlabel('Timepoints');
 ylabel('Decoding accuracy');   
 title(plot_title);
-legend(plot_legend);
 xline(onset_time,'--');
+legend(plot_legend);
