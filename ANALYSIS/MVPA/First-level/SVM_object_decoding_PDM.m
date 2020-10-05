@@ -3,8 +3,8 @@ function SVM_object_decoding_PDM(subject)
 %
 %Input: subject ID
 %
-%Output: 1xP vector of accuracies in %, where P is the number of timepoints. 
-%
+%Output: NxNxP vector of accuracies in %, where N is the number of conditions and
+%P is the number of timepoints. 
 %
 %% Set-up prereqs
 %add paths
