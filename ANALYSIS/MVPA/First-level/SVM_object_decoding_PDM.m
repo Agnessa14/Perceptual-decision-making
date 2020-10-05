@@ -91,7 +91,7 @@ save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/svm_decoding_accuracy',s
 
 %% Helper functions
 
-%Determine number of trials persa object to find the minimum number of trials
+%Determine number of trials per object to find the minimum number of trials
 function [N, numTrials] = minNumberTrials(conditionsList,numConditions)
 numTrials = [];
 for cond = 1:numConditions
@@ -99,10 +99,9 @@ for cond = 1:numConditions
 end
 N = min(numTrials);
 
-%Create the matrix of data
-function [dataMatrix] = createDataMatrix(numConditions,triggers,minNumTrials,dataMatrix,data) 
 %Create the matrix containing voltage values for each object, electrode and
 %timepoint and the matrix containing behavioural data for each condition and trial
+function [dataMatrix] = createDataMatrix(numConditions,triggers,minNumTrials,dataMatrix,data) 
 for c = 1:numConditions
     trialsMat = find(triggers==c);
     trialsMat = trialsMat(randperm(numel(trialsMat))); %randomize
