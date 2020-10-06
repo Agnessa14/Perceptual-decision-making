@@ -11,11 +11,7 @@ function Preprocessing_PDM_pilot_2(subn)
 %-transform into timelock.m
 
 %% Add paths
-if subn < 10
-    subnum = ['0',num2str(subn)];
-else
-    subnum = num2str(subn);
-end
+subnum = get_subject_name(subn);
 addpath(genpath('/home/agnek95/SMST/'));
 addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
@@ -59,12 +55,18 @@ if ~isequal(blockorderarray,blocks)
 end
 
 %% Remove unnecessary triggers
-%Create list of triggers from the behavioural data
+%Create list of triggers from the behavioural data (also points and
+%RTs for further analyses)
 filenamesArray = extractfield(mainDirectoryBeh, 'name')';
-triggers = [];
+behav.triggers = [];
+behav.RT = [];
+behav.points = [];
+
 for n = 1:numel(filenamesArray)
     load(char(filenamesArray{n}));
-    triggers = [triggers;data.triggers];
+    behav.triggers = [behav.triggers;data.triggers];
+    behav.RT = [behav.RT; data.rt]; 
+    behav.points = [behav.points; data.points];  
 end
 
 %Compare eeg triggers with behavioural triggers
@@ -84,8 +86,8 @@ offsetTrigger(removed)=[];
 eegtriggers(eegtriggers==99) = 999;
 
 %Remove extra EEG triggers
-for i = 1:numel(triggers)
-    while round(triggers(i)) ~= round(eegtriggers(i))
+for i = 1:numel(behav.triggers)
+    while round(behav.triggers(i)) ~= round(eegtriggers(i))
         eegtriggers(i) = [];
         beginningEpoch(i)=[];
         endEpoch(i)=[];
@@ -94,7 +96,7 @@ for i = 1:numel(triggers)
 end
 
 %Double-check that eeg and behavioural triggers are equal
-if isequal(round(eegtriggers),round(triggers)) 
+if isequal(round(eegtriggers),round(behav.triggers)) 
     disp('all good!');
 else
     warning('problem with the triggers: check manually');
@@ -102,11 +104,16 @@ else
 end
 
 %Remove the paperclip trials
-paperclipEeg = find(eegtriggers==999);
+paperclip = find(eegtriggers==999);
+
 eegtriggers(eegtriggers==999)=[];
-beginningEpoch(paperclipEeg)=[];
-endEpoch(paperclipEeg)=[];
-offsetTrigger(paperclipEeg)=[];
+beginningEpoch(paperclip)=[];
+endEpoch(paperclip)=[];
+offsetTrigger(paperclip)=[];
+
+behav.triggers(paperclip) = [];
+behav.RT(paperclip) = [];
+behav.points(paperclip) = [];
 
 %put back into the configuration file
 cfg.trl = [beginningEpoch endEpoch offsetTrigger eegtriggers];
@@ -150,6 +157,24 @@ cfg.showlabel='yes';
 cfg.method='summary';
 %cfg.layout='easycapM1.lay'; %not the one we used
 data=ft_rejectvisual(cfg,data);
+
+%Update the behavioural triggers, RT and points and save them
+for i = 1:numel(data.trialinfo)
+    while round(behav.triggers(i)) ~= round(data.trialinfo(i))
+        behav.triggers(i) = [];
+        behav.RT(i) = [];
+        behav.points(i) = [];
+    end
+end
+
+%Double-check that eeg and behavioural triggers are equal
+if isequal(round(data.trialinfo),round(behav.triggers)) 
+    disp('all good!');
+else
+    warning('problem with the triggers: check manually');
+    keyboard;
+end
+save(sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/preprocessed_behavioural_data',subnum),'behav');
 
 %Transform to "timelocked" data and save the output
 cfg.outputfile= sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/timelock',subnum); 
