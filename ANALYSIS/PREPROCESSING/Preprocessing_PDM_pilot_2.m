@@ -34,7 +34,7 @@ end
 T = struct2table(mainDirectoryBeh); 
 sortedT = sortrows(T, 'blockNum'); 
 mainDirectoryBeh = table2struct(sortedT); 
-
+filenamesSorted = extractfield(mainDirectoryBeh,'name');
 
 %double check that the order is correct
 blocks = 1:numel(mainDirectoryBeh);
@@ -49,8 +49,8 @@ behav.triggers = [];
 behav.RT = [];
 behav.points = [];
 
-for n = 1:numel(filenamesArray)
-    load(char(filenamesArray{n}));
+for n = 1:numel(filenamesSorted)
+    load(char(filenamesSorted{n}));
     behav.triggers = [behav.triggers;data.triggers];
     behav.RT = [behav.RT; data.rt]; 
     behav.points = [behav.points; data.points];  
