@@ -139,7 +139,7 @@ cfg.artfctdef.jump.absdiff       = 'yes';
 %  Artifacts are identified by means of thresholding the z-transformed value
 %  of the preprocessed data.
 cfg.artfctdef.jump.channel       = {'eeg'}; %Nx1 cell-array with selection of channels, see FT_CHANNELSEL
-cfg.artfctdef.jump.cutoff        = 20; %volts - z-value at which to threshold (default = 20)
+cfg.artfctdef.jump.cutoff        = 20; %z-value at which to threshold (default = 20)
 [cfg, ~] = ft_artifact_jump(cfg, data);
 
 %Remove the found artifacts
