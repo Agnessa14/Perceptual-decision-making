@@ -15,29 +15,17 @@ subnum = get_subject_name(subn);
 addpath(genpath('/home/agnek95/SMST/'));
 addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
-
 ft_defaults;
 
-%%  Specify input file and read events
+%%  Load EEG and behavioural data
 mainDirectoryEEG = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum,'/EEG/','*.eeg')); 
-fileName = fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/', subnum,'/EEG/', mainDirectoryEEG.name); 
-
-%Define Events
-cfg=[];
-cfg.dataset=fileName;
-cfg.trialdef.eventtype='Stimulus';
-cfg.trialdef.prestim=0.2;
-cfg.trialdef.poststim=0.8;
-cfg=ft_definetrial(cfg);
-
-%load behavioural data
+fileNameEEG = fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/', subnum,'/EEG/', mainDirectoryEEG.name); 
 mainDirectoryBeh = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subnum,'/Behavioural/','*.mat')); 
 
 %% Fix order of blocks since they do not load in the correct order
-for m = 1:numel(mainDirectoryBeh)
-    filename = extractfield(mainDirectoryBeh(m),'name');
-    filename = filename{1}; %in string format
-    parsedName = split(filename,'_');
+filenamesAll = extractfield(mainDirectoryBeh,'name');
+for m = 1:numel(mainDirectoryBeh)  
+    parsedName = split(filenamesAll{m},'_');
     parsedBlocknum = split(parsedName{4},'.');
     mainDirectoryBeh(m).blockNum = str2double(parsedBlocknum{1});     
 end
@@ -47,6 +35,7 @@ T = struct2table(mainDirectoryBeh);
 sortedT = sortrows(T, 'blockNum'); 
 mainDirectoryBeh = table2struct(sortedT); 
 
+
 %double check that the order is correct
 blocks = 1:numel(mainDirectoryBeh);
 blockorderarray = arrayfun(@(x) mainDirectoryBeh(x).blockNum,blocks);
@@ -55,9 +44,7 @@ if ~isequal(blockorderarray,blocks)
 end
 
 %% Remove unnecessary triggers
-%Create list of triggers from the behavioural data (also points and
-%RTs for further analyses)
-filenamesArray = extractfield(mainDirectoryBeh, 'name')';
+%Create list of triggers, points and RTs from the behavioural data 
 behav.triggers = [];
 behav.RT = [];
 behav.points = [];
@@ -68,6 +55,14 @@ for n = 1:numel(filenamesArray)
     behav.RT = [behav.RT; data.rt]; 
     behav.points = [behav.points; data.points];  
 end
+
+%Define Events
+cfg=[];
+cfg.dataset=fileNameEEG;
+cfg.trialdef.eventtype='Stimulus';
+cfg.trialdef.prestim=0.2;
+cfg.trialdef.poststim=0.8;
+cfg=ft_definetrial(cfg);
 
 %Compare eeg triggers with behavioural triggers
 eegtriggers = cfg.trl(:,4);
@@ -122,7 +117,7 @@ cfg.trl = [beginningEpoch endEpoch offsetTrigger eegtriggers];
 %% Rest of preprocessing
 
 %Filter and read
-cfg.dataset=fileName;
+cfg.dataset=fileNameEEG;
 cfg.lpfilter = 'yes';
 cfg.lpfreq = 50;
 cfg.demean='yes'; %apply baseline correction
