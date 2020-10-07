@@ -40,7 +40,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 numConditions = 60;
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
 numTimepoints = size(timelock_data,3);
-numPermutations=1; 
+numPermutations=100; 
 last_artificial_sample = 30;
 num_conditions_batch = numConditions/4; %each training and testing set (for both artificial and natural) has the quarter of all conditions
 
@@ -74,8 +74,8 @@ for perm = 1:numPermutations
         disp('Split into training and testing');
         training_data = [data_artificial_avg(conditions_art_batch_1,:,t); data_natural_avg(conditions_nat_batch_1,:,t)]; 
         testing_data  = [data_artificial_avg(conditions_art_batch_2,:,t); data_natural_avg(conditions_nat_batch_2,:,t)];
-        labels_train = [ones(num_conditions_batch,1); 2*ones(num_conditions_batch,1)]; %one label for each pseudotrial
-        labels_test = labels_train; % we have the same size of training and testing data bcs we don't care about accuracy
+        labels_train  = [ones(num_conditions_batch,1); 2*ones(num_conditions_batch,1)]; %one label for each pseudotrial
+        labels_test   = labels_train; % we have the same size of training and testing data bcs we don't care about accuracy
         
         disp('Train the SVM: run 1');
         train_param_str=  '-s 0 -t 0 -b 0 -c 1 -q';
