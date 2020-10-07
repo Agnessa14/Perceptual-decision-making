@@ -94,8 +94,8 @@ for perm = 1:numPermutations
         disp('Putting the decision values into the big matrix');
         decisionValues(perm,conditions_art_batch_1,t) = decision_values_run2(1:numel(decision_values_run2)/2);
         decisionValues(perm,conditions_art_batch_2,t) = decision_values_run1(1:numel(decision_values_run1)/2);
-        decisionValues(perm,conditions_nat_batch_1,t) = decision_values_run2(1:numel(decision_values_run2)/2);
-        decisionValues(perm,conditions_nat_batch_1,t) = decision_values_run1(1:numel(decision_values_run1)/2);              
+        decisionValues(perm,conditions_nat_batch_1+last_artificial_sample,t) = decision_values_run2(1:numel(decision_values_run2)/2);
+        decisionValues(perm,conditions_nat_batch_2+last_artificial_sample,t) = decision_values_run1(1:numel(decision_values_run1)/2);              
     end
     toc
 end
