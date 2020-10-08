@@ -1,5 +1,5 @@
 function pilot_2_dth_lda(subject)
-%NORMALIZED_BALANCED_MY_VERSION_SEARCHLIGHT_LDA Obtain distances to the hyperplane from time-series data, 
+%PILOT_2_DTH_LDA Obtain distances to the hyperplane from time-series data, 
 %using a balanced dataset (same number of trials for each sample).
 %
 %Input: subject ID
