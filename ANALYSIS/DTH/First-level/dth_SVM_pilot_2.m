@@ -92,14 +92,13 @@ for perm = 1:numPermutations
         [~, ~, decision_values_run2] = svmpredict(labels_train,training_data,model);  %for 60 conditions, you get a 30x1 vector of decision_values
         
         disp('Putting the decision values into the big matrix');
-        decisionValues(perm,conditions_art_batch_1,t) = decision_values_run2(1:numel(decision_values_run2)/2);
-        decisionValues(perm,conditions_art_batch_2,t) = decision_values_run1(1:numel(decision_values_run1)/2);
-        decisionValues(perm,conditions_nat_batch_1+last_artificial_sample,t) = decision_values_run2(1:numel(decision_values_run2)/2);
-        decisionValues(perm,conditions_nat_batch_2+last_artificial_sample,t) = decision_values_run1(1:numel(decision_values_run1)/2);              
+        decisionValues(perm,conditions_art_batch_1,t) = abs(decision_values_run2(1:numel(decision_values_run2)/2));
+        decisionValues(perm,conditions_art_batch_2,t) = abs(decision_values_run1(1:numel(decision_values_run1)/2));
+        decisionValues(perm,conditions_nat_batch_1+last_artificial_sample,t) = abs(decision_values_run2(1:numel(decision_values_run2)/2));
+        decisionValues(perm,conditions_nat_batch_2+last_artificial_sample,t) = abs(decision_values_run1(1:numel(decision_values_run1)/2));              
     end
     toc
 end
-
 
 %% Save the decision values
 decisionValuesAvg = squeeze(mean(decisionValues,1)); %avg over permutations
@@ -114,7 +113,6 @@ for c = 1:numConditions
 end
 
 save(fullfile(results_dir,'RTs_correct_trials'),'RT_per_condition');
-
 end
    
     
