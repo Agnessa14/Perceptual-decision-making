@@ -54,14 +54,6 @@ num_timepoints = size(tl.trial,3);
 decision_values = NaN(num_permutations,num_conditions,num_timepoints);
 last_category1_sample = 30;
 
-%% RTs per condition
-RT_per_condition = NaN(num_conditions,1);
-RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
-
-for c = 1:num_conditions
-    RT_per_condition(c) = mean(RT_correct(trialinfo_all==c));
-end
-
 %% Create a balanced set
 %collect the trials and number of trials for each condition
 trials_condition = NaN(num_conditions,60); %max possible
@@ -167,9 +159,16 @@ averaged_decision_values = squeeze(mean(decision_values,1));
 save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
 save(fullfile(save_path,'dth_lda'),'averaged_decision_values');    
 
-%RTs
+%% RTs per condition
+RT_per_condition = NaN(num_conditions,1);
+RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
+
+for c = 1:num_conditions
+    RT_per_condition(c) = mean(RT_correct(trialinfo_all==c));
+end
+
 save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');    
 
-%Number of trials per condition
+%% Number of trials per condition
 save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
 
