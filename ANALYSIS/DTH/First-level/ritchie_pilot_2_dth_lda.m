@@ -10,43 +10,45 @@ function ritchie_pilot_2_dth_lda(subject)
 %
 %
 %% Set-up prereqs
+%subject name string
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS/'));
+subname = get_subject_name(subject);
+ 
 %add paths
 addpath(genpath('/home/agnek95/CoSMoMVPA'));
-addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_PILOT_2'));
-addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS/'));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
 % reset citation list - is this necessary
 cosmo_check_external('-tic');
 
-%subject name string
-subname = get_subject_name(subject);
- 
+
 %% Prepare data
 %load eeg and behavioural data
-data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/',subname);
-load(fullfile(data_dir,'timelock')); %eeg
-load(fullfile(data_dir,'preprocessed_behavioural_data'));
-
-%only keep the trials with a positive RT & correct response
-tl = timelock;
-tl.trialinfo = tl.trialinfo(behav.RT>0 & behav.points==1);
-tl.trial = tl.trial(behav.RT>0 & behav.points==1,:,:);
-tl.sampleinfo = tl.sampleinfo(behav.RT>0 & behav.points==1,:);
-
-%normalize EEG data: each channel of each trial
-normalized_data = NaN(size(tl.trial));
-for trial = 1:size(tl.trialinfo,1)
-    for channel = 1:size(tl.trialinfo,2)
-        normalized_data(trial,channel,:) = normalize(squeeze(tl.trial(trial,channel,:)));
+data_dir = sprintf('/scratch/agnek95/PDM/ritchie_subject_%s',subname);
+addpath(genpath(data_dir));
+load(fullfile(data_dir,sprintf('s%s_PCA_S1_50hz.mat',subname))); %eeg
+ 
+%take only the needed data 
+triggers = data.TrialList(:,1);
+category = data.TrialList(:,3);
+task = data.TrialList(:,4);
+response = data.TrialList(:,6);
+RT = data.TrialList(:,7);
+trials_final = [];
+for t = 1:size(data.TrialList,1)
+    if category(t) == response(t) && task(t) == 1 %only take the active task and the correct trials
+        trials_final = [trials_final;t];
     end
-end       
-    
+end
+data_cut.trialinfo = triggers(trials_final);
+data_cut.trial = permute(data.class_dat(trials_final,:,:),[1 3 2]);
+data_cut.sampleinfo = [];
+
 % convert to cosmomvpa struct
-ds_tl = cosmo_meeg_dataset(tl); %returns struct with field samples (numtrials x numelectrodes*numtimepoints)
-samples_all = ds_tl.samples;
-trialinfo_all = ds_tl.sa.trialinfo;
+ds_tl = cosmo_meeg_dataset(data_cut); %returns struct with field samples (numtrials x numelectrodes*numtimepoints)
+% samples_all = ds_tl.samples;
+% trialinfo_all = ds_tl.sa.trialinfo;
 
 %% Set up some variables
 num_permutations = 100;
