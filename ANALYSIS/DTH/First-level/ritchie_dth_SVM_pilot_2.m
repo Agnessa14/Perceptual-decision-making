@@ -110,6 +110,7 @@ end
 
 %% Save the decision values
 decisionValuesAvg = squeeze(mean(decisionValues,1)); %avg over permutations
+results_dir = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
 save(fullfile(results_dir,'ritchie_decisionValues'),'decisionValuesAvg');
 
 %% Get the average (over trials) reaction time for each condition
