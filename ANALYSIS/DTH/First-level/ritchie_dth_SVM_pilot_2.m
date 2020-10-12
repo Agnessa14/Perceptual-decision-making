@@ -30,13 +30,13 @@ load(fullfile(data_dir,sprintf('s%s_PCA_S1_50hz.mat',subname))); %eeg
  
 %take only the needed data 
 triggers = data.TrialList(:,1);
-category = data.TrialList(:,3);
+% category = data.TrialList(:,3);
 task = data.TrialList(:,4);
-response = data.TrialList(:,6);
+% response = data.TrialList(:,6);
 RT = data.TrialList(:,7);
 trials_final = [];
 for t = 1:size(data.TrialList,1)
-    if category(t) == response(t)% && task(t) == 1 %only take the active task and the correct trials
+    if  task(t) == 1 %category(t) == response(t) && task(t) == 1 %only take the active task and the correct trials
         trials_final = [trials_final;t];
     end
 end
@@ -111,7 +111,7 @@ end
 %% Save the decision values
 decisionValuesAvg = squeeze(mean(decisionValues,1)); %avg over permutations
 results_dir = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
-save(fullfile(results_dir,'ritchie_decisionValues'),'decisionValuesAvg');
+save(fullfile(results_dir,'all_trials_ritchie_decisionValues'),'decisionValuesAvg');
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditions,1);
@@ -120,7 +120,7 @@ for c = 1:numConditions
     RT_per_condition(c) = mean(RT_final(triggers_final==c));
 end
 
-save(fullfile(results_dir,'ritchie_RTs_correct_trials'),'RT_per_condition');
+save(fullfile(results_dir,'all_trials_ritchie_RTs_correct_trials'),'RT_per_condition');
 end
    
     
