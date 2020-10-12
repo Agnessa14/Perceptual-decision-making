@@ -48,7 +48,7 @@ RT_final = RT(trials_final);
 numConditions = 24;
 [numTrials, ~] = min_number_trials(triggers_final, numConditions); 
 numTimepoints = size(data_final,3);
-numPermutations=1; 
+numPermutations=100; 
 last_artificial_sample = numConditions/2;%double check
 numConditionsPerCategory = numConditions/2; 
 
