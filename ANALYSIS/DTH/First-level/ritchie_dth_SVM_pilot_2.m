@@ -36,7 +36,7 @@ response = data.TrialList(:,6);
 RT = data.TrialList(:,7);
 trials_final = [];
 for t = 1:size(data.TrialList,1)
-    if category(t) == response(t) && task(t) == 1 %only take the active task and the correct trials
+    if category(t) == response(t)% && task(t) == 1 %only take the active task and the correct trials
         trials_final = [trials_final;t];
     end
 end
