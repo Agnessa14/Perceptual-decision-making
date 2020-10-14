@@ -10,6 +10,7 @@ function SVM_artificial_vs_natural_decoding_PDM(subject)
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_PILOT_2'));
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS/'));
+addpath(genpath('/home/agnek95/SMST/PDM/ANALYSIS/'));
 addpath('/home/agnek95/OR/TOOLBOX/MVNN/MEG_SVM_decoding_MVNN'); %MVNN toolbox
 addpath(genpath('/home/agnek95/OR/ANALYSIS/DECODING/libsvm')); %libsvm toolbox
 addpath('/home/agnek95/OR/ANALYSIS/DECODING'); %MVNN function
