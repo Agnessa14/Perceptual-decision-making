@@ -26,58 +26,63 @@ load(fullfile(data_dir,'timelock')); %eeg
 load(fullfile(data_dir,'preprocessed_behavioural_data'));
 
 %only keep the trials with a positive RT & correct response
-timelock_data = timelock;
-timelock_data.trialinfo = timelock_data.trialinfo(behav.RT>0 & behav.points==1); %triggers
-timelock_data.trial = timelock_data.trial(behav.RT>0 & behav.points==1,:,:); %actual data
-timelock_data.sampleinfo = timelock_data.sampleinfo(behav.RT>0 & behav.points==1,:);
+% timelock_data = timelock;
+triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
+timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
 numConditions = 60;
-[numTrials, ~] = min_number_trials(timelock_data.trialinfo, numConditions); %minimum number of trials per scene
-numTimepoints = size(timelock_data.trial,3); %number of timepoints
+num_conditions_per_category = numConditions/2;
+numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
+%define the conditions batches that go into the training and testing sets
+conditions_batch_1 = 1:num_conditions_per_category/2;
+conditions_batch_2 = (num_conditions_per_category/2)+1:num_conditions_per_category;
+
+%minimum number of trials per scene
+[numTrials, ~] = min_number_trials(triggers, numConditions); 
+
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
+decodingAccuracy=NaN(numPermutations,numTimepoints);
     
 %% Decoding
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    data = create_data_matrix(numConditions,timelock_data.trialinfo,numTrials,timelock_data.trial);
+    data = create_data_matrix(numConditions,triggers,numTrials,timelock_data);
 
     disp('Performing MVNN');
-    data = multivariate_noise_normalization(data); 
-
-    disp('Binning data into pseudotrials');
-    numTrialsPerBin = 10;
-    [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
-   
+    data = multivariate_noise_normalization(data); %returns: numConditions x numTrials x numElectrodes x numTimepoints
+      
+    disp('Split into artificial and natural');
+    data_artificial = data(1:num_conditions_per_category,:,:,:);
+    data_natural = data(num_conditions_per_category+1:end,:,:,:);
+       
+    disp('Average over trials');
+    data_artificial_avg = squeeze(mean(data_artificial,2));
+    data_natural_avg = squeeze(mean(data_natural,2));
+    
     %only get the lower diagonal
-    for condA=1:numConditions-1 %1:65
-        for condB = condA+1:numConditions %2:66
-            for timePoint = 1:numTimepoints 
-                disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
-                    ', timepoint ->',num2str(timePoint)]);
-                % L-1 pseudo trials go to testing set, the Lth to training set
-                training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
-                testing_data=[squeeze(pseudoTrials(condA,end,:,timePoint))' ; squeeze(pseudoTrials(condB,end,:,timePoint))']; %1x63x1 each            
-                
-                % class labels
-                labels_train=[ones(1,numPTs-1) 2*ones(1,numPTs-1)]; %one label for each pseudotrial
-                labels_test= [1 2]; 
-                
-                train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
-                model=svmtrain_01(labels_train',training_data,train_param_str); 
-                [~, accuracy, ~,] = svmpredict(labels_test',testing_data,model);
-                decodingAccuracy(perm,condA,condB,timePoint)=accuracy(1);                
-            end 
-        end 
-    end 
+    for t = 1:numTimepoints 
+        disp('Split into training and testing');
+        training_data = [data_artificial_avg(conditions_batch_1,:,t); data_natural_avg(conditions_batch_1,:,t)]; 
+        testing_data  = [data_artificial_avg(conditions_batch_2,:,t); data_natural_avg(conditions_batch_2,:,t)];
+        labels_train  = [ones(num_conditions_per_category/2,1); 2*ones(num_conditions_per_category/2,1)]; %one label for each pseudotrial
+        labels_test   = labels_train;   
+        
+        disp('Train the SVM');
+        train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
+        model=svmtrain_01(labels_train,training_data,train_param_str); 
+                     
+        disp('Test the SVM');
+        [~, accuracy, ~,] = svmpredict(labels_test,testing_data,model);
+        decodingAccuracy(perm,t)=accuracy(1);                
+    end            
     toc
 end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/svm_decoding_accuracy',subname),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
 
