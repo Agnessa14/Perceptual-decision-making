@@ -33,7 +33,8 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
 numConditions = 60;
-num_conditions_per_category = numConditions/2;
+num_categories = 2; %categories to decode
+num_conditions_per_category = numConditions/num_categories;
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
@@ -46,7 +47,7 @@ numPermutations=100;
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numTimepoints);
-decisionValues=NaN(numPermutations,2,numTimepoints); %2 is the size of the testing set
+decisionValues=NaN(numPermutations,num_categories,numTimepoints); %2 is the size of the testing set
 
 %% Decoding
 for perm = 1:numPermutations
@@ -64,14 +65,26 @@ for perm = 1:numPermutations
     disp('Average over trials and scenes');
     data_artificial_avg = squeeze(mean(data_artificial,2));
     data_natural_avg = squeeze(mean(data_natural,2));
-
+    
+    disp('Permute the conditions (scenes)');
+    data_artificial_avg = data_artificial_avg(randperm(num_conditions_per_category),:,:);
+    data_natural_avg = data_natural_avg(randperm(num_conditions_per_category),:,:);
+    
+    disp('Put both categories into one matrix');
+    data_both_categories = NaN([num_categories,size(data_artificial_avg)]);
+    data_both_categories(1,:,:,:) = data_artificial_avg;
+    data_both_categories(2,:,:,:) = data_natural_avg;
+    
+    disp('Split into bins of scenes');
+    numScenesPerBin = 6;
+    [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
+    
     for t = 1:numTimepoints 
         disp('Split into training and testing');
-        training_data = [squeeze(mean(data_artificial_avg(1:end-1,:,t),1)); 
-            squeeze(mean(data_natural_avg(1:end-1,:,t),1))]; 
-        testing_data  = [data_artificial_avg(end,:,t); data_natural_avg(end,:,t)];
+        training_data = [squeeze(bins(1,1:end-1,:,t)); squeeze(bins(2,1:end-1,:,t))]; 
+        testing_data  = [squeeze(bins(1,end,:,t))'; squeeze(bins(2,end,:,t))']; 
 
-        labels_train  = [1;2]; %one label for each pseudotrial
+        labels_train  = [ones(numBins-1,1);2*ones(numBins-1,1)]; %one label for each pseudotrial
         labels_test   = [1;2];   
 
         disp('Train the SVM');
