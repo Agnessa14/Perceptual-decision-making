@@ -103,6 +103,6 @@ end
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
 decisionValues_avg = squeeze(mean(decisionValues,1));
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/redone_trained_on_58_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/redone_trained_on_58_svm_artificial_vs_natural_decision_values',subname),'decisionValues_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/pseudotrials_trained_on_58_svm_artificial_vs_natural_decision_values',subname),'decisionValues_avg');
 
