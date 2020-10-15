@@ -46,7 +46,8 @@ numPermutations=100;
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numTimepoints);
-    
+decisionValues=NaN(numPermutations,2,numTimepoints); %2 is the size of the testing set
+
 %% Decoding
 for perm = 1:numPermutations
     tic   
@@ -60,16 +61,17 @@ for perm = 1:numPermutations
     data_artificial = data(1:num_conditions_per_category,:,:,:);
     data_natural = data(num_conditions_per_category+1:end,:,:,:);
        
-    disp('Average over trials');
+    disp('Average over trials and scenes');
     data_artificial_avg = squeeze(mean(data_artificial,2));
     data_natural_avg = squeeze(mean(data_natural,2));
 
     for t = 1:numTimepoints 
         disp('Split into training and testing');
-        training_data = [data_artificial_avg(1:end-1,:,t); data_natural_avg(1:end-1,:,t)]; 
+        training_data = [squeeze(mean(data_artificial_avg(1:end-1,:,t),1)); 
+            squeeze(mean(data_natural_avg(1:end-1,:,t),1))]; 
         testing_data  = [data_artificial_avg(end,:,t); data_natural_avg(end,:,t)];
 
-        labels_train  = [ones(num_conditions_per_category-1,1); 2*ones(num_conditions_per_category-1,1)]; %one label for each pseudotrial
+        labels_train  = [1;2]; %one label for each pseudotrial
         labels_test   = [1;2];   
 
         disp('Train the SVM');
@@ -77,8 +79,9 @@ for perm = 1:numPermutations
         model=svmtrain_01(labels_train,training_data,train_param_str); 
 
         disp('Test the SVM');
-        [~, accuracy, ~,] = svmpredict(labels_test,testing_data,model);
-        decodingAccuracy(perm,t)=accuracy(1);                
+        [~, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);
+        decodingAccuracy(perm,t)=accuracy(1); 
+        decisionValues(perm,:,t) = decision_values;
     end   
 
     toc
@@ -86,5 +89,7 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/trained_on_58_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
+decisionValues_avg = squeeze(mean(decisionValues,1));
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/redone_trained_on_58_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/redone_trained_on_58_svm_artificial_vs_natural_decision_values',subname),'decisionValues_avg');
 
