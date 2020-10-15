@@ -35,7 +35,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 numConditions = 60;
 num_conditions_per_category = numConditions/2;
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %define the conditions batches that go into the training and testing sets
 % conditions_batch_1 = 1:num_conditions_per_category/2;
