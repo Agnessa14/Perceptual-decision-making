@@ -38,20 +38,16 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 
 %% Define the required variables
 numConditions = 60;
+num_categories = 2; %categories to decode
+num_conditions_per_category = numConditions/num_categories;
+
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
 numTimepoints = size(timelock_data,3);
 numPermutations=100; 
-last_artificial_sample = 30;
-num_conditions_batch = numConditions/4; %each training and testing set (for both artificial and natural) has the quarter of all conditions
 
 %Preallocate 
-decisionValues=NaN(numPermutations,numConditions,numTimepoints);
-
-%define the conditions batches that go into the training and testing sets
-conditions_art_batch_1 = 1:numConditions/4;
-conditions_art_batch_2 = numConditions/4+1:numConditions/2;
-conditions_nat_batch_1 = 1:numConditions/4;
-conditions_nat_batch_2 = numConditions/4+1:numConditions/2;
+decisionValues_Artificial=NaN(numPermutations,num_conditions_per_category,numTimepoints);
+decisionValues_Natural = NaN(numPermutations,num_conditions_per_category,numTimepoints);
 
 %% Running the MVPA
 for perm = 1:numPermutations
@@ -63,46 +59,57 @@ for perm = 1:numPermutations
     data = multivariate_noise_normalization(data);
 
     disp('Split into artificial and natural');
-    data_artificial = data(1:last_artificial_sample,:,:,:);
-    data_natural = data(last_artificial_sample+1:end,:,:,:);
+    data_artificial = data(1:num_conditions_per_category,:,:,:);
+    data_natural = data(num_conditions_per_category+1:end,:,:,:);
        
     disp('Average over trials');
     data_artificial_avg = squeeze(mean(data_artificial,2));
     data_natural_avg = squeeze(mean(data_natural,2));
+   
+    disp('Permute the conditions (scenes)');
+    conditions_order = randperm(num_conditions_per_category)';
+    data_artificial_avg = data_artificial_avg(conditions_order,:,:);
+    data_natural_avg = data_natural_avg(conditions_order,:,:);
+    
+    disp('Put both categories into one matrix');
+    data_both_categories = NaN([num_categories,size(data_artificial_avg)]);
+    data_both_categories(1,:,:,:) = data_artificial_avg;
+    data_both_categories(2,:,:,:) = data_natural_avg;
+    
+    disp('Split into bins of scenes');
+    numScenesPerBin = 6;
+    [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
     
     for t = 1:numTimepoints
         disp('Split into training and testing');
-        training_data = [data_artificial_avg(conditions_art_batch_1,:,t); data_natural_avg(conditions_nat_batch_1,:,t)]; 
-        testing_data  = [data_artificial_avg(conditions_art_batch_2,:,t); data_natural_avg(conditions_nat_batch_2,:,t)];
-        labels_train  = [ones(num_conditions_batch,1); 2*ones(num_conditions_batch,1)]; %one label for each pseudotrial
-        labels_test   = labels_train; % we have the same size of training and testing data bcs we don't care about accuracy
+        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];   
+        testing_data  = [squeeze(data_both_categories(1,:,:,t)); squeeze(data_both_categories(2,:,:,t))];
+       
+        labels_train  = [ones(numBins,1);2*ones(numBins,1)]; %one label for each pseudotrial
+        labels_test   = [ones(num_conditions_per_category,1);2*ones(num_conditions_per_category,1)]; % we have the same size of training and testing data bcs we don't care about accuracy
         
-        disp('Train the SVM: run 1');
+        disp('Train the SVM');
         train_param_str=  '-s 0 -t 0 -b 0 -c 1 -q';
         model=svmtrain_01(labels_train,training_data,train_param_str); 
         
-        disp('Test the SVM: run 1');
-        [~, ~, decision_values_run1] = svmpredict(labels_test,testing_data,model);  %for 60 conditions, you get a 30x1 vector of decision_values
-        
-        disp('Train the SVM: run 2');
-        train_param_str=  '-s 0 -t 0 -b 0 -c 1 -q';
-        model=svmtrain_01(labels_test,testing_data,train_param_str); 
-        
-        disp('Test the SVM: run 2');
-        [~, ~, decision_values_run2] = svmpredict(labels_train,training_data,model);  %for 60 conditions, you get a 30x1 vector of decision_values
+        disp('Test the SVM');
+        [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  %for 60 conditions, you get a 30x1 vector of decision_values
         
         disp('Putting the decision values into the big matrix');
-        decisionValues(perm,conditions_art_batch_1,t) = abs(decision_values_run2(1:numel(decision_values_run2)/2));
-        decisionValues(perm,conditions_art_batch_2,t) = abs(decision_values_run1(1:numel(decision_values_run1)/2));
-        decisionValues(perm,conditions_nat_batch_1+last_artificial_sample,t) = abs(decision_values_run2(1:numel(decision_values_run2)/2));
-        decisionValues(perm,conditions_nat_batch_2+last_artificial_sample,t) = abs(decision_values_run1(1:numel(decision_values_run1)/2));              
+        for c = 1:num_conditions_per_category
+            condition = conditions_order(c);
+            decisionValues_Artificial(perm,condition,t) = abs(decision_values(c));
+            decisionValues_Natural(perm,condition,t) = abs(decision_values(c+num_conditions_per_category));
+        end
     end
     toc
 end
 
 %% Save the decision values
-decisionValuesAvg = squeeze(mean(decisionValues,1)); %avg over permutations
-save(fullfile(results_dir,'decisionValues'),'decisionValuesAvg');
+decisionValues_Artificial_Avg = squeeze(mean(decisionValues_Artificial,1)); %avg over permutations
+decisionValues_Natural_Avg = squeeze(mean(decisionValues_Natural,1)); %avg over permutations
+decisionValues_Avg = [decisionValues_Artificial_Avg;decisionValues_Natural_Avg];
+save(fullfile(results_dir,'pseudotrials_decisionValues'),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditions,1);
