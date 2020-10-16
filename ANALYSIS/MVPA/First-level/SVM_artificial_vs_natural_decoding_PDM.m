@@ -38,16 +38,11 @@ num_conditions_per_category = numConditions/num_categories;
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
-%define the conditions batches that go into the training and testing sets
-% conditions_batch_1 = 1:num_conditions_per_category/2;
-% conditions_batch_2 = (num_conditions_per_category/2)+1:num_conditions_per_category;
-
 %minimum number of trials per scene
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numTimepoints);
-decisionValues=NaN(numPermutations,num_categories,numTimepoints); %2 is the size of the testing set
 
 %% Decoding
 for perm = 1:numPermutations
@@ -92,9 +87,8 @@ for perm = 1:numPermutations
         model=svmtrain_01(labels_train,training_data,train_param_str); 
 
         disp('Test the SVM');
-        [~, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);
+        [~, accuracy, ~] = svmpredict(labels_test,testing_data,model);
         decodingAccuracy(perm,t)=accuracy(1); 
-        decisionValues(perm,:,t) = decision_values;
     end   
 
     toc
@@ -102,7 +96,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-decisionValues_avg = squeeze(mean(decisionValues,1));
 save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/pseudotrials_trained_on_58_svm_artificial_vs_natural_decision_values',subname),'decisionValues_avg');
 
