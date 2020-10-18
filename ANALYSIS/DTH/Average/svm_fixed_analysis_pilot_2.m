@@ -20,15 +20,15 @@ RTs = NaN(numel(subjects),numConditions);
 
 for subject = subjects
     subname = get_subject_name(subject);
-    load(fullfile(results_dir,subname,'decisionValues.mat'));
-    distances(subject,:,:) = averaged_decision_values;   
+    load(fullfile(results_dir,subname,'pseudotrials_decisionValues.mat'));
+    distances(subject,:,:) = decisionValues_Avg;   
     load(fullfile(results_dir,subname,'RTs_correct_trials.mat'));
-    RTs(subject,:) = RT_per_condition;
+    RTs(subject,:) = normalize(RT_per_condition);
 end
 
 %% Get the median RTs of all subjects for each condition
 %Normalize and get median
-medianRT = nanmedian(normalize(RTs,2));
+medianRT = nanmedian(RTs,1);
 
 %% Correlate DTH and RT
 mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
@@ -75,13 +75,13 @@ plotting_dth_one(correlation_dth_rt_both,...
 %% Save
 %correlations
 save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('SVM_DTH_rt_correlation_both_categories_%d_subjects',numel(subjects))),'correlation_dth_rt_both');
-save(fullfile(save_path,sprintf('SVM_DTH_rt_correlation_artificial_%d_subjects',numel(subjects))),'correlation_dth_rt_art');
-save(fullfile(save_path,sprintf('SVM_DTH_rt_correlation_natural_%d_subjects',numel(subjects))),'correlation_dth_rt_nat');
-save(fullfile(save_path,sprintf('SVM_DTH_rt_correlation_both_categories_avg_%d_subjects',numel(subjects))),'correlation_dth_rt_avg');
+save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_both_categories_%d_subjects',numel(subjects))),'correlation_dth_rt_both');
+save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_artificial_%d_subjects',numel(subjects))),'correlation_dth_rt_art');
+save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_natural_%d_subjects',numel(subjects))),'correlation_dth_rt_nat');
+save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_both_categories_avg_%d_subjects',numel(subjects))),'correlation_dth_rt_avg');
 
 %figures
-saveas(gcf,fullfile(save_path,sprintf('SVM_DTH_artificial_natural_%d_subjects',numel(subjects))));
-saveas(gcf,fullfile(save_path,sprintf('SVM_DTH_artificial_natural_%d_subjects.svg',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('pt_SVM_DTH_artificial_natural_%d_subjects',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('pt_SVM_DTH_artificial_natural_%d_subjects.svg',numel(subjects))));
 
 end
