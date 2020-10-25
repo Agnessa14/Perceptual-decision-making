@@ -71,17 +71,18 @@ for perm = 1:numPermutations
     data_both_categories(2,:,:,:) = data_natural_avg;
     
     disp('Split into bins of scenes');
-    numScenesPerBin = 6;
+    numScenesPerBin = 5;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
+    num_bins_testing = 2;  
     
     for t = 1:numTimepoints 
         disp('Split into training and testing');
-        training_data = [squeeze(bins(1,1:end-1,:,t)); squeeze(bins(2,1:end-1,:,t))]; 
-        testing_data  = [squeeze(bins(1,end,:,t))'; squeeze(bins(2,end,:,t))']; 
-
-        labels_train  = [ones(numBins-1,1);2*ones(numBins-1,1)]; %one label for each pseudotrial
-        labels_test   = [1;2];   
-
+        training_data = [squeeze(bins(1,1:end-num_bins_testing,:,t)); squeeze(bins(2,1:end-num_bins_testing,:,t))]; 
+        testing_data  = [squeeze(bins(1,end-(num_bins_testing-1):end,:,t)); squeeze(bins(2,end-(num_bins_testing-1):end,:,t))];
+                 
+        labels_train  = [ones(numBins-num_bins_testing,1);2*ones(numBins-num_bins_testing,1)]; %one label for each pseudotrial
+        labels_test   = [ones(num_bins_testing,1);2*ones(num_bins_testing,1)];   
+        
         disp('Train the SVM');
         train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
         model=svmtrain_01(labels_train,training_data,train_param_str); 
@@ -96,5 +97,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/4_train_2_test_pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
 
