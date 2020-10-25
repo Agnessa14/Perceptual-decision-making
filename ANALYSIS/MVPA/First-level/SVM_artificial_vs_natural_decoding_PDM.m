@@ -73,7 +73,7 @@ for perm = 1:numPermutations
     disp('Split into bins of scenes');
     numScenesPerBin = 5;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
-    num_bins_testing = 2;  
+    num_bins_testing = 3;  
     
     for t = 1:numTimepoints 
         disp('Split into training and testing');
@@ -97,5 +97,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/4_train_2_test_pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/3_train_3_test_pseudotrials_svm_artificial_vs_natural_decoding_accuracy',subname),'decodingAccuracy_avg');
 
