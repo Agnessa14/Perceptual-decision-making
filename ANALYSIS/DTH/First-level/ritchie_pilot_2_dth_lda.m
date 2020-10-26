@@ -27,8 +27,9 @@ cosmo_check_external('-tic');
 %load eeg and behavioural data
 data_dir = sprintf('/scratch/agnek95/PDM/ritchie_subject_%s',subname);
 addpath(genpath(data_dir));
+addpath('/scratch/agnek95/PDM/spm8');
 load(fullfile(data_dir,sprintf('s%s_PCA_S1_50hz.mat',subname))); %eeg
- 
+
 %take only the needed data 
 triggers = data.TrialList(:,1);
 category = data.TrialList(:,3);
@@ -41,54 +42,61 @@ for t = 1:size(data.TrialList,1)
         trials_final = [trials_final;t];
     end
 end
-data_cut.trialinfo = triggers(trials_final);
-data_cut.trial = permute(data.class_dat(trials_final,:,:),[1 3 2]);
-data_cut.sampleinfo = [];
+trialinfo = triggers(trials_final);
+trial = permute(data.class_dat(trials_final,:,:),[1 3 2]);
 
 % convert to cosmomvpa struct
-ds_tl = cosmo_meeg_dataset(data_cut); %returns struct with field samples (numtrials x numelectrodes*numtimepoints)
-% samples_all = ds_tl.samples;
-% trialinfo_all = ds_tl.sa.trialinfo;
+size_tl = size(trial);
+num_trials = size_tl(1);
+num_pcs = size_tl(2);
+num_timepoints = size_tl(3);
+ds_tl.samples = reshape(trial,[num_trials,num_pcs*num_timepoints]); %data
+ds_tl.fa.chan = repmat(1:num_pcs,[1,num_timepoints]);
+ds_tl.fa.time = repmat(1:num_timepoints,[1,num_pcs]);
+ds_tl.a.fdim.labels = {'chan';'time'};
+ds_tl.a.fdim.values = {repmat({'NaN'},[1,num_pcs]);-0.100:0.0194:0.5806}; 
+ds_tl.a.meeg.samples.samples_field = 'trial';
+ds_tl.sa.trialinfo = trialinfo;
 
 %% Set up some variables
 num_permutations = 100;
-num_conditions = 60;
-num_timepoints = size(tl.trial,3);
+num_conditions = 24;
 decision_values = NaN(num_permutations,num_conditions,num_timepoints);
-last_category1_sample = 30;
+last_category1_sample = 12;
 
 %% Create a balanced set
 %collect the trials and number of trials for each condition
-trials_condition = NaN(num_conditions,60); %max possible
+trials_condition = NaN(num_conditions,35); %max possible
 num_trials_condition = NaN(num_conditions,1);
 
 for c = 1:num_conditions
-    trials_c = find(trialinfo_all==c);
+    trials_c = find(ds_tl.sa.trialinfo==c);
     trials_condition(c,1:numel(trials_c)) = trials_c;
     num_trials_condition(c) = numel(trials_c);
 end
 
 %take the minimum number of trials
-min_num_trials = min(num_trials_condition(num_trials_condition>0));
+min_num_trials = min(num_trials_condition);
 
 %% Loop   
 for p = 1:num_permutations 
     
     %randomly permute the trials
     randomized_trials = NaN(size(trials_condition));
+    
     for c = 1:num_conditions
         permuted = randperm(num_trials_condition(c));
         randomized_trials(c,1:numel(permuted)) = trials_condition(c,permuted);
     end
     
-    %take the minimum number of trials of each of the 60 samples
+%     take the minimum number of trials of each of the 24 samples
     selected_trials = reshape(randomized_trials(:,1:min_num_trials)',[],1);
     selected_trials(isnan(selected_trials)) = [];
-    
+
     %put back into the ds structure
-    ds_tl.sa.trialinfo = trialinfo_all(selected_trials);
-    ds_tl.samples = samples_all(selected_trials,:);
-    
+    ds_tl.sa.trialinfo = ds_tl.sa.trialinfo(selected_trials);
+    ds_tl.samples = ds_tl.samples(selected_trials,:);
+         
     %separate into artificial and natural trials
     art_trials = 1:numel(selected_trials)/2; %first half of the selected trials
     nat_trials = numel(selected_trials)/2 + 1:numel(selected_trials); %second half of the selected trials
@@ -175,3 +183,4 @@ save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');
 %% Number of trials per condition
 save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
 
+%     
