@@ -61,6 +61,8 @@ ds_tl.sa.trialinfo = trialinfo;
 %% Set up some variables
 num_permutations = 100;
 num_conditions = 24;
+num_conditions_per_category = num_conditions/2;
+num_components = num_pcs*num_timepoints;
 decision_values = NaN(num_permutations,num_conditions,num_timepoints);
 last_category1_sample = 12;
 
@@ -75,45 +77,46 @@ for c = 1:num_conditions
     num_trials_condition(c) = numel(trials_c);
 end
 
-%take the minimum number of trials
+%determine the minimum number of trials
 min_num_trials = min(num_trials_condition);
 
 %% Loop   
 for p = 1:num_permutations 
     
-    %randomly permute the trials
-    randomized_trials = NaN(size(trials_condition));
+    %permute trials & reorganize into a matrix of objects x trials x components 
+    dataMatrix = NaN(num_conditions,num_components);
+    selected_trials = NaN(num_conditions*min_num_trials,1);
     
     for c = 1:num_conditions
-        permuted = randperm(num_trials_condition(c));
-        randomized_trials(c,1:numel(permuted)) = trials_condition(c,permuted);
+        trials_c = trials_condition(c,:);
+        trialsMat = trials_c(randperm(numel(trials_c(~isnan(trials_c))))); %randomize
+        trialsMat_final = trialsMat(1:min_num_trials);
+        dataMatrix(c,:) = mean(ds_tl.samples(trialsMat_final,:),1); 
     end
     
-%     take the minimum number of trials of each of the 24 samples
-    selected_trials = reshape(randomized_trials(:,1:min_num_trials)',[],1);
-    selected_trials(isnan(selected_trials)) = [];
-
     %put back into the ds structure
-    ds_tl.sa.trialinfo = ds_tl.sa.trialinfo(selected_trials);
-    ds_tl.samples = ds_tl.samples(selected_trials,:);
-         
-    %separate into artificial and natural trials
-    art_trials = 1:numel(selected_trials)/2; %first half of the selected trials
-    nat_trials = numel(selected_trials)/2 + 1:numel(selected_trials); %second half of the selected trials
+%     ds_tl.samples = reshape(permute(dataMatrix,[2,1,3]),[num_conditions*min_num_trials,num_components]); %flatten in row major order, go from 3D to 2D
+%     if ds_tl.samples(2) ~= dataMatrix(1,2,1)
+%         error('Wrong transformation')
+%     end
+    ds_tl.samples = dataMatrix;
+    ds_tl.sa.trialinfo = (1:num_conditions)';
     
-    % set the targets (labels for the classifier): 1 = artificial, 2 = natural
-    ds_tl.sa.targets = NaN(size(ds_tl.sa.trialinfo));
-    for t = 1:size(ds_tl.sa.targets)
-        if ds_tl.sa.trialinfo(t) <= last_category1_sample
-            ds_tl.sa.targets(t) = 1; %artificial
-        else
-            ds_tl.sa.targets(t) = 2; %natural
-        end
-    end
+    %separate into artificial and natural trials to set the targets
+    %(1 = natural, 2 = artificial)
+    nat_conditions = 1:num_conditions/2; 
+    art_conditions = (num_conditions/2)+1:num_conditions; 
+    ds_tl.sa.targets = NaN(num_conditions,1);
+    ds_tl.sa.targets(nat_conditions) = 1;
+    ds_tl.sa.targets(art_conditions) = 2;
+    
+    %randomize the conditions 
+    nat_conditions_random = nat_conditions(randperm(numel(nat_conditions)));
+    art_conditions_random = art_conditions(randperm(numel(art_conditions)));
     
     %split into training and testing: create chunks - 1 = training and 2 = testing
-    training = [art_trials(1:round(numel(art_trials)/2));nat_trials(1:round(numel(nat_trials)/2))];
-    testing = [art_trials(round(numel(art_trials)/2) + 1:end); nat_trials(round(numel(nat_trials)/2) + 1:end)];
+    training = [nat_conditions_random(1:num_conditions_per_category/2);art_conditions_random(1:num_conditions_per_category/2)];
+    testing = [nat_conditions_random((num_conditions_per_category/2)+1:end); art_conditions_random((num_conditions_per_category/2)+1:end)];
     
     ds_tl.sa.chunks = NaN(numel(ds_tl.sa.targets),1);
     ds_tl.sa.chunks(training) = 1;
@@ -152,35 +155,40 @@ for p = 1:num_permutations
                                             measure_args.partitions.test_indices)));
 
     % run searchlight
-    sl_tl_ds=cosmo_searchlight(ds_tl,time_nbrhood,measure,measure_args,'center_ids',center_ids);
-    
+    sl_tl_ds=cosmo_searchlight(ds_tl,time_nbrhood,measure,measure_args,'center_ids',center_ids);   
 
     %avg over trials for each condition
     absolute_value_dvs = abs(sl_tl_ds.samples); 
-    t = 1:num_timepoints;
-    for c = 1:num_conditions 
-        trials_c = ds_tl.sa.trialinfo == c;
-        decision_values(p,c,:) = arrayfun(@(x) squeeze(mean(absolute_value_dvs(trials_c,x),1)),t);
-    end  
+    testing_all = [reshape(testing.',1,[]),reshape(training.',1,[])];
+    
+    for c = 1:num_conditions
+        condition_ID = testing_all(c);
+        decision_values(p,condition_ID,:) = absolute_value_dvs(c);
+    end
+%     t = 1:num_timepoints;
+%     for c = 1:num_conditions 
+%         trials_c = ds_tl.sa.trialinfo == c;
+%         decision_values(p,c,:) = arrayfun(@(x) squeeze(mean(absolute_value_dvs(trials_c,x),1)),t);
+%     end  
 end
 
 %% Save
 %decision values
 averaged_decision_values = squeeze(mean(decision_values,1)); 
 save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
-save(fullfile(save_path,'dth_lda'),'averaged_decision_values');    
+save(fullfile(save_path,'ritchie_dth_lda'),'averaged_decision_values');    
 
-%% RTs per condition
-RT_per_condition = NaN(num_conditions,1);
-RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
+% %% RTs per condition
+% RT_per_condition = NaN(num_conditions,1);
+% RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
+% 
+% for c = 1:num_conditions
+%     RT_per_condition(c) = mean(RT_correct(trialinfo_all==c));
+% end
+% 
+% save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');    
 
-for c = 1:num_conditions
-    RT_per_condition(c) = mean(RT_correct(trialinfo_all==c));
-end
-
-save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');    
-
-%% Number of trials per condition
-save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
+% %% Number of trials per condition
+% save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
 
 %     
