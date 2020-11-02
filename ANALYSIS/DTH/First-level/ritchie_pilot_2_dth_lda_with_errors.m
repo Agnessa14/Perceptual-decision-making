@@ -21,7 +21,6 @@ ft_defaults;
 % reset citation list - is this necessary
 cosmo_check_external('-tic');
 
-
 %% Prepare data
 %load eeg and behavioural data
 data_dir = sprintf('/scratch/agnek95/PDM/ritchie_subject_%s',subname);
@@ -31,13 +30,10 @@ load(fullfile(data_dir,sprintf('s%s_PCA_S1_50hz.mat',subname))); %eeg
 
 %take only the needed data 
 triggers = data.TrialList(:,1);
-category = data.TrialList(:,3);
 task = data.TrialList(:,4);
-response = data.TrialList(:,6);
-RT = data.TrialList(:,7);
 trials_final = [];
 for t = 1:size(data.TrialList,1)
-    if category(t) == response(t) && task(t) == 1 %only take the active task and the correct trials
+    if task(t) == 1 %only take the active task and the correct trials
         trials_final = [trials_final;t];
     end
 end
@@ -66,7 +62,6 @@ num_conditions_per_category = num_conditions/2;
 num_components = num_pcs*num_timepoints;
 decision_values = NaN(num_permutations,num_conditions,num_timepoints);
 data = ds_tl.samples; 
-% last_category1_sample = 12;
 
 %% Create a balanced set
 %collect the trials and number of trials for each condition
@@ -81,6 +76,7 @@ end
 
 %determine the minimum number of trials
 min_num_trials = min(num_trials_condition);
+
 
 %% Loop   
 for p = 1:num_permutations 
@@ -113,12 +109,12 @@ for p = 1:num_permutations
     art_conditions_random = art_conditions(randperm(numel(art_conditions)));
     
     %split into training and testing: create chunks - 1 = training and 2 = testing
-    training = [nat_conditions_random(1:num_conditions_per_category/2);art_conditions_random(1:num_conditions_per_category/2)];
-    testing = [nat_conditions_random((num_conditions_per_category/2)+1:end); art_conditions_random((num_conditions_per_category/2)+1:end)];
+    training = [nat_conditions_random(1:9);art_conditions_random(1:9)]; %75% of the dataset
+    testing  = [nat_conditions_random(10:12);art_conditions_random(10:12)]; %25% of the dataset
     
     ds_tl.sa.chunks = NaN(numel(ds_tl.sa.targets),1);
     ds_tl.sa.chunks(training) = 1;
-    ds_tl.sa.chunks(testing) = 2;
+    ds_tl.sa.chunks(testing) = 2; 
     
     % just to check everything is ok
     cosmo_check_dataset(ds_tl);
@@ -170,19 +166,9 @@ end
 %decision values
 averaged_decision_values = squeeze(mean(decision_values,1)); 
 save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
-save(fullfile(save_path,'ritchie_dth_lda'),'averaged_decision_values');    
-
-% %% RTs per condition
-RT_per_condition = NaN(num_conditions,1);
-% RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
-
-for c = 1:num_conditions
-    RT_per_condition(c) = mean(RT_final(trialinfo==c));
-end
-
-save(fullfile(save_path,'ritchie_lda_RTs_correct_answers'),'RT_per_condition');    
+save(fullfile(save_path,'ritchie_dth_lda'),'averaged_decision_values');      
 
 %% Number of trials per condition
-save(fullfile(save_path,'ritchie_lda_num_trials_per_condition'),'num_trials_condition'); 
+save(fullfile(save_path,'75_ritchie_lda_num_trials_per_condition'),'num_trials_condition'); 
 
     
