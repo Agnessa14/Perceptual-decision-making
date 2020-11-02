@@ -42,8 +42,10 @@ for t = 1:size(data.TrialList,1)
         trials_final = [trials_final;t];
     end
 end
+
 trialinfo = triggers(trials_final);
 trial = permute(data.class_dat(trials_final,:,:),[1 3 2]);
+RT_final = RT(trials_final);
 
 % convert to cosmomvpa struct
 size_tl = size(trial);
@@ -64,7 +66,8 @@ num_conditions = 24;
 num_conditions_per_category = num_conditions/2;
 num_components = num_pcs*num_timepoints;
 decision_values = NaN(num_permutations,num_conditions,num_timepoints);
-last_category1_sample = 12;
+data = ds_tl.samples; 
+% last_category1_sample = 12;
 
 %% Create a balanced set
 %collect the trials and number of trials for each condition
@@ -82,23 +85,19 @@ min_num_trials = min(num_trials_condition);
 
 %% Loop   
 for p = 1:num_permutations 
-    
+
     %permute trials & reorganize into a matrix of objects x trials x components 
     dataMatrix = NaN(num_conditions,num_components);
-    selected_trials = NaN(num_conditions*min_num_trials,1);
+%     selected_trials = NaN(num_conditions*min_num_trials,1);
     
     for c = 1:num_conditions
         trials_c = trials_condition(c,:);
         trialsMat = trials_c(randperm(numel(trials_c(~isnan(trials_c))))); %randomize
         trialsMat_final = trialsMat(1:min_num_trials);
-        dataMatrix(c,:) = mean(ds_tl.samples(trialsMat_final,:),1); 
+        dataMatrix(c,:) = mean(data(trialsMat_final,:),1); 
     end
     
     %put back into the ds structure
-%     ds_tl.samples = reshape(permute(dataMatrix,[2,1,3]),[num_conditions*min_num_trials,num_components]); %flatten in row major order, go from 3D to 2D
-%     if ds_tl.samples(2) ~= dataMatrix(1,2,1)
-%         error('Wrong transformation')
-%     end
     ds_tl.samples = dataMatrix;
     ds_tl.sa.trialinfo = (1:num_conditions)';
     
@@ -165,11 +164,7 @@ for p = 1:num_permutations
         condition_ID = testing_all(c);
         decision_values(p,condition_ID,:) = absolute_value_dvs(c);
     end
-%     t = 1:num_timepoints;
-%     for c = 1:num_conditions 
-%         trials_c = ds_tl.sa.trialinfo == c;
-%         decision_values(p,c,:) = arrayfun(@(x) squeeze(mean(absolute_value_dvs(trials_c,x),1)),t);
-%     end  
+ 
 end
 
 %% Save
@@ -179,16 +174,16 @@ save_path = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
 save(fullfile(save_path,'ritchie_dth_lda'),'averaged_decision_values');    
 
 % %% RTs per condition
-% RT_per_condition = NaN(num_conditions,1);
+RT_per_condition = NaN(num_conditions,1);
 % RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
-% 
-% for c = 1:num_conditions
-%     RT_per_condition(c) = mean(RT_correct(trialinfo_all==c));
-% end
-% 
-% save(fullfile(save_path,'RTs_correct_answers'),'RT_per_condition');    
 
-% %% Number of trials per condition
-% save(fullfile(save_path,'num_trials_per_condition'),'num_trials_condition'); 
+for c = 1:num_conditions
+    RT_per_condition(c) = mean(RT_final(trialinfo==c));
+end
 
-%     
+save(fullfile(save_path,'ritchie_lda_RTs_correct_answers'),'RT_per_condition');    
+
+%% Number of trials per condition
+save(fullfile(save_path,'ritchie_lda_num_trials_per_condition'),'num_trials_condition'); 
+
+    
