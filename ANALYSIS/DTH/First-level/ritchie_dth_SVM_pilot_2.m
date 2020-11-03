@@ -86,18 +86,18 @@ for perm = 1:numPermutations
     
     for t = 1:numTimepoints
         disp('Split into training and testing');
-        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];   
-        testing_data  = [squeeze(data_both_categories(1,:,:,t)); squeeze(data_both_categories(2,:,:,t))];
+        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];  %train on all pseudoconditions (bins) 
+        testing_data  = [squeeze(data_both_categories(1,:,:,t)); squeeze(data_both_categories(2,:,:,t))]; %test on all conditions 
        
-        labels_train  = [ones(numBins,1);2*ones(numBins,1)]; %one label for each pseudotrial
-        labels_test   = [ones(num_conditions_per_category,1);2*ones(num_conditions_per_category,1)]; % we have the same size of training and testing data bcs we don't care about accuracy
+        labels_train  = [ones(numBins,1);2*ones(numBins,1)]; 
+        labels_test   = [ones(num_conditions_per_category,1);2*ones(num_conditions_per_category,1)]; 
         
         disp('Train the SVM');
         train_param_str=  '-s 0 -t 0 -b 0 -c 1 -q';
         model=svmtrain_01(labels_train,training_data,train_param_str); 
         
         disp('Test the SVM');
-        [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  %for 60 conditions, you get a 30x1 vector of decision_values
+        [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  
         
         disp('Putting the decision values into the big matrix');
         for c = 1:num_conditions_per_category
@@ -114,7 +114,7 @@ decisionValues_Natural_Avg = squeeze(mean(decisionValues_Natural,1)); %avg over 
 decisionValues_Artificial_Avg = squeeze(mean(decisionValues_Artificial,1)); %avg over permutations
 decisionValues_Avg = [decisionValues_Natural_Avg;decisionValues_Artificial_Avg];
 results_dir = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
-save(fullfile(results_dir,'noerrors_pseudotrials_svm_ritchie_decisionValues'),'decisionValues_Avg');
+save(fullfile(results_dir,'witherrortrials_svm_ritchie_decisionValues'),'decisionValues_Avg');
 
 end
    
