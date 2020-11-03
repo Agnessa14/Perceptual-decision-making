@@ -42,7 +42,7 @@ set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
 plot(correlation_dth_RT,'LineWidth',2);
 hold on;
 analyze_ritchie_data(subjects,conditions);
-title('Correlation between reaction time and distance to hyperplane in 12 animate objects');
+title(sprintf('Correlation between reaction time and distance to hyperplane in 12 animate objects (N=%d)',numel(subjects)));
 legend({'My script','Ground truth'},'FontSize',12)
 xlabel('Timepoint')
 ylabel('Spearman''s coefficient')
