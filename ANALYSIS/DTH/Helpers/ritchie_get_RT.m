@@ -10,15 +10,15 @@ function ritchie_get_RT(subjects)
 %
 
 %% Add paths 
-data_dir = '/scratch/agnek95/ritchie2015_data/';
+data_dir = '/scratch/agnek95/PDM/ritchie2015_data/';
 results_dir = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS/';
 addpath(data_dir);
 
 %% Load the structure containing RTs
 for s = 1:numel(subjects)
     subname = num2str(subjects(s));
-    load(fullfile(data_dir,sprintf('s%_PCA_S1_5RTanalysis_ClassifyResults.mat',subname)));
-    meanRT = squeeze(Results(1).RTdistanceMatrix(1,:,1)); %take the mean across trials
+    load(fullfile(data_dir,sprintf('s%s_PCA_S1_5RTanalysis_ClassifyResults.mat',subname)));
+    meanRT = squeeze(Results.ActivePassive(1).RTdistanceMatrix(1,:,1)); %take the mean across trials
 
     %% Save
     save(fullfile(results_dir,subname,'RT_active_mean'),'meanRT');
