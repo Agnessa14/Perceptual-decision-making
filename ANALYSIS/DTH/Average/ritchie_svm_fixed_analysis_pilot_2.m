@@ -1,11 +1,11 @@
-function ritchie_svm_fixed_analysis_pilot_2(subjects) %distance art, distance nat, RT
+function ritchie_svm_fixed_analysis_pilot_2(subjects,conditions) %conditions 1:12 for animate or 13:24 for inanimate
 %RITCHIE_SVM_FIXED_ANALYSIS_PILOT_2 Performs the distance-to-hyperplane analysis using
-%the svm classifier 60 scenes on normalized distances (on Ritchie 2015 data).
+%the svm classifier on 24 objects (on Ritchie 2015 data).
 %
 %Input: subjects' ID (e.g., 1:13)
 %
 %Correlates the decision values with reaction times (averaged over
-%participants) of each condition (60 scenes), at each timepoint, resulting in a plot of Spearman's correlation vs time. 
+%participants) of each condition (24 objects), at each timepoint, resulting in a plot of Spearman's correlation vs time. 
 %
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS'));
@@ -14,74 +14,42 @@ addpath(genpath(results_dir));
 
 %% Get the distances from all subjects
 numTimepoints = 36;
-numConditions = 24;
-distances = NaN(numel(subjects),numConditions,numTimepoints);
-RTs = NaN(numel(subjects),numConditions);
+distances = NaN(numel(subjects),numel(conditions),numTimepoints);
+RTs = NaN(numel(subjects),numel(conditions));
 
-for subject = numel(subjects)
+for subject = 1:numel(subjects)
     s = subjects(subject);
     subname = get_subject_name(s);
-    load(fullfile(results_dir,subname,'ritchie_decisionValues.mat'));
-    distances(subject,:,:) = decisionValuesAvg;   
-    load(fullfile(results_dir,subname,'ritchie_RTs_correct_trials.mat'));
-    RTs(subject,:) = normalize(RT_per_condition);
+    load(fullfile(results_dir,subname,'witherrortrials_svm_ritchie_decisionValues.mat'));
+    distances(subject,:,:) = decisionValues_Avg(conditions,:);   
+    load(fullfile(results_dir,subname,'RT_active_mean.mat'));
+    RTs(subject,:) = normalize(meanRT(conditions));
 end
 
 %% Get the median RTs of all subjects for each condition
-medianRT = nanmedian(RTs,1);
+medianRT = median(RTs,1);
 
 %% Correlate DTH and RT
-mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
-correlation_dth_rt_both = NaN(1,numTimepoints);
-correlation_dth_rt_art = NaN(1,numTimepoints);
-correlation_dth_rt_nat = NaN(1,numTimepoints);
-last_category1_sample = numConditions/2;
-first_category2_sample = numConditions/2 + 1;
+avg_distance = squeeze(mean(distances,1)); %avg over subjects
 
-for t = 1:numTimepoints
-    correlation_dth_rt_both(t) = corr(mean_distances(:,t),medianRT','type','Spearman');
-    correlation_dth_rt_art(t) = corr(mean_distances(1:last_category1_sample,t),...
-        medianRT(1:last_category1_sample)','type','Spearman');
-    correlation_dth_rt_nat(t) = corr(mean_distances(first_category2_sample:end,t),...
-        medianRT(first_category2_sample:end)','type','Spearman');
-end
-correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
+correlation_type = 'Spearman';
+timepoints = 1:numTimepoints;
+correlation_dth_RT = arrayfun(@ (x) corr(medianRT',avg_distance(:,x),'type',correlation_type),timepoints);
 
 %% Plot 
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
-
-% %Artificial scenes
-% plot(correlation_dth_rt_art,'LineWidth',2);
-% hold on;
-
-%Natural scenes
-plot(correlation_dth_rt_nat,'LineWidth',2);
+plot(correlation_dth_RT,'LineWidth',2);
 hold on;
+analyze_ritchie_data(subjects,conditions);
+title('Correlation between reaction time and distance to hyperplane in 12 animate objects');
+legend({'My script','Ground truth'},'FontSize',12)
+xlabel('Timepoint')
+ylabel('Spearman''s coefficient')
 
-%Average of artificial and natural
-plot(correlation_dth_rt_avg,'LineWidth',2);
-hold on;
-
-% axis([0,200,-0.7,0.6]);
-%Legend
-legend_art_nat = {'Artificial scenes','Natural scenes','Average of artificial and natural scenes', ...
-    'All scenes','Stimulus onset'};
-
-%Both scenes in one plot
-plotting_dth_one(correlation_dth_rt_both,...
-    sprintf('Correlation between the distance to hyperplane and reaction time for 24 scenes in a categorization task (N=%d)', numel(subjects)),legend_art_nat);
-
-%% Save
-%correlations
+%% Save figures
 save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('ritchie_SVM_DTH_rt_correlation_both_categories_%d_subjects',numel(subjects))),'correlation_dth_rt_both');
-save(fullfile(save_path,sprintf('ritchie_SVM_DTH_rt_correlation_artificial_%d_subjects',numel(subjects))),'correlation_dth_rt_art');
-save(fullfile(save_path,sprintf('ritchie_SVM_DTH_rt_correlation_natural_%d_subjects',numel(subjects))),'correlation_dth_rt_nat');
-save(fullfile(save_path,sprintf('ritchie_SVM_DTH_rt_correlation_both_categories_avg_%d_subjects',numel(subjects))),'correlation_dth_rt_avg');
-
-%figures
-saveas(gcf,fullfile(save_path,sprintf('ritchie_SVM_DTH_artificial_natural_%d_subjects',numel(subjects))));
-saveas(gcf,fullfile(save_path,sprintf('ritchie_SVM_DTH_artificial_natural_%d_subjects.svg',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('good_ritchie_myscript_vs_ground_animate_%d_subjects',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('good_ritchie_myscript_vs_ground_animate_%d_subjects.svg',numel(subjects))));
 
 end
