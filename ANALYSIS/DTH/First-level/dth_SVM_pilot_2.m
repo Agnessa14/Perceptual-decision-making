@@ -41,7 +41,9 @@ numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
 
+subset = 0.5; 
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
+numTrials = subset*numTrials;
 numTimepoints = size(timelock_data,3);
 numPermutations=100; 
 
@@ -53,7 +55,7 @@ decisionValues_Natural = NaN(numPermutations,num_conditions_per_category,numTime
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    data = create_data_matrix(numConditions,triggers,numTrials,timelock_data);
+    [data,trials_subset] = create_data_matrix_subset(numConditions,triggers,numTrials,timelock_data,subset);
 
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data);
@@ -77,7 +79,7 @@ for perm = 1:numPermutations
     data_both_categories(2,:,:,:) = data_natural_avg;
     
     disp('Split into bins of scenes');
-    numScenesPerBin = 6;
+    numScenesPerBin = 4;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
     
     for t = 1:numTimepoints
@@ -109,17 +111,21 @@ end
 decisionValues_Artificial_Avg = squeeze(mean(decisionValues_Artificial,1)); %avg over permutations
 decisionValues_Natural_Avg = squeeze(mean(decisionValues_Natural,1)); %avg over permutations
 decisionValues_Avg = [decisionValues_Artificial_Avg;decisionValues_Natural_Avg];
-save(fullfile(results_dir,'pseudotrials_decisionValues'),'decisionValues_Avg');
+filename = sprintf('subset_%s_decisionValues.mat',num2str(subset));
+save(fullfile(results_dir,filename),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditions,1);
 RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
+RT_subset = RT_correct(reshape(trials_subset.',1,[]));
+triggers_subset = triggers(reshape(trials_subset.',1,[])); 
 
 for c = 1:numConditions
-    RT_per_condition(c) = mean(RT_correct(triggers==c));
+    RT_per_condition(c) = mean(RT_subset(triggers_subset==c));
 end
+filename_RT = sprintf('subset_%s_RTs_correct_trials.mat',num2str(subset));
+save(fullfile(results_dir,filename_RT),'RT_per_condition');
 
-save(fullfile(results_dir,'RTs_correct_trials'),'RT_per_condition');
 end
    
     
