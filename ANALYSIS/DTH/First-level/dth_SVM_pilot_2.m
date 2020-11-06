@@ -43,7 +43,7 @@ num_conditions_per_category = numConditions/num_categories;
 
 subset = 0.5; 
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
-numTrials = subset*numTrials;
+numTrials = floor(subset*numTrials);
 numTimepoints = size(timelock_data,3);
 numPermutations=100; 
 
@@ -55,7 +55,7 @@ decisionValues_Natural = NaN(numPermutations,num_conditions_per_category,numTime
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    [data,trials_subset] = create_data_matrix_subset(numConditions,triggers,numTrials,timelock_data,subset);
+    [data,trials_subset] = create_data_matrix_subset(numConditions,triggers,numTrials,timelock_data);
 
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data);
