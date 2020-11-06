@@ -1,4 +1,4 @@
-function svm_fixed_analysis_pilot_2(subjects) %distance art, distance nat, RT
+function svm_fixed_analysis_pilot_2(subjects,subset) %distance art, distance nat, RT
 %SVM_FIXED_ANALYSIS_PILOT_2 Performs the distance-to-hyperplane analysis using
 %the svm classifier 60 scenes on normalized distances.
 %
@@ -20,9 +20,9 @@ RTs = NaN(numel(subjects),numConditions);
 
 for subject = subjects
     subname = get_subject_name(subject);
-    load(fullfile(results_dir,subname,'pseudotrials_decisionValues.mat'));
+    load(fullfile(results_dir,subname,sprintf('subset_%d_decisionValues.mat',subset)));
     distances(subject,:,:) = decisionValues_Avg;   
-    load(fullfile(results_dir,subname,'RTs_correct_trials.mat'));
+    load(fullfile(results_dir,subname,sprintf('subset_%d_RTs_correct_trials.mat',subset)));
     RTs(subject,:) = normalize(RT_per_condition);
 end
 
@@ -75,13 +75,13 @@ plotting_dth_one(correlation_dth_rt_both,...
 %% Save
 %correlations
 save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_both_categories_%d_subjects',numel(subjects))),'correlation_dth_rt_both');
-save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_artificial_%d_subjects',numel(subjects))),'correlation_dth_rt_art');
-save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_natural_%d_subjects',numel(subjects))),'correlation_dth_rt_nat');
-save(fullfile(save_path,sprintf('pt_SVM_DTH_rt_correlation_both_categories_avg_%d_subjects',numel(subjects))),'correlation_dth_rt_avg');
+save(fullfile(save_path,sprintf('subset_%d_SVM_DTH_rt_correlation_both_categories_%d_subjects',subset,numel(subjects))),'correlation_dth_rt_both');
+save(fullfile(save_path,sprintf('subset_%d_SVM_DTH_rt_correlation_artificial_%d_subjects',subset,numel(subjects))),'correlation_dth_rt_art');
+save(fullfile(save_path,sprintf('subset_%d_SVM_DTH_rt_correlation_natural_%d_subjects',subset,numel(subjects))),'correlation_dth_rt_nat');
+save(fullfile(save_path,sprintf('subset_%d_SVM_DTH_rt_correlation_both_categories_avg_%d_subjects',subset,numel(subjects))),'correlation_dth_rt_avg');
 
 %figures
-saveas(gcf,fullfile(save_path,sprintf('pt_SVM_DTH_artificial_natural_%d_subjects',numel(subjects))));
-saveas(gcf,fullfile(save_path,sprintf('pt_SVM_DTH_artificial_natural_%d_subjects.svg',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('subset_%d_SVM_DTH_artificial_natural_%d_subjects',subset,numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('subset_%d_SVM_DTH_artificial_natural_%d_subjects.svg',subset,numel(subjects))));
 
 end
