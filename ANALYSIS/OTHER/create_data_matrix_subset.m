@@ -1,4 +1,4 @@
-function [dataMatrix,trialsMatAll] = create_data_matrix_subset(numConditions,triggers,minNumTrials,data,subset)
+function [dataMatrix,trialsMatAll] = create_data_matrix_subset(numConditions,triggers,minNumTrials,data)
 %CREATE_DATA_MATRIX_SUBSET Construct the matrix of data containing voltage
 %information for each condition, trial, electrode and timepoint, only using a specified subset of data. 
 %
@@ -19,8 +19,8 @@ dataMatrix = NaN(numConditions,minNumTrials,numElectrodes,numTimepoints);
 trialsMatAll  = NaN(numConditions,minNumTrials);
 for c = 1:numConditions
     trialsMat = find(triggers==c);
-    trialsMat = trialsMat(1:numel(trialsMat)*subset);
+    trialsMat = trialsMat(1:minNumTrials);
     trialsMat = trialsMat(randperm(numel(trialsMat))); %randomize
-    trialsMatAll(c,:) = trialsMat(1:minNumTrials);
+    trialsMatAll(c,:) = trialsMat;
     dataMatrix(c,:,:,:) = data(trialsMat,:,:); 
 end
