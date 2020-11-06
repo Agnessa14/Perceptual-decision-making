@@ -48,11 +48,10 @@ num_conditions_per_category = numConditions/num_categories;
 
 [numTrials, ~] = min_number_trials(triggers_final, numConditions); 
 numTimepoints = size(data_final,3);
-numPermutations=100; 
+numPermutations=1; 
 
 %Preallocate 
-decisionValues_Artificial=NaN(numPermutations,num_conditions_per_category,numTimepoints);
-decisionValues_Natural = NaN(numPermutations,num_conditions_per_category,numTimepoints);
+decisionValues = NaN(numPermutations,numConditions,numTimepoints);
 
 %% Running the MVPA
 for perm = 1:numPermutations
@@ -67,28 +66,37 @@ for perm = 1:numPermutations
     data_natural = data(1:num_conditions_per_category,:,:,:); %in Ritchie's dataset, the natural conditions come first
     data_artificial = data(num_conditions_per_category+1:end,:,:,:);
        
-    disp('Average over trials');
+    disp('Training set: Reshape by taking the trials from all conditions for each category');
+    size_data_category = size(data_natural);
+    data_natural_reshaped = reshape(data_natural,...
+        [size_data_category(1)*size_data_category(2),size_data_category(3),size_data_category(4)]);
+    data_artificial_reshaped = reshape(data_artificial,...
+        [size_data_category(1)*size_data_category(2),size_data_category(3),size_data_category(4)]);
+    
+    disp('Permute the trials')
+    data_natural_permuted = data_natural_reshaped(randperm(size(data_natural_reshaped,1)),:,:);
+    data_artificial_permuted = data_artificial_reshaped(randperm(size(data_artificial_reshaped,1)),:,:);
+       
+    disp('Put both categories into one matrix');
+    data_both_categories = NaN([num_categories,size(data_natural_permuted)]);
+    data_both_categories(1,:,:,:) = data_natural_permuted;
+    data_both_categories(2,:,:,:) = data_artificial_permuted;
+    
+    disp('Split into pseudotrials');
+    numTrialsPerBin = 20; %try different combinations of bins/numTrialsPerBin
+    [bins,numBins] = create_pseudotrials(numTrialsPerBin,data_both_categories);
+    
+    disp('Testing set: Average over trials');
     data_natural_avg = squeeze(mean(data_natural,2));
     data_artificial_avg = squeeze(mean(data_artificial,2));
-  
-    disp('Permute the conditions (scenes)');
-    conditions_order = randperm(num_conditions_per_category)';
-    data_natural_avg = data_natural_avg(conditions_order,:,:);
-    data_artificial_avg = data_artificial_avg(conditions_order,:,:);
-    
-    disp('Put both categories into one matrix');
-    data_both_categories = NaN([num_categories,size(data_artificial_avg)]);
-    data_both_categories(1,:,:,:) = data_natural_avg;
-    data_both_categories(2,:,:,:) = data_artificial_avg;
-    
-    disp('Split into bins of scenes');
-    numScenesPerBin = 4;
-    [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
+    data_testing_both = NaN([num_categories,size(data_natural_avg)]);
+    data_testing_both(1,:,:,:) = data_natural_avg;
+    data_testing_both(2,:,:,:) = data_artificial_avg;
     
     for t = 1:numTimepoints
         disp('Split into training and testing');
-        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];  %train on all pseudoconditions (bins) 
-        testing_data  = [squeeze(data_both_categories(1,:,:,t)); squeeze(data_both_categories(2,:,:,t))]; %test on all conditions 
+        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];  %train on all pseudotrials
+        testing_data  = [squeeze(data_testing_both(1,:,:,t)); squeeze(data_testing_both(2,:,:,t))]; %test on all conditions 
        
         labels_train  = [ones(numBins,1);2*ones(numBins,1)]; 
         labels_test   = [ones(num_conditions_per_category,1);2*ones(num_conditions_per_category,1)]; 
@@ -101,21 +109,16 @@ for perm = 1:numPermutations
         [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  
         
         disp('Putting the decision values into the big matrix');
-        for c = 1:num_conditions_per_category
-            condition = conditions_order(c);
-            decisionValues_Natural(perm,condition,t) = abs(decision_values(c));
-            decisionValues_Artificial(perm,condition,t) = abs(decision_values(c+num_conditions_per_category));
-        end
+        decisionValues(perm,:,t) = abs(decision_values);
+        
     end
     toc
 end
 
 %% Save the decision values
-decisionValues_Natural_Avg = squeeze(mean(decisionValues_Natural,1)); %avg over permutations
-decisionValues_Artificial_Avg = squeeze(mean(decisionValues_Artificial,1)); %avg over permutations
-decisionValues_Avg = [decisionValues_Natural_Avg;decisionValues_Artificial_Avg];
+decisionValues_Avg = squeeze(mean(decisionValues,1));
 results_dir = fullfile('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/',subname);
-save(fullfile(results_dir,'witherrortrials_svm_ritchie_decisionValues'),'decisionValues_Avg');
+save(fullfile(results_dir,'true_pseudotrials_svm_ritchie_decisionValues'),'decisionValues_Avg');
 
 end
    
