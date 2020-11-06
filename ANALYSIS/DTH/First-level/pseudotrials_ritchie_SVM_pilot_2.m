@@ -48,7 +48,7 @@ num_conditions_per_category = numConditions/num_categories;
 
 [numTrials, ~] = min_number_trials(triggers_final, numConditions); 
 numTimepoints = size(data_final,3);
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 decisionValues = NaN(numPermutations,numConditions,numTimepoints);
