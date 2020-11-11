@@ -13,6 +13,10 @@ results_dir = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS';
 addpath(genpath(results_dir));
 save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
 
+%% Load the overall curves
+load(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_artificial_%d_subjects.mat',numel(subjects))));
+load(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_natural_%d_subjects.mat',numel(subjects))));
+
 %% Get the distances from all subjects
 numTimepoints = 200;
 numCategories = 2;
@@ -43,7 +47,8 @@ for c = 1:numCategories
     figure(abs(round(randn*10)));
     set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
     legend_cell = cell(numSubcategoriesPerCategory,1);
-
+    all_scenes = NaN(numConditions/2,1);
+    
     for s = 1:numSubcategoriesPerCategory
         subcat_name = subcategory_names{c,s};
         if c == 1  
@@ -51,8 +56,11 @@ for c = 1:numCategories
         elseif c == 2
             scenes = ((s+2)*numSubConditions)+1:(s+3)*numSubConditions; 
         end
-        disp(scenes);
-        
+        if c == 1
+            all_scenes(scenes) = scenes;
+        elseif c == 2
+            all_scenes(scenes-30) = scenes;
+        end
         RT = medianRT(scenes);
         mean_distances = squeeze(nanmean(distances(:,scenes,:),1)); %avg over subjects
         correlation_dth_RT = arrayfun(@ (x) corr(RT',mean_distances(:,x),'type','Spearman'),timepoints);
@@ -64,17 +72,29 @@ for c = 1:numCategories
     end
  
     %% Plotting parameters
+    %%double checking that the calculations are correct
+%     if c == 1
+%         plot(correlation_dth_rt_art,'--','LineWidth',2);
+%     elseif c == 2
+%         plot(correlation_dth_rt_nat,'--','LineWidth',2);
+%     end
+    RT = medianRT(all_scenes);
+    mean_distances = squeeze(nanmean(distances(:,all_scenes,:),1));
+    correlation_dth_RT = arrayfun(@ (x) corr(RT',mean_distances(:,x),'type','Spearman'),timepoints);
+    plot(correlation_dth_RT,'k --','LineWidth',2);
+
     xline(40,'--'); 
     title(sprintf('Correlation between distance to hyperplane and reaction time in 3 subordinate %s categories',category_names{c}));
     xlabel('Timepoints');
     ylabel('Spearman''s coefficient');
     xticks(0:10:200);
+%     legend_cell{4} = sprintf('All %s scenes',category_names{c});
     legend(legend_cell,'FontSize',12);
 %     set(leg, 'position', [0.7 0.2 0.1 0.01]); %put legend below graph
 
     %% Save figures
-    saveas(gcf,fullfile(save_path,sprintf('subcategories_%s_SVM_DTH_artificial_natural_%d_subjects',category_names{c},numel(subjects)))); 
-    saveas(gcf,fullfile(save_path,sprintf('subcategories_%s_SVM_DTH_artificial_natural_%d_subjects.svg',category_names{c},numel(subjects))));
+%     saveas(gcf,fullfile(save_path,sprintf('subcategories_%s_SVM_DTH_artificial_natural_%d_subjects',category_names{c},numel(subjects)))); 
+%     saveas(gcf,fullfile(save_path,sprintf('subcategories_%s_SVM_DTH_artificial_natural_%d_subjects.svg',category_names{c},numel(subjects))));
     close(gcf);
 
 end
