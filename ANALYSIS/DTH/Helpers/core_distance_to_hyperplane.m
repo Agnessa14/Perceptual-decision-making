@@ -13,6 +13,8 @@ if strcmp(category, 'artificial')
     conditions = 1:30;
 elseif strcmp(category, 'natural')
     conditions = 31:60;
+elseif strcmp(category, 'both')
+    conditions = 1:60;
 end
 
 %% Preallocate
