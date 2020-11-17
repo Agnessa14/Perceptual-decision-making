@@ -61,10 +61,16 @@ for perm = 1:numPermutations
             for timePoint = 1:numTimepoints 
                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoint ->',num2str(timePoint)]);
-                % L-1 pseudo trials go to testing set, the Lth to training set
-                training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
-                testing_data=[squeeze(pseudoTrials(condA,end,:,timePoint))' ; squeeze(pseudoTrials(condB,end,:,timePoint))']; %1x63x1 each            
                 
+                % L-1 pseudo trials go to training set, the Lth to testing set
+                if numPTs == 2
+                    training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint))' ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))']; %(numbins-1)x63x1 each
+                else
+                    training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
+                end
+                
+                testing_data=[squeeze(pseudoTrials(condA,end,:,timePoint))' ; squeeze(pseudoTrials(condB,end,:,timePoint))']; %1x63x1 each
+         
                 % class labels
                 labels_train=[ones(1,numPTs-1) 2*ones(1,numPTs-1)]; %one label for each pseudotrial
                 labels_test= [1 2]; 
