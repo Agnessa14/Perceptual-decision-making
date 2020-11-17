@@ -37,7 +37,7 @@ numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_data.trialinfo, numConditions); %minimum number of trials per scene
 numTrials = floor(subset*numTrials);
 numTimepoints = size(timelock_data.trial,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
