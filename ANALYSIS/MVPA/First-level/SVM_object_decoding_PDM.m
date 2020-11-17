@@ -37,7 +37,7 @@ numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_data.trialinfo, numConditions); %minimum number of trials per scene
 numTrials = floor(subset*numTrials);
 numTimepoints = size(timelock_data.trial,3); %number of timepoints
-numPermutations=100; 
+numPermutations=1; 
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
@@ -87,5 +87,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/subset_%s_svm_decoding_accuracy',subname,num2str(subset)),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/subset_%s_svm_decoding_accuracy.mat',subname,num2str(subset)),'decodingAccuracy_avg');
 
