@@ -41,7 +41,7 @@ numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
 
-subset = 0.5; 
+subset = 0.6; 
 [numTrials, ~] = min_number_trials(triggers, numConditions); 
 numTrials = floor(subset*numTrials);
 numTimepoints = size(timelock_data,3);
