@@ -15,7 +15,6 @@ addpath(genpath(results_dir));
 %Preallocate
 numTimepoints = 200;
 numConditions = 60;
-legend_cell = cell(numel(subsets),1);
 std_dth = NaN(numel(subsets),numTimepoints);
 
 %Loop over subsets & subjects
@@ -28,23 +27,20 @@ for s = 1:numel(subsets)
         decoding_accuracies(subject,:,:,:) = decodingAccuracy_avg;   
     end    
     
-    % Get the standard deviation for all subjects and timepoints 
+    % Get the standard deviation for all subjects and timepoints
     std_dth(s,:) = std(squeeze(nanmean(nanmean(decoding_accuracies,2),3)));    
 end
 
 %Average over baseline timepoints
-std_dth_baseline_avg = squeeze(mean(std_dth(:,0:40),2));
+std_dth_baseline_avg = squeeze(mean(std_dth(:,1:40),2));
 
 %% Plot
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen 
 plot(std_dth_baseline_avg,'LineWidth',2);
-legend_cell{s} = sprintf('%s percent ',num2str(subsets(s)*100));
 
 % %Plot parameters
 title(sprintf('Standard deviation in the baseline over different subsets of data  (N=%d)', numel(subjects)));
-l = legend(legend_cell,'FontSize',12);
-set(l, 'position', [0.7 0.2 0.1 0.01]); %put legend below graph
 xlabel('Subset of data (%)')
 ylabel('Standard deviation')
 
