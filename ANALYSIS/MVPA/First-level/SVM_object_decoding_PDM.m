@@ -52,7 +52,7 @@ for perm = 1:numPermutations
     data = multivariate_noise_normalization(data); 
 
     disp('Binning data into pseudotrials');
-    numTrialsPerBin = 2;
+    numTrialsPerBin = round(numTrials/6);
     [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
    
     %only get the lower diagonal
@@ -63,7 +63,7 @@ for perm = 1:numPermutations
                     ', timepoint ->',num2str(timePoint)]);
                 
                 % L-1 pseudo trials go to training set, the Lth to testing set
-                if numPTs == 2
+                if numPTs == 2 %when only 1P PT for each set
                     training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint))' ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))']; %(numbins-1)x63x1 each
                 else
                     training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
@@ -87,5 +87,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/subset_%s_svm_decoding_accuracy.mat',subname,num2str(subset)),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/subset_%s_svm_decoding_accuracy_%d_bins.mat',subname,num2str(subset),numPTs),'decodingAccuracy_avg');
 
