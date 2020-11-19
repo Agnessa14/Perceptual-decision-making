@@ -31,17 +31,18 @@ for s = 1:numel(subsets)
     std_dth(s,:) = std(squeeze(nanmean(nanmean(decoding_accuracies,2),3)));    
 end
 
+plot(squeeze(nanmean(nanmean(nanmean(decoding_accuracies,1),2),3)));
 %Average over baseline timepoints
 std_dth_baseline_avg = squeeze(mean(std_dth(:,1:40),2));
 
 %% Plot
-subset_values = 10:20:50;
+subset_values = subsets*100;
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen 
 plot(subset_values,std_dth_baseline_avg,'LineWidth',2);
 
 % %Plot parameters
-title(sprintf('Standard deviation in the baseline over different subsets of data  (N=%d)', numel(subjects)));
+title(sprintf('Standard deviation in the baseline of object decoding over different subsets of data  (N=%d)', numel(subjects)));
 xticks(subset_values);
 xlabel('Subset of data (%)')
 ylabel('Standard deviation')
@@ -53,5 +54,6 @@ for s = 1:numel(subsets)
     all_subsets = strcat(all_subsets,num2str(subsets(s)*100),'_');
 end
 save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('standard_deviation_object_decoding_subsets_%s',all_subsets)),'std_dth');
+saveas(gcf,fullfile(save_path,sprintf('standard_deviation_object_decoding_subsets_%s',all_subsets)));
+saveas(gcf,fullfile(save_path,sprintf('standard_deviation_object_decoding_subsets_%s.svg',all_subsets)));
 end
