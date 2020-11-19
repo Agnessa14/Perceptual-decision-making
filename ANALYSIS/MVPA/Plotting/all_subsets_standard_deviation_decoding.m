@@ -17,13 +17,20 @@ numTimepoints = 200;
 numConditions = 60;
 std_dth = NaN(numel(subsets),numTimepoints);
 
+%number of bins: for the filename DOUBLE CHECK :) 
+if subset==0.1
+    bins = 4;
+else
+    bins = 6;
+end
+
 %Loop over subsets & subjects
 for s = 1:numel(subsets)
     decoding_accuracies = NaN(numel(subjects),numConditions,numConditions,numTimepoints);
 
     for subject = subjects
         subname = get_subject_name(subject);
-        load(fullfile(results_dir,subname,sprintf('subset_%s_svm_decoding_accuracy.mat',num2str(subsets(s)))));
+        load(fullfile(results_dir,subname,sprintf('subset_%s_svm_decoding_accuracy_%d_bins.mat',num2str(subsets(s)),bins)));
         decoding_accuracies(subject,:,:,:) = decodingAccuracy_avg;   
     end    
     
@@ -31,7 +38,6 @@ for s = 1:numel(subsets)
     std_dth(s,:) = std(squeeze(nanmean(nanmean(decoding_accuracies,2),3)));    
 end
 
-plot(squeeze(nanmean(nanmean(nanmean(decoding_accuracies,1),2),3)));
 %Average over baseline timepoints
 std_dth_baseline_avg = squeeze(mean(std_dth(:,1:40),2));
 
@@ -46,7 +52,6 @@ title(sprintf('Standard deviation in the baseline of object decoding over differ
 xticks(subset_values);
 xlabel('Subset of data (%)')
 ylabel('Standard deviation')
-
 
 %% Save
 all_subsets = '_';
