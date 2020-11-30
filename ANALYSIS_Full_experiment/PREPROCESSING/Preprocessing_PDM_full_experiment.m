@@ -1,4 +1,4 @@
-function Preprocessing_PDM_full_experiment(subn,task) 
+function Preprocessing_PDM_full_experiment(subn,task_trials) 
 % PREPROCESSING_PDM_full_experiment Preprocess the EEG data for the PDM experiment (post-pilot data) for one
 % participant and one task.
 %
@@ -17,9 +17,9 @@ function Preprocessing_PDM_full_experiment(subn,task)
 %
 
 %% Add paths and rewrite subject & task name
-addpath(genpath('/home/agnek95/SMST/'));
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 subname = get_subject_name(subn);
-task_name = get_task_name(task);
+task_name = get_task_name_capitalized(task_trials);
 data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/';
 addpath(genpath(fullfile(data_path,subname)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
@@ -52,20 +52,22 @@ if ~isequal(blockorderarray,blocks)
 end
 
 %% Take the task-related trials only
-
-%% Remove unnecessary triggers
-%Create list of triggers, points and RTs from the behavioural data 
+%Behavioural data
 behav.triggers = [];
 behav.RT = [];
 behav.points = [];
 
-for n = 1:numel(filenamesSorted)
-    load(char(filenamesSorted{n}));
-    behav.triggers = [behav.triggers;data.triggers];
-    behav.RT = [behav.RT; data.rt]; 
-    behav.points = [behav.points; data.points];  
+for block = 1:numel(filenamesSorted)
+    block_name = filenamesSorted{block};
+    if contains(block_name,task_name)
+        load(block_name);
+            behav.triggers = [behav.triggers;data.triggers];
+            behav.RT = [behav.RT; data.rt]; 
+            behav.points = [behav.points; data.points]; 
+    end
 end
 
+%EEG data
 %Define Events
 cfg=[];
 cfg.dataset=fileNameEEG;
@@ -74,26 +76,32 @@ cfg.trialdef.prestim=0.2;
 cfg.trialdef.poststim=0.8;
 cfg=ft_definetrial(cfg);
 
-%Compare eeg triggers with behavioural triggers
+%Define the columns of cfg
 eegtriggers = cfg.trl(:,4);
 beginningEpoch = cfg.trl(:,1); %beginning of each trial relative to the beginning of the raw data
 endEpoch = cfg.trl(:,2); %end of each trial; column 2-column 1 = duration of epoch
 offsetTrigger = cfg.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
 
+%Pick only the task-relevant triggers
+numConditions = 60;
+task_triggers_eeg = (1:numConditions)+task*100;
+triggers_eeg = eegtriggers==task_triggers_eeg;
+
+%% Remove unnecessary triggers
 %Remove beginning of block (200), end of block (244) and response (200) triggers
-removed = find(eegtriggers==200|eegtriggers==222|eegtriggers==244);
-eegtriggers(eegtriggers==200|eegtriggers==222|eegtriggers==244)=[];
+removed = find(triggers_eeg==200|triggers_eeg==222|triggers_eeg==244);
+triggers_eeg(triggers_eeg==200|triggers_eeg==222|triggers_eeg==244)=[];
 beginningEpoch(removed)=[];
 endEpoch(removed)=[];
 offsetTrigger(removed)=[];
 
 %Change 99 to 999 to be able to compare between eegtriggers and beh. triggers
-eegtriggers(eegtriggers==99) = 999;
+triggers_eeg(triggers_eeg==99) = 999;
 
 %Remove extra EEG triggers
 for i = 1:numel(behav.triggers)
-    while round(behav.triggers(i)) ~= round(eegtriggers(i))
-        eegtriggers(i) = [];
+    while round(behav.triggers(i)) ~= round(triggers_eeg(i))
+        triggers_eeg(i) = [];
         beginningEpoch(i)=[];
         endEpoch(i)=[];
         offsetTrigger(i)=[];
@@ -101,7 +109,7 @@ for i = 1:numel(behav.triggers)
 end
 
 %Double-check that eeg and behavioural triggers are equal
-if isequal(round(eegtriggers),round(behav.triggers)) 
+if isequal(round(triggers_eeg),round(behav.triggers)) 
     disp('all good!');
 else
     warning('problem with the triggers: check manually');
@@ -109,9 +117,9 @@ else
 end
 
 %Remove the paperclip trials
-paperclip = find(eegtriggers==999);
+paperclip = find(triggers_eeg==999);
 
-eegtriggers(eegtriggers==999)=[];
+triggers_eeg(triggers_eeg==999)=[];
 beginningEpoch(paperclip)=[];
 endEpoch(paperclip)=[];
 offsetTrigger(paperclip)=[];
@@ -121,8 +129,7 @@ behav.RT(paperclip) = [];
 behav.points(paperclip) = [];
 
 %put back into the configuration file
-cfg.trl = [beginningEpoch endEpoch offsetTrigger eegtriggers];
-%maybe also remove those trials from cfg.event
+cfg.trl = [beginningEpoch endEpoch offsetTrigger triggers_eeg];
 
 %% Rest of preprocessing
 
@@ -179,9 +186,9 @@ else
     warning('problem with the triggers: check manually');
     keyboard;
 end
-save(sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/preprocessed_behavioural_data',subname),'behav');
+save(sprintf('%s/%s/preprocessed_behavioural_data',data_path, subname),'behav');
 
 %Transform to "timelocked" data and save the output
-cfg.outputfile= sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/timelock',subname); 
+cfg.outputfile= sprintf('%s/%s/timelock',data_path,subname); 
 cfg.keeptrials='yes';
 data=ft_timelockanalysis(cfg,data);
