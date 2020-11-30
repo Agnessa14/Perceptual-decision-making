@@ -16,18 +16,19 @@ function Preprocessing_PDM_full_experiment(subn,task)
 %preprocessed data
 %
 
-%% Add paths
+%% Add paths and rewrite subject & task name
 addpath(genpath('/home/agnek95/SMST/'));
 subname = get_subject_name(subn);
 task_name = get_task_name(task);
-addpath(genpath(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subname)));
+data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/';
+addpath(genpath(fullfile(data_path,subname)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
 %%  Load EEG and behavioural data
-mainDirectoryEEG = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subname,'/EEG/','*.eeg')); 
-fileNameEEG = fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/', subname,'/EEG/', mainDirectoryEEG.name); 
-mainDirectoryBeh = dir(fullfile('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/',subname,'/Behavioural/','*.mat')); 
+mainDirectoryEEG = dir(fullfile(data_path,subname,'/EEG/','*.eeg')); 
+fileNameEEG = fullfile(data_path, subname,'/EEG/', mainDirectoryEEG.name); 
+mainDirectoryBeh = dir(fullfile(data_path,subname,'/Behavioural/','*.mat')); 
 
 %% Fix order of blocks since they do not load in the correct order
 filenamesAll = extractfield(mainDirectoryBeh,'name');
@@ -49,6 +50,8 @@ blockorderarray = arrayfun(@(x) mainDirectoryBeh(x).blockNum,blocks);
 if ~isequal(blockorderarray,blocks)
     error('Incorrect block order: Check and fix manually');
 end
+
+%% Take the task-related trials only
 
 %% Remove unnecessary triggers
 %Create list of triggers, points and RTs from the behavioural data 
