@@ -1,4 +1,4 @@
-function SVM_object_decoding_full_experiment(subject,subset) 
+function SVM_object_decoding_full_experiment(subject,task) 
 %SVM_OBJECT_DECODING_PDM Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
 %
 %Input: subject ID
@@ -8,36 +8,33 @@ function SVM_object_decoding_full_experiment(subject,subset)
 %
 %% Set-up prereqs
 %add paths
-addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_PILOT_2'));
-addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS/'));
+addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_FULL_EXPERIMENT/'));
 addpath('/home/agnek95/OR/TOOLBOX/MVNN/MEG_SVM_decoding_MVNN'); %MVNN toolbox
 addpath(genpath('/home/agnek95/OR/ANALYSIS/DECODING/libsvm')); %libsvm toolbox
 addpath('/home/agnek95/OR/ANALYSIS/DECODING'); %MVNN function
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
-%subject name string
+%subject and task name strings
 subname = get_subject_name(subject);
- 
+task_name = get_task_name(task); 
+
 %% Prepare data
 %load eeg and behavioural data
-data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_PILOT_2/%s/',subname);
-load(fullfile(data_dir,'timelock')); %eeg
-load(fullfile(data_dir,'preprocessed_behavioural_data'));
+data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/%s/',subname);
+load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
 
 %only keep the trials with a positive RT & correct response
-timelock_data = timelock;
-timelock_data.trialinfo = timelock_data.trialinfo(behav.RT>0 & behav.points==1); %triggers
-timelock_data.trial = timelock_data.trial(behav.RT>0 & behav.points==1,:,:); %actual data
-timelock_data.sampleinfo = timelock_data.sampleinfo(behav.RT>0 & behav.points==1,:);
+timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
+timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
-
 numConditions = 60;
-[numTrials, ~] = min_number_trials(timelock_data.trialinfo, numConditions); %minimum number of trials per scene
-numTrials = floor(subset*numTrials);
-numTimepoints = size(timelock_data.trial,3); %number of timepoints
-numPermutations=100; 
+[numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
+numTimepoints = size(timelock_data,3); %number of timepoints
+numPermutations=1; 
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
@@ -46,7 +43,7 @@ decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    [data,~] = create_data_matrix_subset(numConditions,timelock_data.trialinfo,numTrials,timelock_data.trial);
+    data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
 
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data); 
@@ -56,14 +53,14 @@ for perm = 1:numPermutations
     [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
    
     %only get the lower diagonal
-    for condA=1:numConditions-1 %1:65
-        for condB = condA+1:numConditions %2:66
+    for condA=1:numConditions-1 %1:59
+        for condB = condA+1:numConditions %2:60
             for timePoint = 1:numTimepoints 
                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoint ->',num2str(timePoint)]);
                 
                 % L-1 pseudo trials go to training set, the Lth to testing set
-                if numPTs == 2 %when only 1P PT for each set
+                if numPTs == 2 %when only 1 PT for each condition
                     training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint))' ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))']; %(numbins-1)x63x1 each
                 else
                     training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
@@ -87,5 +84,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(sprintf('/home/agnek95/SMST/PDM_PILOT_2/RESULTS/%s/subset_%s_svm_decoding_accuracy_%d_bins.mat',subname,num2str(subset),numPTs),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy.mat',subname),'decodingAccuracy_avg');
 
