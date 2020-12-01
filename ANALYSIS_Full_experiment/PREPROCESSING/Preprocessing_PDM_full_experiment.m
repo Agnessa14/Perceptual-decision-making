@@ -181,7 +181,7 @@ else
     warning('problem with the triggers: check manually');
     keyboard;
 end
-save(sprintf('%s/%s/preprocessed_behavioural_data',data_path, subname),'behav');
+save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name),'behav');
 
 %Transform to "timelocked" data and save the output
 cfg.outputfile= sprintf('%s/%s/timelock_%',data_path,subname,task_name); 
