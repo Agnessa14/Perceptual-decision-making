@@ -20,7 +20,7 @@ function Preprocessing_PDM_full_experiment(subn,task)
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 subname = get_subject_name(subn);
 task_name = get_task_name_capitalized(task);
-data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/';
+data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT';
 addpath(genpath(fullfile(data_path,subname)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
@@ -184,6 +184,6 @@ end
 save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name),'behav');
 
 %Transform to "timelocked" data and save the output
-cfg.outputfile= sprintf('%s/%s/timelock_%',data_path,subname,task_name); 
+cfg.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name); 
 cfg.keeptrials='yes';
 data=ft_timelockanalysis(cfg,data);
