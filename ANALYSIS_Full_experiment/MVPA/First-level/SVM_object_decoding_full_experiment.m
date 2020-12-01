@@ -9,7 +9,7 @@ function SVM_object_decoding_full_experiment(subject,task)
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
-addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_FULL_EXPERIMENT/'));
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 addpath('/home/agnek95/OR/TOOLBOX/MVNN/MEG_SVM_decoding_MVNN'); %MVNN toolbox
 addpath(genpath('/home/agnek95/OR/ANALYSIS/DECODING/libsvm')); %libsvm toolbox
 addpath('/home/agnek95/OR/ANALYSIS/DECODING'); %MVNN function
