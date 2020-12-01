@@ -44,7 +44,7 @@ num_conditions_per_category = numConditions/num_categories;
 
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); 
 numTimepoints = size(timelock_data,3);
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 decisionValues_Artificial=NaN(numPermutations,num_conditions_per_category,numTimepoints);
@@ -110,7 +110,7 @@ end
 decisionValues_Artificial_Avg = squeeze(mean(decisionValues_Artificial,1)); %avg over permutations
 decisionValues_Natural_Avg = squeeze(mean(decisionValues_Natural,1)); %avg over permutations
 decisionValues_Avg = [decisionValues_Artificial_Avg;decisionValues_Natural_Avg];
-filename = sprintf('decisionValues.mat_%s',task_name);
+filename = sprintf('decisionValues_%s.mat',task_name);
 save(fullfile(results_dir,filename),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
