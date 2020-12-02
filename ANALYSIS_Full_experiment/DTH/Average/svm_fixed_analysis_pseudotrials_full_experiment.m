@@ -27,28 +27,22 @@ for subject = subjects
     RTs(subject,:) = normalize(RT_per_condition);
 end
 
-%% Get the median RTs of all subjects for each condition
-%Normalize and get median
+%% Get the median RTs and mean distances of all subjects for each condition 
 medianRT = nanmedian(RTs,1);
+mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
 
 %% Correlate DTH and RT
-mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
-correlation_dth_rt_both = NaN(1,numTimepoints);
-correlation_dth_rt_art = NaN(1,numTimepoints);
-correlation_dth_rt_nat = NaN(1,numTimepoints);
-
-for t = 1:numTimepoints
-    correlation_dth_rt_both(t) = corr(mean_distances(:,t),medianRT','type','Spearman');
-    correlation_dth_rt_art(t) = corr(mean_distances(1:numConditions/2,t),...
-        medianRT(1:last_category1_sample)','type','Spearman');
-    correlation_dth_rt_nat(t) = corr(mean_distances((numConditions/2)+1:end,t),...
-        medianRT(first_category2_sample:end)','type','Spearman');
-end
+t = 1:numTimepoints;
+correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
+correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditions/2,x),medianRT(1:numConditions/2)','type','Spearman'),t);
+correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditions/2)+1:end,x),medianRT((numConditions/2)+1:end)','type','Spearman'),t);
 correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
 
 %% Plot 
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
+plot(correlation_dth_rt_both,'LineWidth',2);
+hold on;
 plot(correlation_dth_rt_art,'LineWidth',2);
 hold on;
 plot(correlation_dth_rt_nat,'LineWidth',2);
@@ -57,9 +51,9 @@ plot(correlation_dth_rt_avg,'LineWidth',2);
 hold on;
 
 %Plotting parameters
-title =  sprintf('Correlation between the distance to hyperplane and reaction time for 60 scenes in a %s task (N=%d)', numel(subjects),task_name);
-legend_plot = {'Artificial scenes','Natural scenes','Average of artificial and natural scenes', ...
-    'All scenes','Stimulus onset'};
+title =  sprintf('Correlation between the distance to hyperplane and reaction time for 60 scenes in a %s task (N=%d)',task_name,numel(subjects));
+legend_plot = {'All scenes','Artificial scenes','Natural scenes',...
+    'Average of artificial and natural scenes','Stimulus onset'};
 plotting_parameters(title,legend_plot,40)
 
 %% Save
