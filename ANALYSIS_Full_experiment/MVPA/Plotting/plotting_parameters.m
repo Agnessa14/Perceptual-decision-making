@@ -8,4 +8,4 @@ xlabel('Timepoints');
 ylabel('Decoding accuracy');   
 title(plot_title);
 xline(onset_time,'--');
-legend(plot_legend);
+legend(plot_legend,'FontSize',12);
