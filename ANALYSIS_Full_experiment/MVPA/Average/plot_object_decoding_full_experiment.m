@@ -1,5 +1,5 @@
 function plot_object_decoding_full_experiment(subjects,task)
-%PLOT_OBJECT_DECODING Plot the results from object decoding, averaged over
+%PLOT_OBJECT_DECODING_FULL_EXPERIMENT Plot the results from object decoding, averaged over
 %all participants and subject-specific.
 %
 %Input: subject IDs, task (1=categorization,2=distraction)
