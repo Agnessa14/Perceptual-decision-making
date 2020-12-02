@@ -82,108 +82,57 @@ beginningEpoch = cfg.trl(:,1); %beginning of each trial relative to the beginnin
 endEpoch = cfg.trl(:,2); %end of each trial; column 2-column 1 = duration of epoch
 offsetTrigger = cfg.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
 
-%Remove specific trials
-% if subn == 1
-%     eegtriggers(1:240) = [];
-%     beginningEpoch(1:240) = [];
-%     endEpoch(1:240) = [];
-%     offsetTrigger = [];
-% end
-
-%Remove the 222, 200 and 244 trials if they are followed by 200
-
-for t = 1:numel(eegtriggers)
-    if eegtriggers(t) == 244
-        if t<numel(eegtriggers) && eegtriggers(t+1) == 200
-            eegtriggers(t) = 555;
-            beginningEpoch(t) = 555;
-            endEpoch(t) = 555;
-            offsetTrigger(t) = 555;
-            disp('replaced end of block trial');
-        elseif t == numel(eegtriggers) && eegtriggers(t) == 244
-            eegtriggers(t) = 555;
-            beginningEpoch(t) = 555;
-            endEpoch(t) = 555;
-            offsetTrigger(t) = 555;
-            disp('replaced end of block trial');
-            
-        end
-    end
-end
-eegtriggers(eegtriggers==555) = [];
-beginningEpoch(beginningEpoch==555) = [];
-endEpoch(endEpoch==555) = [];
-offsetTrigger(offsetTrigger==555) = [];
-
-% |triggers_eeg==244);
-% triggers_eeg(triggers_eeg==200|triggers_eeg==222|triggers_eeg==244)=[];
-removed_200_222 = find(eegtriggers==200|eegtriggers==222);
-eegtriggers(removed_200_222) = [];
-beginningEpoch(removed_200_222)=[];
-endEpoch(removed_200_222)=[];
-offsetTrigger(removed_200_222)=[];
-
-% %Change 99 to 999 to be able to compare between eegtriggers and beh. triggers
-eegtriggers(eegtriggers==99) = 999;
-
-%Pick only the task-relevant triggers
-numConditions = 60;
-task_triggers = (1:numConditions)+task*100; 
-triggers_eeg = [];
-for t = 1:numel(eegtriggers)
-    if ismember(eegtriggers(t),task_triggers)
-        triggers_eeg = [triggers_eeg;eegtriggers(t)];
-    end
-end
-triggers_eeg = triggers_eeg-task*100;
-
-%% Remove unnecessary triggers
 %Problem: response trigger is 222, which is also the fixation trigger for
 %stimulus 22. End of block trigger is 244, also the fixation trigger for
 %44, but that one is easier to remo ve. Need to remove these triggers without removing the experimental trials.
 
-%Find indices for triggers 22 in behavioural data & put them back in eeg
-%triggers
-behav_trigs_no_22 = behav.triggers(behav.triggers~=222|behav.triggers~=999);
-
-for i = 1:numel(behav_trigs_no_22)
-    while round(behav_trigs_no_22(i)) ~= round(triggers_eeg(i))
-        triggers_eeg(i) = [];
-        beginningEpoch(i)=[];
-        endEpoch(i)=[];
-        offsetTrigger(i)=[];
+%Pick only the task-relevant triggers
+numConditions = 60; 
+task_triggers = (1:numConditions)+task*100;
+trials_remaining = [];
+triggers_eeg = [];
+for t = 1:numel(eegtriggers)
+    if ismember(eegtriggers(t),task_triggers)
+        trials_remaining = [trials_remaining;t];
+        triggers_eeg = [triggers_eeg;eegtriggers(t)];
     end
 end
+beginningEpoch = beginningEpoch(trials_remaining);
+endEpoch = endEpoch(trials_remaining);
+offsetTrigger = offsetTrigger(trials_remaining);
 
-if isequal(round(triggers_eeg),round(behav.triggers)) 
-    disp('all good!');
-else
-    warning('problem with the triggers: check manually');
-    keyboard;
-end
-
-if task == 2
-    for n = 1:numel(behav.triggers)
-        if behav.triggers(n) == 22
-            triggers_eeg = [triggers_eeg(1:n-1);22;triggers_eeg(n:end)];
-            %figure out what to do for beginningEpoch etc
+%Remove the 222, 200 and 244 trials if they are followed by 200
+for t = 1:numel(triggers_eeg)
+    if triggers_eeg(t) == 244
+        if (t<numel(triggers_eeg) && triggers_eeg(t+1) == 200) 
+            triggers_eeg(t:t+1) = 555;
+            disp('replaced end of block trial');
+        elseif t == numel(triggers_eeg) 
+            triggers_eeg(t) = 555;
+            disp('replaced end of block trial');           
         end
+    elseif triggers_eeg(t) == 222 && ismember(triggers_eeg(t-1),task_triggers)
+           triggers_eeg(t) = 555;
+           disp('replaced a keystroke');
     end
-%         
 end
-%     
-% 
-%Remove beginning of block (200), end of block (244) and response (222) triggers
-% removed_200_222 = find(triggers_eeg==200|triggers_eeg==222|triggers_eeg==244);
-% triggers_eeg(triggers_eeg==200|triggers_eeg==222|triggers_eeg==244)=[];
-% beginningEpoch(removed_200_222)=[];
-% endEpoch(removed_200_222)=[];
-% offsetTrigger(removed_200_222)=[];
-% % 
-% %Change 99 to 999 to be able to compare between eegtriggers and beh. triggers
-% triggers_eeg(triggers_eeg==99) = 999;
 
-%Remove extra EEG triggers
+triggers_eeg(triggers_eeg==555) = [];
+beginningEpoch(triggers_eeg==555) = [];
+endEpoch(triggers_eeg==555) = [];
+offsetTrigger(triggers_eeg==555) = [];
+
+%Translate back into amodal triggers
+triggers_eeg = triggers_eeg-task*100;
+
+%% Remove unnecessary triggers
+%remove  paperclips from behavioural data
+paperclips = behav.triggers==999;
+behav.triggers = behav.triggers(~paperclips);
+behav.RT = behav.RT(~paperclips);
+behav.points = behav.points(~paperclips);
+
+%remove any extra eeg triggers (from repeating a block for example)
 for i = 1:numel(behav.triggers)
     while round(behav.triggers(i)) ~= round(triggers_eeg(i))
         triggers_eeg(i) = [];
@@ -193,7 +142,6 @@ for i = 1:numel(behav.triggers)
     end
 end
 
-%Double-check that eeg and behavioural triggers are equal
 if isequal(round(triggers_eeg),round(behav.triggers)) 
     disp('all good!');
 else
@@ -201,23 +149,10 @@ else
     keyboard;
 end
 
-%Remove the paperclip trials
-paperclip = find(triggers_eeg==999);
-
-triggers_eeg(triggers_eeg==999)=[];
-beginningEpoch(paperclip)=[];
-endEpoch(paperclip)=[];
-offsetTrigger(paperclip)=[];
-
-behav.triggers(paperclip) = [];
-behav.RT(paperclip) = [];
-behav.points(paperclip) = [];
-
 %put back into the configuration file
 cfg.trl = [beginningEpoch endEpoch offsetTrigger triggers_eeg];
 
 %% Rest of preprocessing
-
 %Filter and read
 cfg.dataset=fileNameEEG;
 cfg.lpfilter = 'yes';
