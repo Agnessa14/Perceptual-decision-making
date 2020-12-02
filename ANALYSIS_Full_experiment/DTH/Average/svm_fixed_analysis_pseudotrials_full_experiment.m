@@ -8,9 +8,10 @@ function svm_fixed_analysis_pseudotrials_full_experiment(subjects,task) %distanc
 %participants) of each condition (60 scenes), at each timepoint, resulting in a plot of Spearman's correlation vs time. 
 %
 %% Add paths
-addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS'));
-results_dir = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS';
+addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
+results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
 addpath(genpath(results_dir));
+task_name = get_task_name(task);
 
 %% Get the distances from all subjects
 numTimepoints = 200;
@@ -20,9 +21,9 @@ RTs = NaN(numel(subjects),numConditions);
 
 for subject = subjects
     subname = get_subject_name(subject);
-    load(fullfile(results_dir,subname,'true_pseudotrials_svm_decisionValues.mat'));
+    load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)));
     distances(subject,:,:) = decisionValues_Avg;   
-    load(fullfile(results_dir,subname,'RTs_correct_trials.mat'));
+    load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name)));
     RTs(subject,:) = normalize(RT_per_condition);
 end
 
@@ -35,14 +36,12 @@ mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
 correlation_dth_rt_both = NaN(1,numTimepoints);
 correlation_dth_rt_art = NaN(1,numTimepoints);
 correlation_dth_rt_nat = NaN(1,numTimepoints);
-last_category1_sample = 30;
-first_category2_sample = 31;
 
 for t = 1:numTimepoints
     correlation_dth_rt_both(t) = corr(mean_distances(:,t),medianRT','type','Spearman');
-    correlation_dth_rt_art(t) = corr(mean_distances(1:last_category1_sample,t),...
+    correlation_dth_rt_art(t) = corr(mean_distances(1:numConditions/2,t),...
         medianRT(1:last_category1_sample)','type','Spearman');
-    correlation_dth_rt_nat(t) = corr(mean_distances(first_category2_sample:end,t),...
+    correlation_dth_rt_nat(t) = corr(mean_distances((numConditions/2)+1:end,t),...
         medianRT(first_category2_sample:end)','type','Spearman');
 end
 correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
@@ -50,38 +49,29 @@ correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1)
 %% Plot 
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
-
-%Artificial scenes
 plot(correlation_dth_rt_art,'LineWidth',2);
 hold on;
-
-%Natural scenes
 plot(correlation_dth_rt_nat,'LineWidth',2);
 hold on;
-
-%Average of artificial and natural
 plot(correlation_dth_rt_avg,'LineWidth',2);
 hold on;
 
-% axis([0,200,-0.7,0.6]);
-%Legend
-legend_art_nat = {'Artificial scenes','Natural scenes','Average of artificial and natural scenes', ...
+%Plotting parameters
+title =  sprintf('Correlation between the distance to hyperplane and reaction time for 60 scenes in a %s task (N=%d)', numel(subjects),task_name);
+legend_plot = {'Artificial scenes','Natural scenes','Average of artificial and natural scenes', ...
     'All scenes','Stimulus onset'};
-
-%Both scenes in one plot
-plotting_dth_one(correlation_dth_rt_both,...
-    sprintf('Correlation between the distance to hyperplane and reaction time for 60 scenes in a categorization task (N=%d)', numel(subjects)),legend_art_nat);
+plotting_parameters(title,legend_plot,40)
 
 %% Save
 %correlations
-save_path = '/home/agnek95/SMST/PDM_PILOT_2/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_both_categories_%d_subjects.mat',numel(subjects))),'correlation_dth_rt_both');
-save(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_artificial_%d_subjects.mat',numel(subjects))),'correlation_dth_rt_art');
-save(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_natural_%d_subjects.mat',numel(subjects))),'correlation_dth_rt_nat');
-save(fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_rt_correlation_both_categories_avg_%d_subjects.mat',numel(subjects))),'correlation_dth_rt_avg');
+save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
+save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_both_categories_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_both');
+save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_artificial_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_art');
+save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_natural_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_nat');
+save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_avg_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_avg');
 
 %figures
-saveas(gcf,fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_artificial_natural_%d_subjects',numel(subjects)))); 
-saveas(gcf,fullfile(save_path,sprintf('true_pseudotrials_SVM_DTH_artificial_natural_%d_subjects.svg',numel(subjects))));
+saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s',numel(subjects),task_name))); 
+saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s.svg',numel(subjects),task_name)));
 
 end
