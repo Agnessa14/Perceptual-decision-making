@@ -82,14 +82,6 @@ beginningEpoch = cfg.trl(:,1); %beginning of each trial relative to the beginnin
 endEpoch = cfg.trl(:,2); %end of each trial; column 2-column 1 = duration of epoch
 offsetTrigger = cfg.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
 
-%Pick only the task-relevant triggers - also removes the 999, 322, 300 and 344 trials
-for tr = 1:numel(eegtriggers)
-    if 1<=eegtriggers(tr)<=4
-        eegtriggers(tr) = eegtriggers(tr)+255;
-    end
-end
-
-eegtriggers(eegtriggers==43) = 260;
 numConditions = 60;
 task_triggers = (1:numConditions)+task*100; 
 triggers_eeg = [];
