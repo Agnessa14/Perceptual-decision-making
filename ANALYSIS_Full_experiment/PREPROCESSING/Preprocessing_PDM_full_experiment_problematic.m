@@ -82,26 +82,54 @@ beginningEpoch = cfg.trl(:,1); %beginning of each trial relative to the beginnin
 endEpoch = cfg.trl(:,2); %end of each trial; column 2-column 1 = duration of epoch
 offsetTrigger = cfg.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
 
+%The triggers for 256-260 have been converted to 0-4 and need to be
+%converted back
+for t = 1:numel(eegtriggers)
+    if eegtriggers(t) <= 4
+        eegtriggers(t) = eegtriggers(t)+256;
+    end
+end
+
 %Problem: response trigger is 222, which is also the fixation trigger for
 %stimulus 22. End of block trigger is 244, also the fixation trigger for
 %44, but that one is easier to remo ve. Need to remove these triggers without removing the experimental trials.
 
-%Pick only the task-relevant triggers
-numConditions = 60; 
-task_triggers = (1:numConditions)+task*100;
-trials_remaining = [];
-triggers_eeg = [];
-for t = 1:numel(eegtriggers)
-    if ismember(eegtriggers(t),task_triggers)
-        trials_remaining = [trials_remaining;t];
-        triggers_eeg = [triggers_eeg;eegtriggers(t)];
+%Remove the other task blocks
+conditions = 1:60; 
+task_triggers = conditions+task*100;
+block_starts = find(eegtriggers==200);
+numBlocks = numel(block_starts);
+block_triggers = cell(numel(block_starts),1);
+
+for bs = 1:numBlocks
+    if bs < numBlocks
+        block_triggers{bs} = eegtriggers(block_starts(bs):block_starts(bs+1)-1);
+    else
+        block_triggers{bs} = eegtriggers(block_starts(bs):end);
     end
 end
+
+for b = 1:numBlocks
+    t = 2;
+    if ~ismember(block_triggers{b}(t),task_triggers)
+        block_triggers{b}(:) = NaN;
+    elseif block_triggers{b}(t) == 199
+        t=t+2;
+        if ~ismember(block_triggers{b}(t),task_triggers)
+            block_triggers{b}(:) = NaN;
+        end
+    end
+end    
+       
+%Pick only the task-relevant triggers
+nan_or_not = cell2mat(cellfun(@isnan, block_triggers, 'UniformOutput', false));
+trials_remaining = find(nan_or_not==0);
+triggers_eeg = eegtriggers(trials_remaining);
 beginningEpoch = beginningEpoch(trials_remaining);
 endEpoch = endEpoch(trials_remaining);
 offsetTrigger = offsetTrigger(trials_remaining);
 
-%Remove the 222, 200 and 244 trials if they are followed by 200
+%Remove the 999, 200 and 244 trials if they are followed by 200
 for t = 1:numel(triggers_eeg)
     if triggers_eeg(t) == 244
         if (t<numel(triggers_eeg) && triggers_eeg(t+1) == 200) 
@@ -111,16 +139,17 @@ for t = 1:numel(triggers_eeg)
             triggers_eeg(t) = 555;
             disp('replaced end of block trial');           
         end
-    elseif triggers_eeg(t) == 222 && ismember(triggers_eeg(t-1),task_triggers)
-           triggers_eeg(t) = 555;
-           disp('replaced a keystroke');
+    elseif triggers_eeg(t) == 200 || triggers_eeg(t) == 43 || triggers_eeg(t) == 222
+        triggers_eeg(t) = 555;
+        disp('replaced a block start, a paperclip or a keystroke');
     end
 end
 
-triggers_eeg(triggers_eeg==555) = [];
 beginningEpoch(triggers_eeg==555) = [];
 endEpoch(triggers_eeg==555) = [];
 offsetTrigger(triggers_eeg==555) = [];
+trials_remaining(triggers_eeg==555)= [];
+triggers_eeg(triggers_eeg==555) = [];
 
 %Translate back into amodal triggers
 triggers_eeg = triggers_eeg-task*100;
@@ -129,8 +158,14 @@ triggers_eeg = triggers_eeg-task*100;
 %remove  paperclips from behavioural data
 paperclips = behav.triggers==999;
 behav.triggers = behav.triggers(~paperclips);
+full_behav_triggers = behav.triggers;
 behav.RT = behav.RT(~paperclips);
 behav.points = behav.points(~paperclips);
+
+%remove 56 & 22 temporarily 
+trials_56 = find(behav.triggers==56);
+trials_22 = find(behav.triggers==22);
+behav.triggers([trials_56;trials_22]) = [];
 
 %remove any extra eeg triggers (from repeating a block for example)
 for i = 1:numel(behav.triggers)
@@ -139,6 +174,7 @@ for i = 1:numel(behav.triggers)
         beginningEpoch(i)=[];
         endEpoch(i)=[];
         offsetTrigger(i)=[];
+        trials_remaining(i) = [];
     end
 end
 
@@ -148,6 +184,19 @@ else
     warning('problem with the triggers: check manually');
     keyboard;
 end
+
+triggers_eeg = full_behav_triggers; %since everything else is the same, assume that the triggers for 22 and 56 are also the same in behav and eeg
+for t = 1:numel(full_behav_triggers)
+    if full_behav_triggers(t) ~= 56 || full_behav_triggers(t) ~= 22
+        continue
+    elseif full_behav_triggers(t) == 56
+        beginningEpoch = [beginningEpoch(1:t-1);56];
+        endEpoch = [endEpoch(1:t-1);56];
+    elseif full_behav_triggers(t) == 22
+        beginningEpoch = [beginningEpoch(1:t-1);22];
+    end
+end
+offsetTrigger = -200*ones(numel(full_behav_triggers),1);
 
 %put back into the configuration file
 cfg.trl = [beginningEpoch endEpoch offsetTrigger triggers_eeg];
