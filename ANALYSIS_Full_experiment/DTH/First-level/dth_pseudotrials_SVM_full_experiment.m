@@ -1,9 +1,9 @@
 function dth_pseudotrials_SVM_full_experiment(subject,task)
-%PSEUDOTRIALS_DTH_SVM_PILOT_2 Performs the distance-to-hyperplane analysis using SVM on
+%DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. Instead of creating pseudoconditions out of scenes,
 %the trials from across conditions are lumped into pseudotrials.
 %
-%Input: subject ID (integer)
+%Input: subject ID (integer), task (1=categorization, 2=fixation)
 %
 %Output: 
 %   - NxP matrix of decision values, where N is the number of conditions
