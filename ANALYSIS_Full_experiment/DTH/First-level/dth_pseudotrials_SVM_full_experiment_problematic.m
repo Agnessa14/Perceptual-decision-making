@@ -42,7 +42,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 numConditionsAll = 60;
 num_categories = 2; %categories to decode
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 [numTrials, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 
 %Deal with the excluded samples
@@ -51,7 +51,7 @@ numConditionsIncluded = numel(included_conditions);
 num_conditions_per_category = numConditionsIncluded/num_categories;
 
 %Preallocate 
-decisionValues = NaN(numPermutations,numConditions,numTimepoints);
+decisionValues = NaN(numPermutations,numConditionsIncluded,numTimepoints);
 
 %% Running the MVPA
 for perm = 1:numPermutations
@@ -121,10 +121,10 @@ decisionValues_Avg = squeeze(mean(decisionValues,1));
 save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
-RT_per_condition = NaN(numConditions,1);
+RT_per_condition = NaN(numConditionsAll,1);
 RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
 
-for c = 1:numConditions
+for c = 1:numConditionsAll
     RT_per_condition(c) = mean(RT_correct(timelock_triggers==c));
 end
 
