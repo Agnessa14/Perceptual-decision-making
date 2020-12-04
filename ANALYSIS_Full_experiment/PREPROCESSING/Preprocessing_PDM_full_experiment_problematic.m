@@ -242,9 +242,10 @@ else
     warning('problem with the triggers: check manually');
     keyboard;
 end
-save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name),'behav');
+task_name_small = get_task_name(task);
+save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name_small),'behav');
 
 %Transform to "timelocked" data and save the output
-cfg.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name); 
+cfg.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name_small); 
 cfg.keeptrials='yes';
 data=ft_timelockanalysis(cfg,data);
