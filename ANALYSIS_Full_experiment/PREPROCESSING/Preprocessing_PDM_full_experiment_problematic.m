@@ -20,7 +20,7 @@ function Preprocessing_PDM_full_experiment_problematic(subn,task)
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 subname = get_subject_name(subn);
 task_name = get_task_name_capitalized(task);
-data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/';
+data_path = '/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT';
 addpath(genpath(fullfile(data_path,subname)));
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
@@ -185,19 +185,6 @@ else
     keyboard;
 end
 
-triggers_eeg = full_behav_triggers; %since everything else is the same, assume that the triggers for 22 and 56 are also the same in behav and eeg
-for t = 1:numel(full_behav_triggers)
-    if full_behav_triggers(t) ~= 56 || full_behav_triggers(t) ~= 22
-        continue
-    elseif full_behav_triggers(t) == 56
-        beginningEpoch = [beginningEpoch(1:t-1);56];
-        endEpoch = [endEpoch(1:t-1);56];
-    elseif full_behav_triggers(t) == 22
-        beginningEpoch = [beginningEpoch(1:t-1);22];
-    end
-end
-offsetTrigger = -200*ones(numel(full_behav_triggers),1);
-
 %put back into the configuration file
 cfg.trl = [beginningEpoch endEpoch offsetTrigger triggers_eeg];
 
@@ -255,9 +242,9 @@ else
     warning('problem with the triggers: check manually');
     keyboard;
 end
-save(sprintf('%s/%s/preprocessed_behavioural_data',data_path, subname),'behav');
+save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name),'behav');
 
 %Transform to "timelocked" data and save the output
-cfg.outputfile= sprintf('%s/%s/timelock',data_path,subname); 
+cfg.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name); 
 cfg.keeptrials='yes';
 data=ft_timelockanalysis(cfg,data);
