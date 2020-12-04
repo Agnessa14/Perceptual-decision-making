@@ -148,7 +148,6 @@ end
 beginningEpoch(triggers_eeg==555) = [];
 endEpoch(triggers_eeg==555) = [];
 offsetTrigger(triggers_eeg==555) = [];
-trials_remaining(triggers_eeg==555)= [];
 triggers_eeg(triggers_eeg==555) = [];
 
 %Translate back into amodal triggers
@@ -158,7 +157,6 @@ triggers_eeg = triggers_eeg-task*100;
 %remove  paperclips from behavioural data
 paperclips = behav.triggers==999;
 behav.triggers = behav.triggers(~paperclips);
-full_behav_triggers = behav.triggers;
 behav.RT = behav.RT(~paperclips);
 behav.points = behav.points(~paperclips);
 
@@ -166,6 +164,8 @@ behav.points = behav.points(~paperclips);
 trials_56 = find(behav.triggers==56);
 trials_22 = find(behav.triggers==22);
 behav.triggers([trials_56;trials_22]) = [];
+behav.RT([trials_56;trials_22]) = [];
+behav.points([trials_56;trials_22]) = [];
 
 %remove any extra eeg triggers (from repeating a block for example)
 for i = 1:numel(behav.triggers)
