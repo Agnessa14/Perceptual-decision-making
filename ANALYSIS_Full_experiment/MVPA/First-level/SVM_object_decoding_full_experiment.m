@@ -1,7 +1,7 @@
 function SVM_object_decoding_full_experiment(subject,task) 
-%SVM_OBJECT_DECODING_PDM Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
+%SVM_OBJECT_DECODING_FULL_EXPERIMENT Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
 %
-%Input: subject ID
+%Input: subject ID, task (1=categorization, 2=fixation)
 %
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
