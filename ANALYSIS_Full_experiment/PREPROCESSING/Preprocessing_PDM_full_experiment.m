@@ -83,7 +83,12 @@ endEpoch = cfg.trl(:,2); %end of each trial; column 2-column 1 = duration of epo
 offsetTrigger = cfg.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
 
 numConditions = 60;
-task_triggers = (1:numConditions)+task*100; 
+if task == 1
+    task_triggers = 1:numConditions; 
+elseif task == 2
+    task_triggers = (1:numConditions)+100;
+end
+
 triggers_eeg = [];
 trials_remaining = [];
 for t = 1:numel(eegtriggers)
@@ -92,8 +97,9 @@ for t = 1:numel(eegtriggers)
         triggers_eeg = [triggers_eeg;eegtriggers(t)];
     end
 end
-triggers_eeg = triggers_eeg-task*100;
-
+if task == 2
+    triggers_eeg = triggers_eeg-100;
+end
 %Remove the same trials from the other columns of cfg
 beginningEpoch = beginningEpoch(trials_remaining);
 endEpoch = endEpoch(trials_remaining);
