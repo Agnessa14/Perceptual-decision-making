@@ -221,6 +221,13 @@ end
 cfg_18_20.trl = [beginningEpoch_18_20 endEpoch_18_20 offsetTrigger_18_20 triggers_eeg_18_20];
 
 %% Rest of preprocessing
+%Filter and read
+cfg_1_17.dataset=fileNameEEG;
+cfg_1_17.lpfilter = 'yes';
+cfg_1_17.lpfreq = 50;
+cfg_1_17.demean='yes'; %apply baseline correction
+cfg_1_17.baselinewindow=[-0.2,0];
+data_1_17=ft_preprocessing(cfg_1_17);
 
 %Filter and read
 cfg_18_20.dataset=fileNameEEG;
@@ -228,12 +235,34 @@ cfg_18_20.lpfilter = 'yes';
 cfg_18_20.lpfreq = 50;
 cfg_18_20.demean='yes'; %apply baseline correction
 cfg_18_20.baselinewindow=[-0.2,0];
-data=ft_preprocessing(cfg_18_20);
+data_18_20=ft_preprocessing(cfg_18_20);
+
+%Resample data to 200hz
+cfg_1_17=[];
+cfg_1_17.resamplefs=200;
+data_1_17=ft_resampledata(cfg_1_17,data_1_17);
 
 %Resample data to 200hz
 cfg_18_20=[];
 cfg_18_20.resamplefs=200;
-data=ft_resampledata(cfg_18_20,data);
+data_18_20=ft_resampledata(cfg_18_20,data_18_20);
+
+% Get rid of jumps
+%The data are preprocessed (again) with the following configuration parameters,
+%which are optimal for identifying jump artifacts.
+cfg_1_17.artfctdef.jump.medianfilter  = 'yes';
+cfg_1_17.artfctdef.jump.medianfiltord = 9;
+cfg_1_17.artfctdef.jump.absdiff       = 'yes';
+
+%  Artifacts are identified by means of thresholding the z-transformed value
+%  of the preprocessed data.
+cfg_1_17.artfctdef.jump.channel       = {'eeg'}; %Nx1 cell-array with selection of channels, see FT_CHANNELSEL
+cfg_1_17.artfctdef.jump.cutoff        = 20; %z-value at which to threshold (default = 20)
+[cfg_1_17, ~] = ft_artifact_jump(cfg_1_17, data_1_17);
+
+%Remove the found artifacts
+cfg_1_17.feedback = 'yes';
+data_1_17 = ft_rejectartifact(cfg_1_17, data_1_17);
 
 % Get rid of jumps
 %The data are preprocessed (again) with the following configuration parameters,
@@ -244,24 +273,31 @@ cfg_18_20.artfctdef.jump.absdiff       = 'yes';
 
 %  Artifacts are identified by means of thresholding the z-transformed value
 %  of the preprocessed data.
-cfg_1_17.artfctdef.jump.channel       = {'eeg'}; %Nx1 cell-array with selection of channels, see FT_CHANNELSEL
-cfg_1_17.artfctdef.jump.cutoff        = 20; %z-value at which to threshold (default = 20)
-[cfg_1_17, ~] = ft_artifact_jump(cfg_1_17, data);
+cfg_18_20.artfctdef.jump.channel       = {'eeg'}; %Nx1 cell-array with selection of channels, see FT_CHANNELSEL
+cfg_18_20.artfctdef.jump.cutoff        = 20; %z-value at which to threshold (default = 20)
+[cfg_18_20, ~] = ft_artifact_jump(cfg_18_20, data_18_20);
 
 %Remove the found artifacts
-cfg_1_17.feedback = 'yes';
-data = ft_rejectartifact(cfg_1_17, data);
+cfg_18_20.feedback = 'yes';
+data_18_20 = ft_rejectartifact(cfg_18_20, data_18_20);
 
 % Display Summary Stats and exclude epochs/channels
 cfg_1_17=[];
 cfg_1_17.showlabel='yes';
 cfg_1_17.method='summary';
-%cfg.layout='easycapM1.lay'; %not the one we used
-data=ft_rejectvisual(cfg_1_17,data);
+cfg_1_17.layout='easycapM1.lay'; %not the one we used
+data_1_17=ft_rejectvisual(cfg_1_17,data_1_17);
+
+% Display Summary Stats and exclude epochs/channels
+cfg_18_20=[];
+cfg_18_20.showlabel='yes';
+cfg_18_20.method='summary';
+cfg_18_20.layout='easycapM1.lay'; %not the one we used
+data_18_20=ft_rejectvisual(cfg_18_20,data_18_20);
 
 %Update the behavioural triggers, RT and points and save them
-for i = 1:numel(data.trialinfo)
-    while round(behav_1_17.triggers(i)) ~= round(data.trialinfo(i))
+for i = 1:numel(data_1_17.trialinfo)
+    while round(behav_1_17.triggers(i)) ~= round(data_1_17.trialinfo(i))
         behav_1_17.triggers(i) = [];
         behav_1_17.RT(i) = [];
         behav_1_17.points(i) = [];
@@ -269,16 +305,49 @@ for i = 1:numel(data.trialinfo)
 end
 
 %Double-check that eeg and behavioural triggers are equal
-if isequal(round(data.trialinfo),round(behav_1_17.triggers)) 
+if isequal(round(data_1_17.trialinfo),round(behav_1_17.triggers)) 
     disp('all good!');
 else
     warning('problem with the triggers: check manually');
     keyboard;
 end
-task_name_small = get_task_name(task);
-save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name_small),'behav');
+% 
+% %in the categorization case, this wasnt covered by the loop above &
+% resulted in an error
+% behav_1_17.triggers(end) = [];
+% behav_1_17.RT(end) = [];
+% behav_1_17.points(end) = [];
+
+for i = 1:numel(data_18_20.trialinfo)
+    while round(behav_18_20.triggers(i)) ~= round(data_18_20.trialinfo(i))
+        behav_18_20.triggers(i) = [];
+        behav_18_20.RT(i) = [];
+        behav_18_20.points(i) = [];
+    end
+end
+
+%Double-check that eeg and behavioural triggers are equal
+if isequal(round(data_18_20.trialinfo),round(behav_18_20.triggers)) 
+    disp('all good!');
+else
+    warning('problem with the triggers: check manually');
+    keyboard;
+end
+
+%% Append both datasets
+cfg = [];
+cfg.keepsampleinfo='no'; %yes if they come from different datafiles
+data = ft_appenddata(cfg, data_1_17, data_18_20);
+
+% Append behavioural data
+behav = struct;
+behav.triggers = [behav_1_17.triggers;behav_18_20.triggers];
+behav.RT = [behav_1_17.RT;behav_18_20.RT];
+behav.points = [behav_1_17.points;behav_18_20.points];
 
 %Transform to "timelocked" data and save the output
-cfg_1_17.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name_small); 
-cfg_1_17.keeptrials='yes';
-data=ft_timelockanalysis(cfg_1_17,data);
+task_name_small = get_task_name(task);
+save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name_small),'behav');
+cfg.outputfile= sprintf('%s/%s/timelock_%s',data_path,subname,task_name_small); 
+cfg.keeptrials='yes';
+data=ft_timelockanalysis(cfg,data);
