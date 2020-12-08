@@ -185,6 +185,7 @@ if isequal(round(data.trialinfo),round(behav.triggers))
 else
     warning('problem with the triggers: check manually');
     keyboard;
+    behav.triggers(end) = [];
 end
 task_name_small = get_task_name(task);
 save(sprintf('%s/%s/preprocessed_behavioural_data_%s',data_path, subname, task_name_small),'behav');
