@@ -26,8 +26,7 @@ addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
 %%  Load EEG and behavioural data
-mainDirectoryEEG = dir(fullfile(data_path,subname,'/EEG/','*.eeg')); 
-fileNameEEG = fullfile(data_path, subname,'/EEG/', mainDirectoryEEG.name); 
+fileNameEEG = fullfile(data_path, subname,'/EEG/', 'pdm_full_experiment_sub05.eeg'); 
 mainDirectoryBeh = dir(fullfile(data_path,subname,'/Behavioural/','*.mat')); 
 
 %% Fix order of blocks since they do not load in the correct order
@@ -51,10 +50,11 @@ if ~isequal(blockorderarray,blocks)
     error('Incorrect block order: Check and fix manually');
 end
 
-%% Take only the 18 blocks
+%% Split into two groups
 filenamesSorted_1_17 = filenamesSorted(1:17);
+filenamesSorted_18_20 = filenamesSorted(18:20);
 
-%% Take the task-related trials only
+%% Take the task-related trials only: blocks 1-17
 %Behavioural data
 behav_1_17.triggers = [];
 behav_1_17.RT = [];
@@ -136,27 +136,111 @@ end
 %put back into the configuration file
 cfg_1_17.trl = [beginningEpoch_1_17 endEpoch_1_17 offsetTrigger_1_17 triggers_eeg_1_17];
 
+%% Take the task-related trials only: blocks 1-17
+%Behavioural data
+behav_18_20.triggers = [];
+behav_18_20.RT = [];
+behav_18_20.points = [];
+
+for block = 1:numel(filenamesSorted_18_20)
+    block_name = filenamesSorted_18_20{block};
+    if contains(block_name,task_name)
+        load(block_name);
+        behav_18_20.triggers = [behav_18_20.triggers;data.triggers];
+        behav_18_20.RT = [behav_18_20.RT; data.rt]; 
+        behav_18_20.points = [behav_18_20.points; data.points]; 
+    end
+end
+
+%EEG data
+fileNameEEG_18_20 = fullfile(data_path, subname,'/EEG/', 'pdm_full_experiment_sub05_runs_18_20.eeg');
+
+%Define Events
+cfg_18_20=[];
+cfg_18_20.dataset=fileNameEEG_18_20;
+cfg_18_20.trialdef.eventtype='Stimulus';
+cfg_18_20.trialdef.prestim=0.2;
+cfg_18_20.trialdef.poststim=0.8;
+cfg_18_20=ft_definetrial(cfg_18_20);
+
+%Define the columns of cfg
+eegtriggers_18_20 = cfg_18_20.trl(:,4);
+beginningEpoch_18_20 = cfg_18_20.trl(:,1); %beginning of each trial relative to the beginning of the raw data
+endEpoch_18_20 = cfg_18_20.trl(:,2); %end of each trial; column 2-column 1 = duration of epoch
+offsetTrigger_18_20 = cfg_18_20.trl(:,3); %offset of the trigger with respect to the trial - defined by cfg.trialdef.prestim
+
+numConditions = 60;
+if task == 1
+    task_triggers_18_20 = (1:numConditions); 
+elseif task == 2
+    task_triggers_18_20 = (1:numConditions)+100;
+end
+
+triggers_eeg_18_20 = [];
+trials_remaining_18_20 = [];
+for t = 1:numel(eegtriggers_18_20)
+    if ismember(eegtriggers_18_20(t),task_triggers_18_20)
+        trials_remaining_18_20 = [trials_remaining_18_20;t];
+        triggers_eeg_18_20 = [triggers_eeg_18_20;eegtriggers_18_20(t)];
+    end
+end
+
+if task == 2
+    triggers_eeg_18_20 = triggers_eeg_18_20-100;
+end
+
+%Remove the same trials from the other columns of cfg
+beginningEpoch_18_20 = beginningEpoch_18_20(trials_remaining_18_20);
+endEpoch_18_20 = endEpoch_18_20(trials_remaining_18_20);
+offsetTrigger_18_20 = offsetTrigger_18_20(trials_remaining_18_20);
+
+%% Remove extra triggers
+%remove  paperclips from behavioural data
+paperclips = behav_18_20.triggers==999;
+behav_18_20.triggers = behav_18_20.triggers(~paperclips);
+behav_18_20.RT = behav_18_20.RT(~paperclips);
+behav_18_20.points = behav_18_20.points(~paperclips);
+
+for i = 1:numel(behav_18_20.triggers)
+    while round(triggers_eeg_18_20(i)) ~= round(behav_18_20.triggers(i))
+        triggers_eeg_18_20(i) = [];
+        beginningEpoch_18_20(i)=[];
+        endEpoch_18_20(i)=[];
+        offsetTrigger_18_20(i)=[];
+    end
+end
+
+if isequal(round(triggers_eeg_18_20),round(behav_18_20.triggers)) 
+    disp('all good!');
+else
+    warning('problem with the triggers: check manually');
+    keyboard;
+end
+
+%put back into the configuration file
+cfg_18_20.trl = [beginningEpoch_18_20 endEpoch_18_20 offsetTrigger_18_20 triggers_eeg_18_20];
+
 %% Rest of preprocessing
 
 %Filter and read
-cfg_1_17.dataset=fileNameEEG;
-cfg_1_17.lpfilter = 'yes';
-cfg_1_17.lpfreq = 50;
-cfg_1_17.demean='yes'; %apply baseline correction
-cfg_1_17.baselinewindow=[-0.2,0];
-data=ft_preprocessing(cfg_1_17);
+cfg_18_20.dataset=fileNameEEG;
+cfg_18_20.lpfilter = 'yes';
+cfg_18_20.lpfreq = 50;
+cfg_18_20.demean='yes'; %apply baseline correction
+cfg_18_20.baselinewindow=[-0.2,0];
+data=ft_preprocessing(cfg_18_20);
 
 %Resample data to 200hz
-cfg_1_17=[];
-cfg_1_17.resamplefs=200;
-data=ft_resampledata(cfg_1_17,data);
+cfg_18_20=[];
+cfg_18_20.resamplefs=200;
+data=ft_resampledata(cfg_18_20,data);
 
 % Get rid of jumps
 %The data are preprocessed (again) with the following configuration parameters,
 %which are optimal for identifying jump artifacts.
-cfg_1_17.artfctdef.jump.medianfilter  = 'yes';
-cfg_1_17.artfctdef.jump.medianfiltord = 9;
-cfg_1_17.artfctdef.jump.absdiff       = 'yes';
+cfg_18_20.artfctdef.jump.medianfilter  = 'yes';
+cfg_18_20.artfctdef.jump.medianfiltord = 9;
+cfg_18_20.artfctdef.jump.absdiff       = 'yes';
 
 %  Artifacts are identified by means of thresholding the z-transformed value
 %  of the preprocessed data.
