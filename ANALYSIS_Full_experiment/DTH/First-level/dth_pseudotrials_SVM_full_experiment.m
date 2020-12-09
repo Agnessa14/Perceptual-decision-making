@@ -1,7 +1,10 @@
 function dth_pseudotrials_SVM_full_experiment(subject,task)
 %DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. Instead of creating pseudoconditions out of scenes,
-%the trials from across conditions are lumped into pseudotrials.
+%the trials from across conditions are lumped into pseudotrials.  For the
+%fixation task of subjects 1-4, where triggers were not properly recorded,
+%and samples 22 and 56 had to be excluded. 
+%
 %
 %Input: subject ID (integer), task (1=categorization, 2=fixation)
 %
@@ -23,9 +26,15 @@ ft_defaults;
 subname = get_subject_name(subject);
 task_name = get_task_name(task);
 
+%check if there's a directory for that subject, otherwise create one
+results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
+if ~isfolder(fullfile(results_dir,subname))
+    mkdir(results_dir,subname);
+end
+
 %data and results
 data_dir = fullfile('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/',subname);
-results_dir = fullfile('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/',subname);
+results_dir = fullfile(results_dir,subname);
 addpath(genpath(data_dir));
 addpath(results_dir);
 
