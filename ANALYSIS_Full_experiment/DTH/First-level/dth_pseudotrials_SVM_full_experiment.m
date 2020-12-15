@@ -5,7 +5,6 @@ function dth_pseudotrials_SVM_full_experiment(subject,task)
 %fixation task of subjects 1-4, where triggers were not properly recorded,
 %and samples 22 and 56 had to be excluded. 
 %
-%
 %Input: subject ID (integer), task (1=categorization, 2=fixation)
 %
 %Output: 
