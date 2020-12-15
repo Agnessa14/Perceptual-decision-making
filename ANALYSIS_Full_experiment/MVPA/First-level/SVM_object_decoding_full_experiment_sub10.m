@@ -38,27 +38,32 @@ load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
 timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
-%remove data and triggers for scene #47
-trig_47 = find(timelock_triggers==47);
-timelock_triggers(trig_47) = [];
-timelock_data(trig_47,:,:) = [];
+% %remove data and triggers for scene #47
+% trig_47 = find(timelock_triggers==47);
+% timelock_triggers(trig_47) = [];
+% timelock_data(trig_47,:,:) = [];
 
 %% Define the required variables
-numConditions = 59;
-[numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
-
+numConditionsAll = 60;
+[~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
+numTrials = min(trials_per_condition(trials_per_condition>3));
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
+
+%exclude trials from scene 47
+included_conditions = find(trials_per_condition>=numTrials);
+numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints);
+decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints);
     
 %% Decoding
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
-
+    data = create_data_matrix(numConditionsAll,timelock_triggers,numTrials,timelock_data);
+    data = data(included_conditions,:,:,:); 
+    
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data); 
 
@@ -67,8 +72,8 @@ for perm = 1:numPermutations
     [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
    
     %only get the lower diagonal
-    for condA=1:numConditions-1 %1:58
-        for condB = condA+1:numConditions %2:59
+    for condA=1:numConditionsIncluded-1 %1:59
+        for condB = condA+1:numConditionsIncluded %2:60
             for timePoint = 1:numTimepoints 
                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoint ->',num2str(timePoint)]);
@@ -98,5 +103,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,sprintf('svm_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
+save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
 
