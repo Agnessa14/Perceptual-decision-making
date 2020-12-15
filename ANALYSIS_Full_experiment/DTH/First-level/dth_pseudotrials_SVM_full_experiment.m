@@ -1,9 +1,7 @@
 function dth_pseudotrials_SVM_full_experiment(subject,task)
 %DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. Instead of creating pseudoconditions out of scenes,
-%the trials from across conditions are lumped into pseudotrials.  For the
-%fixation task of subjects 1-4, where triggers were not properly recorded,
-%and samples 22 and 56 had to be excluded. 
+%the trials from across conditions are lumped into pseudotrials.  
 %
 %Input: subject ID (integer), task (1=categorization, 2=fixation)
 %
