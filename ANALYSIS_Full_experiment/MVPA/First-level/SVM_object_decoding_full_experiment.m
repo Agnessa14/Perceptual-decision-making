@@ -38,7 +38,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
 numConditions = 60;
-[numTrials, n] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
+[numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
