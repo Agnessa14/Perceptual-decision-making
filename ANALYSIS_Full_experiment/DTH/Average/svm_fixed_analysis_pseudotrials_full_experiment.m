@@ -23,25 +23,19 @@ for subject = subjects
     subname = get_subject_name(subject);
     load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)));
     load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name)));
-    if ismember(subject,1:4) && task==2
-        decisionValues_Avg = cat(1,decisionValues_Avg,NaN(2,numTimepoints));
-        RT_per_condition = cat(1,RT_per_condition,NaN(2,1));
-    end
     distances(subject,:,:) = decisionValues_Avg;   
     RTs(subject,:) = normalize(RT_per_condition);
 end
 
 %% Get the median RTs and mean distances of all subjects for each condition 
-included_conditions = find(~isnan(RTs(subjects(1),:))); %can be any subject
-numConditionsIncluded = numel(included_conditions);
-medianRT = nanmedian(RTs(subjects,included_conditions),1);
-mean_distances = squeeze(nanmean(distances(subjects,included_conditions,:),1)); %avg over subjects
+medianRT = nanmedian(RTs,1);
+mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
 
 %% Correlate DTH and RT
 t = 1:numTimepoints;
 correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
-correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditionsIncluded/2,x),medianRT(1:numConditionsIncluded/2)','type','Spearman'),t);
-correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditionsIncluded/2)+1:end,x),medianRT((numConditionsIncluded/2)+1:end)','type','Spearman'),t);
+correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditions/2,x),medianRT(1:numConditions/2)','type','Spearman'),t);
+correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditions/2)+1:end,x),medianRT((numConditions/2)+1:end)','type','Spearman'),t);
 correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
 
 %% Plot 
@@ -65,7 +59,7 @@ end
 title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
 legend_plot = {'All scenes','Artificial scenes','Natural scenes',...
     'Average of artificial and natural scenes','Stimulus onset'};
-plotting_parameters(title,legend_plot,40)
+plotting_parameters(title,legend_plot,40,12,[0.4 0.75 0.1 0.1])
 
 %% Save
 %correlations
