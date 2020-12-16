@@ -38,17 +38,12 @@ load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
 timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
-% %remove data and triggers for scene #47
-% trig_47 = find(timelock_triggers==47);
-% timelock_triggers(trig_47) = [];
-% timelock_data(trig_47,:,:) = [];
-
 %% Define the required variables
 numConditionsAll = 60;
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 numTrials = min(trials_per_condition(trials_per_condition>3));
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=100; 
+numPermutations=1; 
 
 %exclude trials from scene 47
 included_conditions = find(trials_per_condition>=numTrials);
