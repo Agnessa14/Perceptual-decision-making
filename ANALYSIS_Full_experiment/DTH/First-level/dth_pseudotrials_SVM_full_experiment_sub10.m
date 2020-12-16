@@ -50,7 +50,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 numConditionsAll = 60;
 num_categories = 2; %categories to decode
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 numTrials = min(trials_per_condition(trials_per_condition>3));
 
@@ -107,9 +107,6 @@ for perm = 1:numPermutations
     disp('Testing set: Average over trials');
     data_artificial_avg = squeeze(mean(data_artificial,2));
     data_natural_avg = squeeze(mean(data_natural,2));
-%     data_testing_both = NaN([num_categories,size(data_artificial_avg)]);
-%     data_testing_both(1,:,:,:) = data_artificial_avg;
-%     data_testing_both(2,:,:,:) = data_natural_avg;
     
     for t = 1:numTimepoints
         disp('Split into training and testing');
@@ -128,7 +125,6 @@ for perm = 1:numPermutations
         
         disp('Putting the decision values into the big matrix');
         decisionValues(perm,:,t) = abs(decision_values);
-        
     end
     toc
 end
