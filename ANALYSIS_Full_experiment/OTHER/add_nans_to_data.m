@@ -54,10 +54,13 @@ for subject = subjects
         decodingAccuracy_avg = decodingAccuracy_with_56;
         
         %% DTH
-        decisionValues_Avg = cat(1,decisionValues_Avg(1:21,:),added_2d_array,decisionValues_Avg(22:55,:),...
-            added_2d_array,decisionValues_Avg(56:end,:));
-        RT_per_condition = cat(1,RT_per_condition(1:21),added_NaN, RT_per_condition(22:55),added_NaN,...
-            RT_per_condition(56:end));
+        decisionValues_Avg_with_22 = cat(1,decisionValues_Avg(1:21,:),added_2d_array,decisionValues_Avg(22:end,:)); 
+        decisionValues_Avg_with_56 = cat(1,decisionValues_Avg_with_22(1:55,:),added_2d_array,decisionValues_Avg_with_22(56:end,:));
+        RT_per_condition_with_22 = [RT_per_condition(1:21);added_NaN;RT_per_condition(22:end)];
+        RT_per_condition_with_56 = [RT_per_condition_with_22(1:55);added_NaN;RT_per_condition_with_22(56:end)];
+        decisionValues_Avg = decisionValues_Avg_with_56;
+        RT_per_condition = RT_per_condition_with_56;
+        
     elseif subject == 10 && task == 1
         %% OD
         decodingAccuracy_with_47 = cat(1,decodingAccuracy_avg(1:46,:,:),added_matrix_47_row,...
@@ -72,9 +75,9 @@ for subject = subjects
         RT_per_condition = cat(1,RT_per_condition(1:46),added_NaN,RT_per_condition(47:end));
     end
 
-    save(fullfile(subjects_results_dir,'decodingAccuracy_avg'),'decodingAccuracy_avg');
-    save(fullfile(subjects_results_dir,'decisionValues_Avg'),'decisionValues_Avg');
-    save(fullfile(subjects_results_dir,'RT_per_condition'),'RT_per_condition');
+    save(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
+    save(fullfile(subject_results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)),'decisionValues_Avg');
+    save(fullfile(subject_results_dir,sprintf('RTs_correct_trials_%s.mat',task_name)),'RT_per_condition');
 end   
 
 end
