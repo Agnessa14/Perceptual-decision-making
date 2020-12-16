@@ -76,41 +76,45 @@ for perm = 1:numPermutations
     data = multivariate_noise_normalization(data);
 
     disp('Split into artificial and natural');
-    data_artificial = data(1:last_condition_artificial,:,:,:); %in Ritchie's dataset, the natural conditions come first
+    data_artificial = data(1:last_condition_artificial,:,:,:); 
     data_natural = data(first_condition_natural:end,:,:,:);
        
     disp('Training set: Reshape by taking the trials from all conditions for each category');
     size_data_artificial = size(data_artificial);
     size_data_natural = size(data_natural);
     data_artificial_reshaped = reshape(data_artificial,...
-        [size_data_artificial(1)*size_data_artificial(2),size_data_category(3),size_data_category(4)]);
+        [size_data_artificial(1)*size_data_artificial(2),size_data_artificial(3),size_data_artificial(4)]);
     data_natural_reshaped = reshape(data_natural,...
-        [size_data_natural(1)*size_data_natural(2),size_data_category(3),size_data_category(4)]);
+        [size_data_natural(1)*size_data_natural(2),size_data_natural(3),size_data_natural(4)]);
     
     disp('Permute the trials')
     data_artificial_permuted = data_artificial_reshaped(randperm(size(data_artificial_reshaped,1)),:,:);
     data_natural_permuted = data_natural_reshaped(randperm(size(data_natural_reshaped,1)),:,:);
-       
+    
+    disp('Take the same number of trials for both categories')
+    num_trials_natural = size(data_natural_permuted,1);
+    data_artificial_permuted = data_artificial_permuted(1:num_trials_natural,:,:);
+    
     disp('Put both categories into one matrix');
     data_both_categories = NaN([num_categories,size(data_artificial_permuted)]);
     data_both_categories(1,:,:,:) = data_artificial_permuted;
     data_both_categories(2,:,:,:) = data_natural_permuted;
     
-    disp('Split into pseudotrials');
+    disp('Split into pseudotrials: Artificial scenes');
     numTrialsPerBin = 20; %try different combinations of bins/numTrialsPerBin
     [bins,numBins] = create_pseudotrials(numTrialsPerBin,data_both_categories);
-    
+        
     disp('Testing set: Average over trials');
     data_artificial_avg = squeeze(mean(data_artificial,2));
     data_natural_avg = squeeze(mean(data_natural,2));
-    data_testing_both = NaN([num_categories,size(data_artificial_avg)]);
-    data_testing_both(1,:,:,:) = data_artificial_avg;
-    data_testing_both(2,:,:,:) = data_natural_avg;
+%     data_testing_both = NaN([num_categories,size(data_artificial_avg)]);
+%     data_testing_both(1,:,:,:) = data_artificial_avg;
+%     data_testing_both(2,:,:,:) = data_natural_avg;
     
     for t = 1:numTimepoints
         disp('Split into training and testing');
         training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];  %train on all pseudotrials
-        testing_data  = [squeeze(data_testing_both(1,:,:,t)); squeeze(data_testing_both(2,:,:,t))]; %test on all conditions 
+        testing_data  = [squeeze(data_artificial_avg(:,:,t)); squeeze(data_natural_avg(:,:,t))]; %test on all conditions 
        
         labels_train  = [ones(numBins,1);2*ones(numBins,1)]; 
         labels_test   = [ones(num_conditions_artificial,1);2*ones(num_conditions_natural,1)]; 
