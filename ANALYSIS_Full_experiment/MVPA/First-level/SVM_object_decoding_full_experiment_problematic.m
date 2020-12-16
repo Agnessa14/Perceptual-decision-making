@@ -37,7 +37,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 numConditionsAll = 60;
 [numTrials, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=100; 
+numPermutations=1; 
 
 %Deal with the excluded samples
 included_conditions = find(trials_per_condition>=numTrials);
@@ -92,5 +92,24 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
+
+% add NaNs in lieu of condition 22
+added_matrix_22_row = NaN(1,58,numTimepoints);
+added_matrix_22_column = NaN(59,1,numTimepoints);
+decodingAccuracy_with_22 = cat(1,decodingAccuracy_avg(1:21,:,:),added_matrix_22_row,...
+    decodingAccuracy_avg(22:end,:,:));
+decodingAccuracy_with_22 = cat(2,decodingAccuracy_with_22(:,1:21,:),added_matrix_22_column,...
+    decodingAccuracy_with_22(:,22:end,:));
+
+% add NaNs in lieu of condition 56
+added_matrix_56_row = NaN(1,59,numTimepoints);
+added_matrix_56_column = NaN(60,1,numTimepoints);
+decodingAccuracy_with_56 = cat(1,decodingAccuracy_with_22(1:55,:,:),added_matrix_56_row,...
+    decodingAccuracy_with_22(56:end,:,:));
+decodingAccuracy_with_56 = cat(2,decodingAccuracy_with_56(:,1:55,:),added_matrix_56_column,...
+    decodingAccuracy_with_56(:,56:end,:));
+
+%rename 
+decodingAccuracy_avg = decodingAccuracy_with_56;
 save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
 
