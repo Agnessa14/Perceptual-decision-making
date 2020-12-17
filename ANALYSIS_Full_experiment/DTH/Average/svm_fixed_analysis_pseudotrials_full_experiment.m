@@ -59,7 +59,8 @@ end
 title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
 legend_plot = {'All scenes','Artificial scenes','Natural scenes',...
     'Average of artificial and natural scenes','Stimulus onset'};
-plotting_parameters(title,legend_plot,40,12,[0.4 0.75 0.1 0.1])
+xticks(0:10:200);
+plotting_parameters(title,legend_plot,40,12,[0.4 0.8 0.1 0.1],'Spearman''s coefficient');
 
 %% Save
 %correlations
