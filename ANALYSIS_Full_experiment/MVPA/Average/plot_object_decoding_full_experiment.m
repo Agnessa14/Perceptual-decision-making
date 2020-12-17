@@ -49,7 +49,7 @@ title = sprintf('Object decoding per timepoint for %d subjects',numel(subjects))
 onset_time = 40; 
 legend_cell{numel(subjects)+1} = 'Average over all subjects';
 legend_cell{numel(subjects)+2} = 'Stimulus onset'; %last legend element
-plotting_parameters(title,legend_cell,onset_time,10);
+plotting_parameters(title,legend_cell,onset_time,10,[0.4 0.75 0.1 0.1],'Decoding accuracy (%)');
 
 %save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_%s',numel(subjects),task_name))); %save as matlab figure
