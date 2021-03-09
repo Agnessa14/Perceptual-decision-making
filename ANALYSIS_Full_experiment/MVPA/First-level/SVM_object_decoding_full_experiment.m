@@ -6,6 +6,7 @@ function SVM_object_decoding_full_experiment(subject,task)
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
 %
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
