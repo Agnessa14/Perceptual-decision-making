@@ -93,3 +93,6 @@ end
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
 save(fullfile(results_dir,subname,sprintf('svm_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
 
+%% Save the number of trials used 
+save(fullfile(results_dir,subname,sprintf('num_trials_included_%s.mat',task_name)),'numTrials');
+
