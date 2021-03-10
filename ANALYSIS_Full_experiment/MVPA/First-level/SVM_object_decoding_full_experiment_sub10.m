@@ -1,6 +1,6 @@
 function SVM_object_decoding_full_experiment_sub10(subject,task) 
 %SVM_OBJECT_DECODING_FULL_EXPERIMENT_SUB10 Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
-%Script only for subject 10, who had only 3 correct trials for scene 47,
+%Script only for subject 10 (and 15), who had only 3 correct trials for scene 47,
 %and therefore needs to have a different number of trials.
 %
 %Input: subject ID, task (1=categorization, 2=fixation)
@@ -43,7 +43,7 @@ numConditionsAll = 60;
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 numTrials = min(trials_per_condition(trials_per_condition>3));
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %exclude trials from scene 47
 included_conditions = find(trials_per_condition>=numTrials);
@@ -99,4 +99,7 @@ end
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
 save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
+
+%% Save the number of trials used 
+save(fullfile(results_dir,subname,sprintf('num_trials_included_%s.mat',task_name)),'numTrials');
 
