@@ -129,8 +129,13 @@ for perm = 1:numPermutations
     toc
 end
 
-%% Save the decision values
+
+%% Add NaN to the 47th scene
 decisionValues_Avg = squeeze(mean(decisionValues,1));
+DV_1 = [decisionValues_Avg(1:46,:);NaN(1,200);decisionValues_Avg(47:end,:)];
+decisionValues_Avg = DV_1;
+
+%% Save the decision values
 save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
@@ -141,7 +146,9 @@ for c = 1:numConditionsAll
     RT_per_condition(c) = mean(RT_correct(timelock_triggers==c));
 end
 
-RT_per_condition = RT_per_condition(included_conditions);
+% % Add NaN to the 47th scene
+% RT_per_condition = RT_per_condition(included_conditions);
+RT_per_condition(47) = NaN;
 filename_RT = sprintf('RTs_correct_trials_%s.mat',task_name);
 save(fullfile(results_dir,filename_RT),'RT_per_condition');
 
