@@ -96,8 +96,13 @@ for perm = 1:numPermutations
     toc
 end
 
-%% Save the decoding accuracy
+%% Add NaN to the 47th scene
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
+DA_1 = [decodingAccuracy_avg(1:46,:,:);NaN(1,59,200);decodingAccuracy_avg(47:end,:,:)];
+DA_2 = [DA_1(:,1:46,:),NaN(60,1,200),DA_1(:,47:end,:)];
+decodingAccuracy_avg = DA_2;
+
+%% Save the decoding accuracy
 save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
 
 %% Save the number of trials used 
