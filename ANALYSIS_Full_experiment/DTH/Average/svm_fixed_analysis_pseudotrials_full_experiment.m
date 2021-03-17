@@ -16,7 +16,8 @@ task_name = get_task_name(task);
 %% Get the distances from all subjects
 numTimepoints = 200;
 numConditions = 60;
-distances = NaN(numel(subjects),numConditions,numTimepoints);
+sorted_subjects = sort(subjects); %order by ID
+distances = NaN(sorted_subjects(end),numConditions,numTimepoints);
 RTs = NaN(numel(subjects),numConditions);
 
 for subject = subjects
@@ -60,7 +61,7 @@ title =  sprintf('Correlation between the distance to hyperplane and reaction ti
 legend_plot = {'All scenes','Artificial scenes','Natural scenes',...
     'Average of artificial and natural scenes','Stimulus onset'};
 xticks(0:10:200);
-plotting_parameters(title,legend_plot,40,12,[0.4 0.8 0.1 0.1],'Spearman''s coefficient');
+plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
 
 %% Save
 %correlations
