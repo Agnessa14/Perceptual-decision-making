@@ -15,12 +15,12 @@ task_name = get_task_name(task);
 %% Preallocate
 numConditions = 60;
 numTimepoints = 200;
-decoding_accuracies_all_subjects = NaN(numel(subjects),numConditions,numConditions,numTimepoints);
 
 %% Set up the figure for plotting
 figure(abs(round(randn*10))); %Random figure number
 set(gcf, 'Position', get(0, 'Screensize'));
 sorted_subjects = sort(subjects); %order by ID
+decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
 legend_cell = cell(1,sorted_subjects(end));
 legend_cell(:) = {NaN};
 
@@ -56,7 +56,7 @@ onset_time = 40;
 legend_cell{numel(subjects)+1} = 'Average over all subjects';
 legend_cell{numel(subjects)+2} = 'Stimulus onset'; %last legend element
 xticks(0:10:200);
-plotting_parameters(title,legend_cell,onset_time,10,[0.75 0.7 0.1 0.1],'Decoding accuracy (%)');
+plotting_parameters(title,legend_cell,onset_time,8,'best','Decoding accuracy (%)'); %'best' location or specify position [0.75 0.7 0.1 0.1]
 
 %save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_%s',numel(subjects),task_name))); %save as matlab figure
