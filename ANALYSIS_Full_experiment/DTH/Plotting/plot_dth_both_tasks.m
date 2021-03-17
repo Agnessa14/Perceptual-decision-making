@@ -30,7 +30,7 @@ hold on;
 title =  sprintf('Correlation between the distance to hyperplane and reaction time in 60 scenes (N=%d)',numel(subjects));
 legend_plot = {'Scene categorization','Distraction'};
 xticks(0:10:200);
-plotting_parameters(title,legend_plot,40,12,[0.4 0.8 0.1 0.1],'Spearman''s coefficient');
+plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.7 0.85 0.1 0.01]
 
 %% Save
 saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_both_tasks',numel(subjects)))); 
