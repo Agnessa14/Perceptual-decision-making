@@ -14,8 +14,9 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %% Preallocate
 numConditions = 60;
 numTimepoints = 200;
-decoding_accuracies_all_subjects_cat = NaN(numel(subjects),numConditions,numConditions,numTimepoints);
-decoding_accuracies_all_subjects_fix = NaN(numel(subjects),numConditions,numConditions,numTimepoints);
+sorted_subjects = sort(subjects);
+decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
@@ -42,7 +43,7 @@ title = sprintf('Object decoding per timepoint for %d subjects',numel(subjects))
 onset_time = 40; 
 xticks(0:10:200);
 legend_cell = {'Scene categorization','Distraction'};
-plotting_parameters(title,legend_cell,onset_time,12,[0.75 0.7 0.1 0.1],'Decoding accuracy (%)');
+plotting_parameters(title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
 %save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks',numel(subjects)))); %save as matlab figure
