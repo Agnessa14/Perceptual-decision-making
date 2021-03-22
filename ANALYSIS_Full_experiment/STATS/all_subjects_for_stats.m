@@ -3,7 +3,8 @@ function all_subjects_for_stats(subjects,task)
 %
 %Input: subject IDs, task (1=categorization,2=distraction)
 %
-%Output: SxP matrix containing the correlations for 
+%Output: SxP matrix containing decoding accuracies, where S is the number
+%of subjects and P is the number of timepoints.
 
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
@@ -16,28 +17,25 @@ numConditions = 60;
 numTimepoints = 200;
 
 %% Set up the figure for plotting
-figure(abs(round(randn*10))); %Random figure number
-set(gcf, 'Position', get(0, 'Screensize'));
 sorted_subjects = sort(subjects); %order by ID
 decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-legend_cell = cell(1,sorted_subjects(end));
-legend_cell(:) = {NaN};
 
-cmap = jet(max(subjects));
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy_%s.mat',task_name)));
-    decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;
-   
-    %plot the object decoding curve for the participant    
-    avg_over_conditions = squeeze(nanmean(nanmean(decodingAccuracy_avg,1),2));
-    plot(avg_over_conditions, 'Linewidth',2, 'Color', cmap(subject, :));
-    hold on;
-    legend_cell{subject} = sprintf('Subject %d',subject);   
+    decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;  
 end   
 
-%% Remove any NaN (for non-included subjects)
-avg_over_conditions_all_subjects = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects,1),2),3));
-legend_cell(cellfun(@(x) any(isnan(x)),legend_cell)) = [];
+%% Remove any NaN 
+for_stats = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects,2),3));
+for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if timepoint 1 is NaN, the subject is excluded
+
+%% Subtract 50 to get the difference with chance (needed for stats)
+for_stats = for_stats-50;
+
+%% Save
+save(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task',numel(subjects),task_name)),'for_stats');
+
+end
