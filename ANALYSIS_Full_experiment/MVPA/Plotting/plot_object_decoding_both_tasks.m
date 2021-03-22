@@ -1,8 +1,8 @@
-function plot_object_decoding_both_tasks(subjects)
+function plot_object_decoding_both_tasks(subjects,with_stats)
 %PLOT_OBJECT_BOTH_TASKS Plot the results from object decoding, averaged over
 %all participants for both tasks (categorization and distraction).
 %
-%Input: subject IDs
+%Input: subject IDs, ,with_stats (1 plot with stats, 0 plot without)
 %
 %Output: curve of decoding accuracies per timepoint, for two tasks
 
@@ -35,17 +35,52 @@ avg_over_conditions_all_subjects_fix = squeeze(nanmean(nanmean(nanmean(decoding_
 %% Plot the average of all subjects
 figure(abs(round(randn*10))); %Random figure number
 set(gcf, 'Position', get(0, 'Screensize'));
-plot(avg_over_conditions_all_subjects_cat,'Linewidth',3);
+color_cat = 'b';
+color_fix = 'm';
+plot(avg_over_conditions_all_subjects_cat,'Linewidth',3, 'Color', color_cat);
 hold on;
-plot(avg_over_conditions_all_subjects_fix,'Linewidth',3);
+plot(avg_over_conditions_all_subjects_fix,'Linewidth',3, 'Color', color_fix);
 hold on;
 title = sprintf('Object decoding per timepoint for %d subjects',numel(subjects));
 onset_time = 40; 
 xticks(0:10:200);
+
+%% Plot stats if needed
+if with_stats
+    analysis = 'object_decoding';
+    for task = 1:2
+        if task == 1
+            task_name = 'categorization';
+            plot_name = avg_over_conditions_all_subjects_cat;
+            plot_location = 47.5;
+            color = color_cat;
+        elseif task == 2
+            task_name = 'fixation';
+            plot_name = avg_over_conditions_all_subjects_fix;
+            plot_location = 46;
+            color = color_fix;
+        end
+        %error bars
+        load(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',...
+        numel(subjects),task_name,analysis)));
+        stdDM = std(for_stats); %std(26x200)
+        err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects
+        errorbar(plot_name, err, 'Color',color); %plot
+        hold on;
+
+        %significant timepoints
+        load(fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
+        numel(subjects),task_name,analysis)));
+        st = (significant_timepoints*plot_location); %depending on the stats
+        st(st==0) = NaN;
+        plot(st,'*','Color',color); 
+    end
+end 
+
 legend_cell = {'Scene categorization','Distraction'};
 plotting_parameters(title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
-%save the plot
+%% Save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks',numel(subjects)))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks.svg',numel(subjects)))); %save as svg
 close(gcf);    
