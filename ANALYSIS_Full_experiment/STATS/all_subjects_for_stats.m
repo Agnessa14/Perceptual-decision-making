@@ -1,4 +1,4 @@
-function all_subjects_for_stats(subjects,task,analysis)
+function for_stats = all_subjects_for_stats(subjects,task,analysis)
 %ALL_SUBJECTS_FOR_STATS Gather the subject x time matrices needed to perform cluster-based permutation tests.
 %
 %Input: subject IDs, task (1=categorization,2=distraction), analysis
