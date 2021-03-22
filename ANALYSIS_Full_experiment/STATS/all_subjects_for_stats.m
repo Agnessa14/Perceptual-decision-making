@@ -1,7 +1,8 @@
-function all_subjects_for_stats(subjects,task)
+function all_subjects_for_stats(subjects,task,analysis)
 %ALL_SUBJECTS_FOR_STATS Gather the subject x time matrices needed to perform cluster-based permutation tests.
 %
-%Input: subject IDs, task (1=categorization,2=distraction)
+%Input: subject IDs, task (1=categorization,2=distraction), analysis
+%('object_decoding' or 'category_decoding')
 %
 %Output: SxP matrix containing decoding accuracies, where S is the number
 %of subjects and P is the number of timepoints.
@@ -18,13 +19,17 @@ numTimepoints = 200;
 
 %% Set up the figure for plotting
 sorted_subjects = sort(subjects); %order by ID
-decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+if strcmp(analysis,'object_decoding')
+    decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+    filename = sprintf('svm_decoding_accuracy_%s.mat',task_name);
+end %add an elseif clause for category decoding later
+
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
-    load(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy_%s.mat',task_name)));
+    load(fullfile(subject_results_dir,filename));
     decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;  
 end   
 
@@ -36,6 +41,6 @@ for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if 
 for_stats = for_stats-50;
 
 %% Save
-save(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task',numel(subjects),task_name)),'for_stats');
+save(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',numel(subjects),task_name,analysis)),'for_stats');
 
 end
