@@ -55,7 +55,6 @@ for bs = 1:num_bootstrap_samples
     end
     avg_datasets = squeeze(mean(datasets,1));
     peak_latency_all_samples(bs) = find(avg_datasets==max(avg_datasets));
-    disp(bs);
 end
 
 %% 2) Get mean bootstrapped peak latency
