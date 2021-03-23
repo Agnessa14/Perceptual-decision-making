@@ -1,11 +1,12 @@
-function plot_object_decoding_both_tasks(subjects,with_stats)
+function plot_object_decoding_both_tasks(subjects,with_stats,analysis)
 %PLOT_OBJECT_BOTH_TASKS Plot the results from object decoding, averaged over
 %all participants for both tasks (categorization and distraction).
 %
-%Input: subject IDs,with_stats (1 plot with stats, 0 plot without)
+%Input: subject IDs, with_stats (1 plot with stats, 0 plot without),
+%analysis ('object_decoding' or 'category_decoding')
 %
 %Output: curve of decoding accuracies per timepoint, for two tasks
-
+%
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
@@ -48,7 +49,6 @@ ylim([45 80]);
 
 %% Plot stats if needed
 if with_stats
-    analysis = 'object_decoding';
     for task = 1:2
         if task == 1
             task_name = 'categorization';
