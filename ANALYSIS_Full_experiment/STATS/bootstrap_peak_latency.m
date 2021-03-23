@@ -45,16 +45,26 @@ peak_latency_all_samples = NaN(num_bootstrap_samples,1);
 
 %% 1) Create the bootstrap samples
 rng(0,'twister');
-max = num_datasets; %for the random dataset index generator
-min = 1;
+max_dataset = num_datasets; %for the random dataset index generator
+min_dataset = 1;
 for bs = 1:num_bootstrap_samples
     datasets = NaN(size(decoding_accuracies_all));
     for d = 1:num_datasets
-        idx = round((max-min).*rand(1,1) + min); %pick one random number between one and num_datasets
-        disp(idx)
+        idx = round((max_dataset-min_dataset).*rand(1,1) + min_dataset); %pick one random number between one and num_datasets
         datasets(d,:) = decoding_accuracies_all(idx,:);
     end
+    avg_datasets = squeeze(mean(datasets,1));
+    peak_latency_all_samples(bs) = find(avg_datasets==max(avg_datasets));
+    disp(bs);
 end
+
+%% 2) Get mean bootstrapped peak latency
+peak_latency = round(mean(peak_latency_all_samples));
+
+%% 3) Get 95% confidence interval
+confidence_interval = NaN(2,1);
+confidence_interval(1) = prctile(peak_latency_all_samples,2.5);
+confidence_interval(2) = prctile(peak_latency_all_samples,97.5);
 
 
 
