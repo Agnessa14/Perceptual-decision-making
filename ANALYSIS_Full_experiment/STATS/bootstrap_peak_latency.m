@@ -14,11 +14,12 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 % results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
+                                    %%%%% SETUP %%%%%
 %% Pre-allocate + setup for loading
 task_name = get_task_name(task);
 sorted_subjects = sort(subjects);
 numTimepoints = 200;
-decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numTimepoints);
+decoding_accuracies_all = NaN(sorted_subjects(end),numTimepoints);
 if strcmp(analysis,'object_decoding')
     filename = 'svm_decoding_accuracy';
     var_name = 'decodingAccuracy_avg';
@@ -29,11 +30,31 @@ for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,sprintf('%s_%s.mat',filename,task_name)));
-    decoding_accuracies_all_subjects(subject,:) = squeeze(nanmean(nanmean(eval(var_name),1),2)); %decodingAccuracy_avg; average over conditions
+    decoding_accuracies_all(subject,:) = squeeze(nanmean(nanmean(eval(var_name),1),2)); %decodingAccuracy_avg; average over conditions
 end 
 
+%Remove nan subjects
+decoding_accuracies_all = decoding_accuracies_all(~isnan(decoding_accuracies_all(:,1)),:); %if timepoint 1 is empty, assume there is no data for that subject
 
+                                  %%%%% BOOTSTRAPPING %%%%%
 
+%% 0) Prepare required variables
+num_bootstrap_samples = 1000;
+num_datasets = size(decoding_accuracies_all,1);
+peak_latency_all_samples = NaN(num_bootstrap_samples,1);
+
+%% 1) Create the bootstrap samples
+rng(0,'twister');
+max = num_datasets; %for the random dataset index generator
+min = 1;
+for bs = 1:num_bootstrap_samples
+    datasets = NaN(size(decoding_accuracies_all));
+    for d = 1:num_datasets
+        idx = round((max-min).*rand(1,1) + min); %pick one random number between one and num_datasets
+        disp(idx)
+        datasets(d,:) = decoding_accuracies_all(idx,:);
+    end
+end
 
 
 
