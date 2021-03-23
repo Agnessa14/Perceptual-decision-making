@@ -12,7 +12,6 @@ function [peak_latency, confidence_interval] = bootstrap_peak_latency(subjects,t
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
-% results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
                                     %%%%% SETUP %%%%%
 %% Pre-allocate + setup for loading
