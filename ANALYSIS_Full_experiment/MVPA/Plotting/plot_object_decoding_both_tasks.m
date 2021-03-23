@@ -2,7 +2,7 @@ function plot_object_decoding_both_tasks(subjects,with_stats)
 %PLOT_OBJECT_BOTH_TASKS Plot the results from object decoding, averaged over
 %all participants for both tasks (categorization and distraction).
 %
-%Input: subject IDs, ,with_stats (1 plot with stats, 0 plot without)
+%Input: subject IDs,with_stats (1 plot with stats, 0 plot without)
 %
 %Output: curve of decoding accuracies per timepoint, for two tasks
 
@@ -44,6 +44,7 @@ hold on;
 title = sprintf('Object decoding per timepoint for %d subjects',numel(subjects));
 onset_time = 40; 
 xticks(0:10:200);
+ylim([45 80]);
 
 %% Plot stats if needed
 if with_stats
@@ -74,11 +75,18 @@ if with_stats
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
+        hold on;
+        
+        %peak latency and 95% confidence interval 
+        [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
+        quiver(peak_latency,80,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
+        quiver(CI(1),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(CI(2),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
     end
 end 
 
-legend_cell = {'Scene categorization','Distraction'};
-plotting_parameters(title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
+legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to add the arrowws and CIs to the legend
+plotting_parameters(title,legend_cell{1:3},onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
 %% Save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks',numel(subjects)))); %save as matlab figure
