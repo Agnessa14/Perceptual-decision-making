@@ -79,8 +79,10 @@ critical_value = arrayfun(@(x) (x/numPermutations)*Q, pv);
 
 %% 3) Cut off at the largest p-value that is smaller than its critical value
 rank_largest = [];
+p_sorted_descending = sort(p_sorted,'descend');
+critical_value_descending = sort(critical_value,'descend');
 for p = pv
-    if p_sorted(p) < critical_value(p)
+    if p_sorted_descending(p) < critical_value_descending(p)
         rank_largest = p;
     else
         break
@@ -88,7 +90,7 @@ for p = pv
 end
 
 if ~isempty(rank_largest)
-    significant_pvalues = p_sorted(1:rank_largest);
+    significant_pvalues = p_sorted_descending(rank_largest:end);
     st = arrayfun(@(x) find(p_by_time==significant_pvalues(x)),...
         1:numel(significant_pvalues));
     significant_timepoints = zeros(numTimepoints,1);
