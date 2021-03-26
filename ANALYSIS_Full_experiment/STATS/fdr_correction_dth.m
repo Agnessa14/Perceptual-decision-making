@@ -51,20 +51,27 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
 
                         %%%%% PERMUTATION TEST %%%%%
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 10000;
+numPermutations = 10;% 10000;
 all_correlations = NaN(numPermutations,numTimepoints);
 
 for perm = 1:numPermutations %replace by parfor!
     permuted_RTs = medianRT(randperm(numel(medianRT)));
     all_correlations(perm,:) = arrayfun(@(x) corr(mean_distances(:,x),permuted_RTs','type','Spearman'),t);
 end
-        
+keyboard;
 %% 2) Calculate the p-value of the true value WRT the permuted samples
 %histogram? and then check the value in the 95th percentile?
-
+%calculate the b value: num of permutations larger than the ground truth 
+p = NaN(numTimepoints,1);
+for tp = 1:numTimepoints
+    b = numel(find(all_correlations,tp) > true_correlation(tp)); %https://benediktehinger.de/blog/science/permutation-test-for-matlab/
+    p(tp) = (b+1) / (numPermutations+1);
+end
             %%%%% FDR CORRECTION: Benjamini-Hochberg procedure %%%%%
+%% 1) Rank the p-values in ascending order & assign ranks
+%% 2) Calculate the critical value for each p-value
+%% 3) Cut off at the largest p-value that is smaller than its critical value
 
-        
         
         
         
