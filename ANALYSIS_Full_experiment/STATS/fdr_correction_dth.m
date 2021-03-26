@@ -95,16 +95,5 @@ else
     disp('No significant timepoints were found');
 end
 
-end
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-                        
+end  
+                   
