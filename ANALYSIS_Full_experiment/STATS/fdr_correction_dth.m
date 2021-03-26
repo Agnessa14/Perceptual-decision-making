@@ -5,7 +5,7 @@ function significant_timepoints = fdr_correction_dth(subjects,task,category)
 %Input: subject IDs, with_stats (1 plot with stats, 0 plot without),
 %category ('artificial', 'natural', 'average' or 'both')
 %
-%Output: 1xP vector of significance (1) or not (0), where P is the number
+%Output: Px1 vector of significance (1) or not (0), where P is the number
 %of timepoints.
 %
 %
