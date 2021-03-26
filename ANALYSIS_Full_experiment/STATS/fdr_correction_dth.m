@@ -89,8 +89,10 @@ end
 
 if ~isempty(rank_largest)
     significant_pvalues = p_sorted(1:rank_largest);
-    significant_timepoints = arrayfun(@(x) find(p_by_time==significant_pvalues(x)),...
+    st = arrayfun(@(x) find(p_by_time==significant_pvalues(x)),...
         1:numel(significant_pvalues));
+    significant_timepoints = zeros(numTimepoints,1);
+    significant_timepoints(st) = 1;
 else
     disp('No significant timepoints were found');
 end
