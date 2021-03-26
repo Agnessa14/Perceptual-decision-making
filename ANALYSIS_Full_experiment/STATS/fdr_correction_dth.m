@@ -1,4 +1,4 @@
-function fdr_correction_dth(subjects,task,category)
+function significant_timepoints = fdr_correction_dth(subjects,task,category)
 %FDR_CORRECTION_DTH Perform permutation tests + FDR correction on the p-values to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -51,27 +51,52 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
 
                         %%%%% PERMUTATION TEST %%%%%
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 10;% 10000;
+numPermutations = 10;
 all_correlations = NaN(numPermutations,numTimepoints);
-
-for perm = 1:numPermutations %replace by parfor!
+for perm = 1:numPermutations
+    if ~mod(perm,100)
+        fprintf('Permutation %d \n',perm);
+    end
     permuted_RTs = medianRT(randperm(numel(medianRT)));
     all_correlations(perm,:) = arrayfun(@(x) corr(mean_distances(:,x),permuted_RTs','type','Spearman'),t);
 end
-keyboard;
+
 %% 2) Calculate the p-value of the true value WRT the permuted samples
-%histogram? and then check the value in the 95th percentile?
-%calculate the b value: num of permutations larger than the ground truth 
-p = NaN(numTimepoints,1);
+p_by_time = NaN(numTimepoints,1);
 for tp = 1:numTimepoints
+    %calculate the b value: num of permutations larger than the ground truth 
     b = numel(find(all_correlations,tp) > true_correlation(tp)); %https://benediktehinger.de/blog/science/permutation-test-for-matlab/
-    p(tp) = (b+1) / (numPermutations+1);
+    p_by_time(tp) = (b+1) / (numPermutations+1);
 end
             %%%%% FDR CORRECTION: Benjamini-Hochberg procedure %%%%%
-%% 1) Rank the p-values in ascending order & assign ranks
-%% 2) Calculate the critical value for each p-value
-%% 3) Cut off at the largest p-value that is smaller than its critical value
+%% 1) Rank the p-values in ascending order
+p_sorted = sort(p_by_time);
 
+%% 2) Calculate the critical value for each p-value
+Q = 0.05; %define a false discovery rate threshold
+pv = 1:numel(p_sorted);
+critical_value = arrayfun(@(x) (x/numPermutations)*Q, pv);
+
+%% 3) Cut off at the largest p-value that is smaller than its critical value
+rank_largest = [];
+for p = pv
+    if p_sorted(p) < critical_value(p)
+        rank_largest = p;
+    else
+        break
+    end
+end
+
+if ~isempty(rank_largest)
+    significant_pvalues = p_sorted(1:rank_largest);
+    significant_timepoints = arrayfun(@(x) find(p_by_time==significant_pvalues(x)),...
+        1:numel(significant_pvalues));
+else
+    disp('No significant timepoints were found');
+end
+
+end
+    
         
         
         
