@@ -51,7 +51,7 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
 
                         %%%%% PERMUTATION TEST %%%%%
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 10;
+numPermutations = 10000;
 all_correlations = NaN(numPermutations,numTimepoints);
 for perm = 1:numPermutations
     if ~mod(perm,100)
@@ -65,7 +65,7 @@ end
 p_by_time = NaN(numTimepoints,1);
 for tp = 1:numTimepoints
     %calculate the b value: num of permutations larger than the ground truth 
-    b = numel(find(all_correlations,tp) > true_correlation(tp)); %https://benediktehinger.de/blog/science/permutation-test-for-matlab/
+    b = numel(find(abs(all_correlations(:,tp)) > abs(true_correlation(tp)))); %https://benediktehinger.de/blog/science/permutation-test-for-matlab/
     p_by_time(tp) = (b+1) / (numPermutations+1);
 end
             %%%%% FDR CORRECTION: Benjamini-Hochberg procedure %%%%%
