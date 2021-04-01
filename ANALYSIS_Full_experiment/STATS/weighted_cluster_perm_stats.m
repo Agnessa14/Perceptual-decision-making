@@ -49,9 +49,10 @@ mean_distances = mean_distances(conditions,:);
 t = 1:numTimepoints;
 true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
 
-                 %%%%% PERMUTATION TEST: CALCULATING THE GROUND TRUTH P-VALUES %%%%%
+                 %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
+
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 10000;
+numPermutations = 1000;
 sample_correlations = NaN(numPermutations,numTimepoints);
 for perm = 1:numPermutations
     if ~mod(perm,100)
@@ -61,43 +62,21 @@ for perm = 1:numPermutations
     sample_correlations(perm,:) = arrayfun(@(x) corr(mean_distances(:,x),permuted_RTs','type','Spearman'),t);
 end
 
-%% 2) Calculate the p-value of the true value WRT the permuted samples
-p_ground_truth = NaN(numTimepoints,1);
- 
-for tp = 1:numTimepoints
-    %calculate the b value: num of permutations larger than the ground truth 
-    b = numel(find( abs(sample_correlations(:,tp)) > abs(true_correlation(tp)) )); %https://benediktehinger.de/blog/science/permutation-test-for-matlab/
-    p_ground_truth(tp) = (b+1) / (numPermutations+1); 
-end
-%p_ground_truth = (numPermutations+1 - tiedrank(abs([true_correlation;all_correlations]))) / numPermutations;
-
+%% 2) Calculate the p-value of the ground truth and of the permuted samples
+all_correlations = [true_correlation;sample_correlations];
+p_ground_and_samples = (numPermutations+1 - tiedrank(abs(all_correlations))) / numPermutations;
            
                 %%%%% CLUSTER-BASED PT: ATTRIBUTE SIGNIFICANCE TO TIMEPOINTS %%%%%
-     
-%% 1) Calculate the p-values of each permutation sample (at each timepoint)
-p_samples = NaN(numPermutations,numTimepoints);
-% all_correlations = [true_correlation;sample_correlations];
-for perm = 1:numPermutations
-%     p_samples(perm,tp) = (numPermutations+1 - tiedrank(abs(sample_correlations(perm,:)))) / numPermutations;
-    if ~mod(perm,100)
-        fprintf('Calculating the p-value %d \n',perm);
-    end
-    for tp = 1:numTimepoints
-        b = numel(find( abs(sample_correlations(:,tp)) > abs(sample_correlations(perm,tp)) )); 
-        p_samples(perm,tp) = (b+1) / (numPermutations+1); 
-    end
-end
-% p_samples(perm,tp) = arrayfun(@(x,y) ...
-%     (numPermutations+1 - tiedrank(abs([true_correlation(x);all_correlations(y,x)]))) / numPermutations, [1:numTimepoints,1:numPermutations]);
 
-%% 2) Find maximum weighted cluster (highest sum of correlations) in the ground truth and the permutation samples
+%% 1) Find maximum weighted cluster (highest sum of correlations) in the ground truth and the permutation samples
 %find maximum cluster size and maximum weighted cluster for all permutation samples
 cluster_th = 0.05;
 clusterMaxSize = NaN(numPermutations,1);
 clusterMaxWei = NaN(numPermutations,1);
 
 %ground truth
-[clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(p_ground_truth, p_ground_truth<=cluster_th);
+p_ground = squeeze(p_ground_and_samples(1,:));
+[clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(p_ground, p_ground<=cluster_th);
 
 %permutation samples
 for perm = 1:numPermutations
