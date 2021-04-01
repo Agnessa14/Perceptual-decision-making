@@ -53,7 +53,7 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 1000;
+numPermutations = 10000;
 sample_correlations = NaN(numPermutations,numTimepoints);
 for perm = 1:numPermutations
     if ~mod(perm,100)
