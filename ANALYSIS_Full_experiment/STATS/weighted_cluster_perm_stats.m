@@ -1,4 +1,4 @@
-function significant_timepoints = weighted_cluster_perm_stats(subjects,task,category)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task,category)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -12,6 +12,7 @@ function significant_timepoints = weighted_cluster_perm_stats(subjects,task,cate
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
+results_avg = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %% Get the distances from all subjects
 task_name = get_task_name(task);
@@ -118,7 +119,11 @@ end
 
 %% Save        
 if ~isempty(clustersize)
-    
+    permutation_stats.SignificantMaxClusterSize = significantVarMax;
+    permutation_stats.SignificantMaxClusterWeight = significantVarWei;
+    permutation_stats.pValueClusterSize = pValMax;
+    permutation_stats.pValueWeight = pValWeight;
+    save(fullfile(results_avg,sprintf('dth_permutation_stats_category_%s_%s_task_%d_subjects',category,task_name,numel(subjects))),'permutation_stats');
 end
 
 end  
