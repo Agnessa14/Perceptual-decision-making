@@ -76,14 +76,15 @@ clusterMaxWei = NaN(numPermutations,1);
 
 %ground truth
 p_ground = squeeze(p_ground_and_samples(1,:));
-[clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(p_ground, p_ground<=cluster_th);
+[clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(abs(true_correlation), p_ground<=cluster_th);
 
 %permutation samples
+p_samples = p_ground_and_samples(2:end,:);
 for perm = 1:numPermutations
     if ~mod(perm,100)
         fprintf('Permutation %d \n',perm);
     end
-    [clusterMaxSize(perm), clusterMaxWei(perm)] = find_clusters_weight_alld(squeeze(p_samples(perm,:)), squeeze(p_samples(perm,:)<=cluster_th));
+    [clusterMaxSize(perm), clusterMaxWei(perm)] = find_clusters_weight_alld(squeeze(abs(sample_correlations(perm,:))), squeeze(p_samples(perm,:)<=cluster_th));
 end           
 
 %combine ground and permutation samples
