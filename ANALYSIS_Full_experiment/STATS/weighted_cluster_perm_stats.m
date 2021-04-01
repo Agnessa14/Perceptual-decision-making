@@ -1,9 +1,10 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task,category)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task,category,save)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
-%Input: subject IDs, with_stats (1 plot with stats, 0 plot without),
-%category ('artificial', 'natural', 'average' or 'both')
+%Input: subject IDs, task (1 = categorization, 2 = distraction),
+%category ('artificial', 'natural', 'average' or 'both'), save (save the
+%structure or not)
 %
 %Output: 1xP vector of significance (1) or not (0), where P is the number
 %of timepoints.
@@ -118,7 +119,7 @@ else
 end
 
 %% Save        
-if ~isempty(clustersize)
+if save == 1 && ~isempty(clustersize)
     permutation_stats.SignificantMaxClusterSize = significantVarMax;
     permutation_stats.SignificantMaxClusterWeight = significantVarWei;
     permutation_stats.pValueClusterSize = pValMax;
