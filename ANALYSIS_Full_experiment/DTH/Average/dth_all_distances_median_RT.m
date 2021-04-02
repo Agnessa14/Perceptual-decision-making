@@ -8,6 +8,7 @@ function dth_all_distances_median_RT(subjects,task,with_stats) %distance art, di
 %participants of each condition (60 scenes), averaged, at each timepoint, resulting in a plot of Spearman's correlation vs time. 
 %
 
+
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
