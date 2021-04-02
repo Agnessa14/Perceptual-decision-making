@@ -78,9 +78,6 @@ if with_stats
             color = color_avg;
         end
 
-        %significant timepoints
-%         load(fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
-%         numel(subjects),task_name,analysis)));
         significant_timepoints = weighted_cluster_perm_stats(subjects,task,category,0);
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
@@ -88,6 +85,7 @@ if with_stats
         hold on;        
     end
 end 
+
 %Plotting parameters
 if task==1
     task_title = 'scene categorization';
@@ -96,7 +94,7 @@ elseif task==2
 end
 title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
 legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
-    'Average of artificial and natural scenes','Stimulus onset'};
+    'Average of artificial and natural scenes'}; %add stimulus onset?
 xticks(0:10:200);
 plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
 
