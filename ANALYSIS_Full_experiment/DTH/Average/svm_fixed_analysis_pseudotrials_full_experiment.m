@@ -17,9 +17,8 @@ task_name = get_task_name(task);
 %% Get the distances from all subjects
 numTimepoints = 200;
 numConditions = 60;
-sorted_subjects = sort(subjects); %order by ID
-distances = NaN(sorted_subjects(end),numConditions,numTimepoints);
-RTs = NaN(numel(subjects),numConditions);
+distances = NaN(max(subjects),numConditions,numTimepoints);
+RTs = NaN(max(subjects),numConditions);
 
 for subject = subjects
     subname = get_subject_name(subject);
