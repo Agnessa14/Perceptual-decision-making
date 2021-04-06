@@ -1,5 +1,5 @@
-function SVM_object_decoding_full_experiment_sub10(subject,task) 
-%SVM_OBJECT_DECODING_FULL_EXPERIMENT_SUB10 Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
+function SVM_object_decoding_full_experiment_removed_scene(subject,task) 
+%SVM_OBJECT_DECODING_FULL_EXPERIMENT_REMOVED_SCENE Perform object decoding (average of pairwise object decoding) using the SVM classifier. 
 %Script only for subject 10 (and 15), who had only 3 correct trials for scene 47,
 %and therefore needs to have a different number of trials.
 %
