@@ -12,6 +12,8 @@ function [dataMatrix] = create_data_matrix(numConditions,triggers,minNumTrials,d
 %
 %Output: NxMxExTP matrix containing the data in the desired format.
 %
+
+rng('shuffle');
 numElectrodes = size(data,2);
 numTimepoints = size(data,3);
 dataMatrix = NaN(numConditions,minNumTrials,numElectrodes,numTimepoints);
