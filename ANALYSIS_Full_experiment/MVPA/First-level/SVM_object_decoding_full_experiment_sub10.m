@@ -41,11 +41,13 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 %% Define the required variables
 numConditionsAll = 60;
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
-numTrials = min(trials_per_condition(trials_per_condition>3));
+removed_condition = find(trials_per_condition==min(trials_per_condition));
+low_minnumtrials = min(trials_per_condition);
+numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
-%exclude trials from scene 47
+%exclude trials from removed scene 
 included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
@@ -66,7 +68,7 @@ for perm = 1:numPermutations
     numTrialsPerBin = round(numTrials/6);
     [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
    
-    %only get the lower diagonal
+    %only get the upper diagonal
     for condA=1:numConditionsIncluded-1 %1:59
         for condB = condA+1:numConditionsIncluded %2:60
             for timePoint = 1:numTimepoints 
@@ -96,10 +98,10 @@ for perm = 1:numPermutations
     toc
 end
 
-%% Add NaN to the 47th scene
+%% Add NaN to the removed scene
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-DA_1 = [decodingAccuracy_avg(1:46,:,:);NaN(1,59,200);decodingAccuracy_avg(47:end,:,:)];
-DA_2 = [DA_1(:,1:46,:),NaN(60,1,200),DA_1(:,47:end,:)];
+DA_1 = [decodingAccuracy_avg(1:removed_condition-1,:,:);NaN(1,numConditionsAll-1,200);decodingAccuracy_avg(removed_condition:end,:,:)];
+DA_2 = [DA_1(:,1:removed_condition-1,:),NaN(numConditionsAll,1,200),DA_1(:,removed_condition:end,:)];
 decodingAccuracy_avg = DA_2;
 
 %% Save the decoding accuracy
