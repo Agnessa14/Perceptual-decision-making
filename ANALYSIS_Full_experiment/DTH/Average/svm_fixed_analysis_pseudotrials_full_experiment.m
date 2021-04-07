@@ -44,8 +44,8 @@ mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
 %% Correlate DTH and RT
 t = 1:numTimepoints;
 correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
-correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditions/2,x),medianRT_art','type','Spearman'),t);
-correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditions/2)+1:end,x),medianRT_nat','type','Spearman'),t);
+correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(artificial_conditions,x),medianRT_art','type','Spearman'),t);
+correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances(natural_conditions,x),medianRT_nat','type','Spearman'),t);
 correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
 
 %% Plot 
