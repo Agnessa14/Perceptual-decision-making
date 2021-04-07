@@ -99,11 +99,12 @@ plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %
 
 %% Save
 %correlations
+dth_results.corr_both_categories = correlation_dth_rt_both;
+dth_results.corr_artificial = correlation_dth_rt_art;
+dth_results.corr_natural = correlation_dth_rt_nat;
+dth_results.corr_avg_categories = correlation_dth_rt_avg;
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_both_categories_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_both');
-save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_artificial_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_art');
-save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_natural_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_nat');
-save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_rt_avg_%d_subjects_%s.mat',numel(subjects),task_name)),'correlation_dth_rt_avg');
+save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s.mat',numel(subjects),task_name)),'dth_results');
 
 %figures
 saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s',numel(subjects),task_name))); 
