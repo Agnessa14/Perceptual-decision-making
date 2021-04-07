@@ -1,4 +1,4 @@
-function svm_fixed_analysis_pseudotrials_full_experiment(subjects,task,with_stats) %distance art, distance nat, RT
+function svm_fixed_analysis_pseudotrials_full_experiment(subjects,task,with_stats) 
 %SVM_FIXED_ANALYSIS_PSEUDOTRIALS_FULL_EXPERIMENT Performs the distance-to-hyperplane analysis using
 %the svm classifier 60 scenes on normalized distances.
 %
