@@ -19,24 +19,33 @@ numTimepoints = 200;
 numConditions = 60;
 distances = NaN(max(subjects),numConditions,numTimepoints);
 RTs = NaN(max(subjects),numConditions);
-
+RTs_art = NaN(max(subjects),numConditions/2);
+RTs_nat = NaN(size(RTs_art));
+artificial_conditions = 1:numConditions/2;
+natural_conditions = (numConditions/2)+1:numConditions;
 for subject = subjects
     subname = get_subject_name(subject);
     load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)));
     load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name)));
     distances(subject,:,:) = decisionValues_Avg;   
+    
+    %normalize RTs
     RTs(subject,:) = normalize(RT_per_condition);
+    RTs_art(subject,:) = normalize(RT_per_condition(artificial_conditions));
+    RTs_nat(subject,:) = normalize(RT_per_condition(natural_conditions));
 end
 
 %% Get the median RTs and mean distances of all subjects for each condition 
 medianRT = nanmedian(RTs,1);
+medianRT_art = nanmedian(RTs_art,1);
+medianRT_nat = nanmedian(RTs_nat,1);
 mean_distances = squeeze(nanmean(distances,1)); %avg over subjects
 
 %% Correlate DTH and RT
 t = 1:numTimepoints;
 correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
-correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditions/2,x),medianRT(1:numConditions/2)','type','Spearman'),t);
-correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditions/2)+1:end,x),medianRT((numConditions/2)+1:end)','type','Spearman'),t);
+correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(1:numConditions/2,x),medianRT_art','type','Spearman'),t);
+correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances((numConditions/2)+1:end,x),medianRT_nat','type','Spearman'),t);
 correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
 
 %% Plot 
@@ -91,11 +100,11 @@ if task==1
 elseif task==2
     task_title = 'distraction';
 end
-title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
+plot_title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
 legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
     'Average of artificial and natural scenes'}; %add stimulus onset?
 xticks(0:10:200);
-plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
+plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
 
 %% Save
 %correlations
