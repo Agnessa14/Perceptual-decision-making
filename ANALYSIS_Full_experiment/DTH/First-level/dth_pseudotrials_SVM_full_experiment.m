@@ -37,8 +37,8 @@ addpath(results_dir);
 
 %% Prepare data
 %load data
-load(fullfile(data_dir,sprintf('zero_cfg_timelock_%s',task_name))); %eeg
-load(fullfile(data_dir,sprintf('zero_cfg_preprocessed_behavioural_data_%s',task_name)));
+load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); 
@@ -57,6 +57,7 @@ numPermutations=100;
 decisionValues = NaN(numPermutations,numConditions,numTimepoints);
 
 %% Running the MVPA
+rng('shuffle');
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
@@ -66,7 +67,7 @@ for perm = 1:numPermutations
     data = multivariate_noise_normalization(data);
 
     disp('Split into artificial and natural');
-    data_artificial = data(1:num_conditions_per_category,:,:,:); %in Ritchie's dataset, the natural conditions come first
+    data_artificial = data(1:num_conditions_per_category,:,:,:); 
     data_natural = data(num_conditions_per_category+1:end,:,:,:);
        
     disp('Training set: Reshape by taking the trials from all conditions for each category');
@@ -120,7 +121,7 @@ end
 
 %% Save the decision values
 decisionValues_Avg = squeeze(mean(decisionValues,1));
-save(fullfile(results_dir,sprintf('zero_cfg_dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
+save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditions,1);
@@ -129,7 +130,7 @@ RT_correct = behav.RT(behav.RT > 0 & behav.points == 1);
 for c = 1:numConditions
     RT_per_condition(c) = mean(RT_correct(timelock_triggers==c));
 end
-filename_RT = sprintf('zero_cfg_RTs_correct_trials_%s.mat',task_name);
+filename_RT = sprintf('RTs_correct_trials_%s.mat',task_name);
 save(fullfile(results_dir,filename_RT),'RT_per_condition');
 
 end
