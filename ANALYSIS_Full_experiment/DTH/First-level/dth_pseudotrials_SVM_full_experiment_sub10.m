@@ -1,5 +1,5 @@
 function dth_pseudotrials_SVM_full_experiment_sub10(subject,task)
-%DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT_SUB10 Performs the distance-to-hyperplane analysis using SVM on
+%DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT_REMOVED_SCENE Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. Instead of creating pseudoconditions out of scenes,
 %the trials from across conditions are lumped into pseudotrials.  For the
 %categorization task of subject 10 who only had 3 correct trials in the categorization task: removing all trials for scene 47. 
@@ -52,7 +52,9 @@ num_categories = 2; %categories to decode
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
-numTrials = min(trials_per_condition(trials_per_condition>3));
+removed_condition = find(trials_per_condition==min(trials_per_condition));
+low_minnumtrials = min(trials_per_condition);
+numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
 
 %exclude trials from scene 47
 included_conditions = find(trials_per_condition>=numTrials);
@@ -60,12 +62,16 @@ numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
 decisionValues = NaN(numPermutations,numConditionsIncluded,numTimepoints);
-last_condition_artificial = 30;
-first_condition_natural = 31;
-num_conditions_artificial = 30;
-num_conditions_natural = 29; 
+if removed_condition<=30
+    num_conditions_artificial = 29;
+    num_conditions_natural = 30; 
+else
+    num_conditions_artificial = 30;
+    num_conditions_natural = 29; 
+end
 
 %% Running the MVPA
+rng('shuffle');
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
@@ -76,8 +82,8 @@ for perm = 1:numPermutations
     data = multivariate_noise_normalization(data);
 
     disp('Split into artificial and natural');
-    data_artificial = data(1:last_condition_artificial,:,:,:); 
-    data_natural = data(first_condition_natural:end,:,:,:);
+    data_artificial = data(1:num_conditions_artificial,:,:,:); 
+    data_natural = data(num_conditions_artificial+1:end,:,:,:);
        
     disp('Training set: Reshape by taking the trials from all conditions for each category');
     size_data_artificial = size(data_artificial);
@@ -130,13 +136,17 @@ for perm = 1:numPermutations
 end
 
 
-%% Add NaN to the 47th scene
+%% Add NaN to the removed scene
 decisionValues_Avg = squeeze(mean(decisionValues,1));
-DV_1 = [decisionValues_Avg(1:46,:);NaN(1,200);decisionValues_Avg(47:end,:)];
+DV_1 = [decisionValues_Avg(1:removed_condition-1,:);NaN(1,numTimepoints);decisionValues_Avg(removed_condition:end,:)];
 decisionValues_Avg = DV_1;
 
 %% Save the decision values
-save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
+if subject==15
+    save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s_shuffle',task_name)),'decisionValues_Avg');
+else
+    save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
+end
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditionsAll,1);
@@ -146,9 +156,8 @@ for c = 1:numConditionsAll
     RT_per_condition(c) = mean(RT_correct(timelock_triggers==c));
 end
 
-% % Add NaN to the 47th scene
-% RT_per_condition = RT_per_condition(included_conditions);
-RT_per_condition(47) = NaN;
+%Add NaN to the removed scene
+RT_per_condition(removed_condition) = NaN;
 filename_RT = sprintf('RTs_correct_trials_%s.mat',task_name);
 save(fullfile(results_dir,filename_RT),'RT_per_condition');
 
