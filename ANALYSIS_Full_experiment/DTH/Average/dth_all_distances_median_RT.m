@@ -20,17 +20,24 @@ numTimepoints = 200;
 numConditions = 60;
 distances = NaN(max(subjects),numConditions,numTimepoints);
 RTs = NaN(max(subjects),numConditions);
-
+RTs_art = NaN(max(subjects),numConditions/2);
+RTs_nat = NaN(size(RTs_art));
+artificial_conditions = 1:numConditions/2;
+natural_conditions = (numConditions/2)+1:numConditions;
 for subject = subjects
     subname = get_subject_name(subject);
     load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)));
     load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name)));
     distances(subject,:,:) = decisionValues_Avg;   
     RTs(subject,:) = normalize(RT_per_condition);
+    RTs_art(subject,:) = normalize(RT_per_condition(artificial_conditions));
+    RTs_nat(subject,:) = normalize(RT_per_condition(natural_conditions));
 end
 
 %% Get the median RTs of all subjects for each condition 
 medianRT = nanmedian(RTs,1);
+medianRT_art = nanmedian(RTs_art,1);
+medianRT_nat = nanmedian(RTs_nat,1);
 
 %% Correlate each subject's distances with the median RT
 t = 1:numTimepoints;
@@ -41,8 +48,8 @@ correlation_both = NaN(size_corr);
 correlation_avg = NaN(size_corr);
 
 for subject = subjects
-    correlation_art(subject,:) = arrayfun(@(x) corr(squeeze(distances(subject,1:numConditions/2,x))',medianRT(1:numConditions/2)','type','Spearman'), t);
-    correlation_nat(subject,:) = arrayfun(@(x) corr(squeeze(distances(subject,(numConditions/2)+1:end,x))',medianRT((numConditions/2)+1:end)','type','Spearman'), t);
+    correlation_art(subject,:) = arrayfun(@(x) corr(squeeze(distances(subject,artificial_conditions,x))',medianRT_art','type','Spearman'), t);
+    correlation_nat(subject,:) = arrayfun(@(x) corr(squeeze(distances(subject,natural_conditions,x))',medianRT_nat','type','Spearman'), t);
     correlation_both(subject,:) = arrayfun(@(x) corr(squeeze(distances(subject,:,x))',medianRT','type','Spearman'), t);
     correlation_avg(subject,:) = mean([squeeze(correlation_art(subject,:));squeeze(correlation_nat(subject,:))],1);
 end
