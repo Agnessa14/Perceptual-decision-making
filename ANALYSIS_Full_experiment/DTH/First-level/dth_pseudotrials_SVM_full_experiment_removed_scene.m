@@ -1,4 +1,4 @@
-function dth_pseudotrials_SVM_full_experiment_sub10(subject,task)
+function dth_pseudotrials_SVM_full_experiment_removed_scene(subject,task)
 %DTH_PSEUDOTRIALS_SVM_FULL_EXPERIMENT_REMOVED_SCENE Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. Instead of creating pseudoconditions out of scenes,
 %the trials from across conditions are lumped into pseudotrials.  For the
@@ -142,11 +142,7 @@ DV_1 = [decisionValues_Avg(1:removed_condition-1,:);NaN(1,numTimepoints);decisio
 decisionValues_Avg = DV_1;
 
 %% Save the decision values
-if subject==15
-    save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s_shuffle',task_name)),'decisionValues_Avg');
-else
-    save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
-end
+save(fullfile(results_dir,sprintf('dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
 
 %% Get the average (over trials) reaction time for each condition
 RT_per_condition = NaN(numConditionsAll,1);
