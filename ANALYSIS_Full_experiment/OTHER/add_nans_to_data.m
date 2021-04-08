@@ -42,25 +42,27 @@ for subject = subjects
 
     if ismember(subject,1:4) && task==2
         %% Object decoding
-        decodingAccuracy_with_22 = cat(1,decodingAccuracy_avg(1:21,:,:),added_matrix_22_row,...
-            decodingAccuracy_avg(22:end,:,:));
-        decodingAccuracy_with_22 = cat(2,decodingAccuracy_with_22(:,1:21,:),added_matrix_22_column,...
-            decodingAccuracy_with_22(:,22:end,:));
-        decodingAccuracy_with_56 = cat(1,decodingAccuracy_with_22(1:55,:,:),added_matrix_56_row,...
-            decodingAccuracy_with_22(56:end,:,:));
-        decodingAccuracy_with_56 = cat(2,decodingAccuracy_with_56(:,1:55,:),added_matrix_56_column,...
-            decodingAccuracy_with_56(:,56:end,:));
-        %rename
-        decodingAccuracy_avg = decodingAccuracy_with_56;
-        
+        if isequal(size(decodingAccuracy_avg),[58,58,200])
+            decodingAccuracy_with_22 = cat(1,decodingAccuracy_avg(1:21,:,:),added_matrix_22_row,...
+                decodingAccuracy_avg(22:end,:,:));
+            decodingAccuracy_with_22 = cat(2,decodingAccuracy_with_22(:,1:21,:),added_matrix_22_column,...
+                decodingAccuracy_with_22(:,22:end,:));
+            decodingAccuracy_with_56 = cat(1,decodingAccuracy_with_22(1:55,:,:),added_matrix_56_row,...
+                decodingAccuracy_with_22(56:end,:,:));
+            decodingAccuracy_with_56 = cat(2,decodingAccuracy_with_56(:,1:55,:),added_matrix_56_column,...
+                decodingAccuracy_with_56(:,56:end,:));
+            %rename
+            decodingAccuracy_avg = decodingAccuracy_with_56;
+        end
         %% DTH
-        decisionValues_Avg_with_22 = cat(1,decisionValues_Avg(1:21,:),added_2d_array,decisionValues_Avg(22:end,:)); 
-        decisionValues_Avg_with_56 = cat(1,decisionValues_Avg_with_22(1:55,:),added_2d_array,decisionValues_Avg_with_22(56:end,:));
-        RT_per_condition_with_22 = [RT_per_condition(1:21);added_NaN;RT_per_condition(22:end)];
-        RT_per_condition_with_56 = [RT_per_condition_with_22(1:55);added_NaN;RT_per_condition_with_22(56:end)];
-        decisionValues_Avg = decisionValues_Avg_with_56;
-        RT_per_condition = RT_per_condition_with_56;
-        
+        if isequal(size(decisionValues_Avg),[58,200])
+            decisionValues_Avg_with_22 = cat(1,decisionValues_Avg(1:21,:),added_2d_array,decisionValues_Avg(22:end,:)); 
+            decisionValues_Avg_with_56 = cat(1,decisionValues_Avg_with_22(1:55,:),added_2d_array,decisionValues_Avg_with_22(56:end,:));
+            RT_per_condition_with_22 = [RT_per_condition(1:21);added_NaN;RT_per_condition(22:end)];
+            RT_per_condition_with_56 = [RT_per_condition_with_22(1:55);added_NaN;RT_per_condition_with_22(56:end)];
+            decisionValues_Avg = decisionValues_Avg_with_56;
+            RT_per_condition = RT_per_condition_with_56;
+        end
     elseif subject == 10 && task == 1
         %% OD
         decodingAccuracy_with_47 = cat(1,decodingAccuracy_avg(1:46,:,:),added_matrix_47_row,...
