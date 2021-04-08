@@ -40,7 +40,7 @@ numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %minimum number of trials per scene
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); 
