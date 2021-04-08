@@ -59,7 +59,7 @@ for perm = 1:numPermutations
     numTrialsPerBin = round(numTrials/6);
     [pseudoTrials,numPTs] = create_pseudotrials(numTrialsPerBin,data);
    
-    %only get the lower diagonal
+    %only get the upper diagonal
     for condA=1:numConditions-1 %1:59
         for condB = condA+1:numConditions %2:60
             for timePoint = 1:numTimepoints 
