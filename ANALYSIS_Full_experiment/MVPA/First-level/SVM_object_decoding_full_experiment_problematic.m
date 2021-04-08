@@ -37,7 +37,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 numConditionsAll = 60;
 [numTrials, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %Deal with the excluded samples
 included_conditions = find(trials_per_condition>=numTrials);
