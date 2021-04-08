@@ -1,4 +1,4 @@
-function SVM_artificial_vs_natural_decoding_PDM_full_experiment(subject) 
+function SVM_artificial_vs_natural_decoding_PDM_full_experiment(subject,task) 
 %SVM_ARTIFICIAL_VS_NATURAL_DECODING_PDM_FULL_EXPERIMENT Perform category decoding (artificial vs natural) using the SVM classifier. 
 %
 %Input: subject ID, task (1=categorization, 2=fixation)
@@ -16,8 +16,9 @@ addpath('/home/agnek95/OR/ANALYSIS/DECODING'); %MVNN function
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
-%subject name string
+%subject and task name string
 subname = get_subject_name(subject);
+task_name = get_task_name(task); 
 
 %check if there's a directory for that subject, otherwise create one
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
