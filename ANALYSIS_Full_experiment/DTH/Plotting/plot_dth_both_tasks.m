@@ -13,10 +13,11 @@ results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 addpath(genpath(results_dir));
 
 %Load the correlations
-load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_rt_both_categories_%d_subjects_categorization.mat',numel(subjects))));
-correlation_both_categorization = correlation_dth_rt_both;
-load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_rt_both_categories_%d_subjects_fixation.mat',numel(subjects))));
-correlation_both_fixation = correlation_dth_rt_both;
+load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_categorization.mat',numel(subjects))));
+correlation_both_categorization = dth_results.corr_both_categories;
+clear dth_results;
+load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_fixation.mat',numel(subjects))));
+correlation_both_fixation = dth_results.corr_both_categories;
 
 %% Plot 
 figure(abs(round(randn*10)));
