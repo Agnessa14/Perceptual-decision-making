@@ -123,8 +123,8 @@ for perm = 1:numPermutations
                         ', timepoints ->',num2str(timePoint1), ', and ->', num2str(timePoint2)]);
                     
                     %% Model 1: train on categorization, test on distraction
-                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,:,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,:,:,timePoint2))]; %(numbins-1)x63x1 each
-                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,:,:,timePoint1))' ; squeeze(pseudoTrials_distraction(condB,:,:,timePoint2))']; %1x63x1 each
+                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,:,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,:,:,timePoint1))]; %(numbins-1)x63x1 each
+                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,:,:,timePoint2)) ; squeeze(pseudoTrials_distraction(condB,:,:,timePoint2))]; %1x63x1 each
 
                     % class labels
                     labels_train_1=[ones(1,numPTs_categorization) 2*ones(1,numPTs_categorization)]; %one label for each pseudotrial
