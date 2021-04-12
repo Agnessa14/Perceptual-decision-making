@@ -69,7 +69,7 @@ for perm = 1:numPermutations
 
     disp('Split into artificial and natural');
     data_artificial = data(1:num_conditions_artificial,:,:,:);
-    data_natural = data(num_conditions_natural+1:end,:,:,:);
+    data_natural = data(num_conditions_artificial+1:end,:,:,:);
        
     disp('Average over trials and scenes');
     data_artificial_avg = squeeze(mean(data_artificial,2));
@@ -100,7 +100,7 @@ for perm = 1:numPermutations
     numScenesPerBin = 5;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
     
-    num_bins_testing = 3;  
+    num_bins_testing = 3;  %or 1/2 * numBins
     if removed_condition<=30
         testing_conditions_artificial = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins-1;
         testing_conditions_natural = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins;
