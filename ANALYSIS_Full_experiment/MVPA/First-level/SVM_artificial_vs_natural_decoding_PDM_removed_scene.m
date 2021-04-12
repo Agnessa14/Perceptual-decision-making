@@ -43,11 +43,10 @@ numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100; 
 
 %exclude trials from removed scene 
-included_conditions = find(trials_per_condition>=numTrials);
-numConditionsIncluded = numel(included_conditions);
+included_conditions = trials_per_condition>=numTrials;
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints);
+decodingAccuracy=NaN(numPermutations,numTimepoints);
 if removed_condition<=30
     num_conditions_artificial = 29;
     num_conditions_natural = 30; 
