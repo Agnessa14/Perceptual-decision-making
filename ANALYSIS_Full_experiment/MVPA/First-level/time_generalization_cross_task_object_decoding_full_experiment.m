@@ -104,12 +104,12 @@ for perm = 1:numPermutations
                         ', timepoints ->',num2str(timePoint1), ', and ->', num2str(timePoint2)]);
                     
                     %% Model 1: train on categorization, test on distraction
-                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,1:end-1,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,1:end-1,:,timePoint2))]; %(numbins-1)x63x1 each
-                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,end,:,timePoint1))' ; squeeze(pseudoTrials_distraction(condB,end,:,timePoint2))']; %1x63x1 each
+                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,:,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,:,:,timePoint1))]; %(numbins-1)x63x1 each
+                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,:,:,timePoint2)) ; squeeze(pseudoTrials_distraction(condB,:,:,timePoint2))]; %1x63x1 each
 
                     % class labels
-                    labels_train_1=[ones(1,numPTs_categorization-1) 2*ones(1,numPTs_categorization-1)]; %one label for each pseudotrial
-                    labels_test_1 = [1 2]; 
+                    labels_train_1=[ones(1,numPTs_categorization) 2*ones(1,numPTs_categorization)]; %one label for each pseudotrial
+                    labels_test_1=[ones(1,numPTs_distraction) 2*ones(1,numPTs_distraction)]; %one label for each pseudotrial
                     
                     %train & test the model
                     train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
@@ -141,6 +141,6 @@ end
 
 %% Save the decoding accuracy
 timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,sprintf('time_generalized_trained_on_cat_svm_decoding_accuracy_crosstask.mat')),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,'time_generalized_trained_on_cat_all_svm_decoding_accuracy_crosstask.mat'),'timeg_decodingAccuracy_avg');
 
 end
