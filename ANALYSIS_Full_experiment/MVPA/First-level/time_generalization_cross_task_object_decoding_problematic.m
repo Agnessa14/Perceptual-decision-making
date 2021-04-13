@@ -80,9 +80,8 @@ numConditions = 60;
 numTrials = min([min_cat, min_dis]); %minimum number of trials per scene
 
 %Deal with the excluded samples - distraction only
-included_conditions = trials_per_condition_dis>=numTrials;
-
-% numConditionsIncluded = numel(included_conditions);
+included_conditions = find(trials_per_condition_dis>=numTrials);
+numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
 % decodingAccuracy=NaN(numPermutations,numConditions,numConditions,50,50);
@@ -92,6 +91,7 @@ for perm = 1:numPermutations
     tic   
     disp('Creating the data matrices');
     data_categorization = create_data_matrix(numConditions,timelock_triggers_categorization,numTrials,downsampled_timelock_data_categorization);
+    data_categorization = data_categorization(included_conditions,:,:,:);
     data_distraction = create_data_matrix(numConditions,timelock_triggers_distraction,numTrials,downsampled_timelock_data_distraction);
     data_distraction = data_distraction(included_conditions,:,:,:); 
 
@@ -105,8 +105,8 @@ for perm = 1:numPermutations
     [pseudoTrials_distraction,numPTs_distraction] = create_pseudotrials(numTrialsPerBin,data_distraction);
     
     %only get the upper diagonal
-    for condA=1:numConditions 
-        for condB = 1:numConditions 
+    for condA=1:numConditionsIncluded 
+        for condB = 1:numConditionsIncluded 
             for timePoint1 = 1:numTimepoints 
                 for timePoint2 = 1:numTimepoints
                     disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
