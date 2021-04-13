@@ -22,25 +22,30 @@ sorted_subjects = sort(subjects); %order by ID
 if strcmp(analysis,'object_decoding')
     decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
     filename = sprintf('svm_decoding_accuracy_%s.mat',task_name);
+    all_dimensions = repmat({':'},1,3);
 elseif strcmp(analysis,'category_decoding')
     decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numTimepoints);
     filename = sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name);
-end %add an elseif clause for category decoding later
-
+    all_dimensions = ':';
+end 
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,filename));
-    decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;  
+    decoding_accuracies_all_subjects(subject,all_dimensions) = decodingAccuracy_avg;  
 end   
 
-%% Remove any NaN 
-for_stats = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects,2),3));
-for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if timepoint 1 is NaN, the subject is excluded
-
-%% Subtract 50 to get the difference with chance (needed for stats)
+%% Average over Remove any NaN 
+if strcmp(analysis,'object_decoding')
+    for_stats = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects,2),3));
+    for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if timepoint 1 is NaN, the subject is excluded
+elseif strcmp(analysis,'category_decoding')
+    for_stats = decoding_accuracies_all_subjects;
+    for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if timepoint 1 is NaN, the subject is excluded
+end
+    %% Subtract 50 to get the difference with chance (needed for stats)
 for_stats = for_stats-50;
 
 %% Save
