@@ -1,4 +1,4 @@
-function run_permutation_stats(subjects,task,analysis) 
+function significant_timepoints = run_permutation_stats(subjects,task,analysis) 
 %RUN_PERMUTATION_STATS Call on the permutation stats script to perform
 %cluster based permutation tests. 
 %
@@ -25,9 +25,10 @@ significance_threshold = 0.05;
 tail = 'right'; 
 
 %% Run the stats script 
-significant_timepoints = permutation_cluster_1sample_alld(for_stats, nperm, cluster_threshold, significance_threshold,tail); 
+[significant_timepoints, pvalues] = permutation_cluster_1sample_alld(for_stats, nperm, cluster_threshold, significance_threshold,tail); 
 
 %% Save 
 save(fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
     numel(subjects),task_name,analysis)),'significant_timepoints');
-
+save(fullfile(results_avg_dir,sprintf('pvalues_%d_subjects_%s_task_%s',...
+    numel(subjects),task_name,analysis)),'pvalues');
