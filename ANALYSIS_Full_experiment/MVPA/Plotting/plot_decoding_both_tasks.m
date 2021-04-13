@@ -86,7 +86,7 @@ if with_stats
 end 
 
 legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to add the arrowws and CIs to the legend
-plotting_parameters(title,legend_cell{1:3},onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
+plotting_parameters(title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
 %% Save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks',numel(subjects)))); %save as matlab figure
