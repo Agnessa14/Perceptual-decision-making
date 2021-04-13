@@ -1,5 +1,5 @@
-function plot_object_decoding_both_tasks(subjects,with_stats,analysis)
-%PLOT_OBJECT_BOTH_TASKS Plot the results from object decoding, averaged over
+function plot_decoding_both_tasks(subjects,with_stats,analysis)
+%PLOT_DECODING_BOTH_TASKS Plot the results from object decoding, averaged over
 %all participants for both tasks (categorization and distraction).
 %
 %Input: subject IDs, with_stats (1 plot with stats, 0 plot without),
@@ -16,22 +16,41 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 numConditions = 60;
 numTimepoints = 200;
 sorted_subjects = sort(subjects);
-decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+if strcmp(analysis,'object_decoding')
+    decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+    decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+elseif strcmp(analysis,'category_decoding')
+    decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numTimepoints);
+    decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numTimepoints);
+end
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
-    load(fullfile(subject_results_dir,'svm_decoding_accuracy_categorization.mat'));
-    decoding_accuracies_all_subjects_cat(subject,:,:,:) = decodingAccuracy_avg;
-    load(fullfile(subject_results_dir,'svm_decoding_accuracy_fixation.mat'));
-    decoding_accuracies_all_subjects_fix(subject,:,:,:) = decodingAccuracy_avg;
+    if strcmp(analysis,'object_decoding')
+        cat_filename = 'svm_decoding_accuracy_categorization.mat';
+        fix_filename = 'svm_decoding_accuracy_fixation.mat';
+        all_dimensions = repmat({':'},1,3); %conditions x conditions x timepoints
+    elseif strcmp(analysis,'category_decoding')
+        cat_filename = 'svm_artificial_vs_natural_decoding_accuracy_categorization.mat';
+        fix_filename = 'svm_artificial_vs_natural_decoding_accuracy_fixation.mat';
+        all_dimensions = ':'; % timepoints
+    end
+    load(fullfile(subject_results_dir,cat_filename));
+    decoding_accuracies_all_subjects_cat(subject,all_dimensions) = decodingAccuracy_avg;
+    load(fullfile(subject_results_dir,fix_filename));
+    decoding_accuracies_all_subjects_fix(subject,all_dimensions) = decodingAccuracy_avg;
 end   
 
-%% Remove any NaN (for non-included subjects)
-avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3));
-avg_over_conditions_all_subjects_fix = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_fix,1),2),3));
+%% Average over subjects + conditions and remove any NaN (for non-included subjects)
+if strcmp(analysis,'object_decoding')
+    avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3));
+    avg_over_conditions_all_subjects_fix = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_fix,1),2),3));
+elseif strcmp(analysis,'category_decoding')
+    avg_over_conditions_all_subjects_cat = squeeze(nanmean(decoding_accuracies_all_subjects_cat,1));
+    avg_over_conditions_all_subjects_fix = squeeze(nanmean(decoding_accuracies_all_subjects_fix,1));
+end
 
 %% Plot the average of all subjects
 figure(abs(round(randn*10))); %Random figure number
@@ -42,7 +61,12 @@ plot(avg_over_conditions_all_subjects_cat,'Linewidth',3, 'Color', color_cat);
 hold on;
 plot(avg_over_conditions_all_subjects_fix,'Linewidth',3, 'Color', color_fix);
 hold on;
-title = sprintf('Object decoding per timepoint for %d subjects',numel(subjects));
+if strcmp(analysis,'object_decoding')
+    analysis_title = 'Object';
+elseif strcmp(analysis,'category_decoding')
+    analysis_title = 'Category';
+end
+plot_title = sprintf('%s decoding per timepoint for %d subjects',numel(subjects),analysis_title);
 onset_time = 40; 
 xticks(0:10:200);
 ylim([45 80]);
@@ -61,36 +85,49 @@ if with_stats
             plot_location = 46;
             color = color_fix;
         end
+        
         %error bars
-        load(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',...
-        numel(subjects),task_name,analysis)));
+        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',...
+        numel(subjects),task_name,analysis));
+        if exist(filename_forstats,'file')
+            load(filename_forstats);
+        else
+            for_stats = all_subjects_for_stats(subjects,task,analysis);
+        end
         stdDM = std(for_stats); %std(26x200)
         err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects
         errorbar(plot_name, err, 'Color',color); %plot
         hold on;
 
         %significant timepoints
-        load(fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
-        numel(subjects),task_name,analysis)));
+        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
+        numel(subjects),task_name,analysis));
+        if exist(filename_sign,'file')
+            load(fullfile(results_avg_dir,filename_sign));
+        else
+            significant_timepoints = run_permutation_stats(subjects,task,analysis);
+        end
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
         hold on;
         
         %peak latency and 95% confidence interval 
-        [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
-        quiver(peak_latency,80,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
-        quiver(CI(1),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
-        quiver(CI(2),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        if strcmp(analysis,'object_decoding')
+            [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
+            quiver(peak_latency,80,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
+            quiver(CI(1),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+            quiver(CI(2),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        end
     end
 end 
 
 legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to add the arrowws and CIs to the legend
-plotting_parameters(title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
+plotting_parameters(plot_title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
 %% Save the plot
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks',numel(subjects)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_object_decoding_%d_subjects_both_tasks.svg',numel(subjects)))); %save as svg
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_%d_subjects_both_tasks',analysis,numel(subjects)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_%d_subjects_both_tasks.svg',analysis,numel(subjects)))); %save as svg
 close(gcf);    
 
 end
