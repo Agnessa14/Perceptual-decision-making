@@ -1,4 +1,4 @@
-function significant_timepoints = run_permutation_stats(subjects,task,analysis) 
+function significant_timepoints = run_permutation_stats(subjects,task,analysis,for_stats) 
 %RUN_PERMUTATION_STATS Call on the permutation stats script to perform
 %cluster based permutation tests. 
 %
@@ -13,10 +13,6 @@ function significant_timepoints = run_permutation_stats(subjects,task,analysis)
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 task_name = get_task_name(task);
-
-%% Create the for_stats matrix: decoding accuracies for each subject and each timepoint
-for_stats = all_subjects_for_stats(subjects,task,analysis);
-disp('Creating for_stats_matrix');
 
 %% Parameters for the stats script  
 nperm = 10000;
