@@ -160,9 +160,9 @@ decodingAccuracy_with_22 = cat(2,decodingAccuracy_with_22(:,1:21,:,:),added_matr
 
 % add NaNs in lieu of condition 56
 added_matrix_56_row = NaN(1,59,numTimepoints,numTimepoints);
-added_matrix_56_column = NaN(60,1,numTimepoints);
+added_matrix_56_column = NaN(60,1,numTimepoints,numTimepoints);
 decodingAccuracy_with_56 = cat(1,decodingAccuracy_with_22(1:55,:,:,:),added_matrix_56_row,...
-    decodingAccuracy_with_22(56:end,:,:));
+    decodingAccuracy_with_22(56:end,:,:,:));
 decodingAccuracy_with_56 = cat(2,decodingAccuracy_with_56(:,1:55,:,:),added_matrix_56_column,...
     decodingAccuracy_with_56(:,56:end,:,:));
 
