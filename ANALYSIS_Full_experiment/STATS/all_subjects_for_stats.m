@@ -22,6 +22,9 @@ sorted_subjects = sort(subjects); %order by ID
 if strcmp(analysis,'object_decoding')
     decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
     filename = sprintf('svm_decoding_accuracy_%s.mat',task_name);
+elseif strcmp(analysis,'category_decoding')
+    decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numTimepoints);
+    filename = sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name);
 end %add an elseif clause for category decoding later
 
 
