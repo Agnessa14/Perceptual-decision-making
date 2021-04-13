@@ -87,7 +87,7 @@ if with_stats
         end
         
         %error bars
-        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',...
+        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s.mat',...
         numel(subjects),task_name,analysis));
         if exist(filename_forstats,'file')
             load(filename_forstats);
@@ -100,12 +100,12 @@ if with_stats
         hold on;
 
         %significant timepoints
-        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s',...
+        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s.mat',...
         numel(subjects),task_name,analysis));
         if exist(filename_sign,'file')
-            load(fullfile(results_avg_dir,filename_sign));
+            load(filename_sign);
         else
-            significant_timepoints = run_permutation_stats(subjects,task,analysis);
+            significant_timepoints = run_permutation_stats(subjects,task,analysis,for_stats);
         end
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
@@ -117,9 +117,9 @@ if with_stats
         if strcmp(analysis,'object_decoding')
             height = 80;
         elseif strcmp(analysis,'category_decoding')
-            height = 75;
+            height = 77;
         end
-        quiver(peak_latency,height,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
+        quiver(peak_latency,height,0,-4,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
         quiver(CI(1),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(CI(2),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
     end
