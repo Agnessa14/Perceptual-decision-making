@@ -74,11 +74,18 @@ end
 %% Define the required variables
 numTimepoints = numResampledTps; 
 numPermutations=50; 
-numConditionsAll = 60;
-[~, trials_per_condition] = min(min_number_trials(timelock_triggers_categorization, numConditions),...
-    min_number_trials(timelock_triggers_distraction,numConditions)); %minimum number of trials per scene
-removed_condition = find(trials_per_condition==min(trials_per_condition));
-low_minnumtrials = min(trials_per_condition);
+numConditions = 60;
+[min_cat,trials_per_condition_cat] = min_number_trials(timelock_triggers_categorization, numConditions); 
+[min_dis,trials_per_condition_dis] = min_number_trials(timelock_triggers_distraction, numConditions);
+if min_cat<min_dis
+    removed_condition = find(trials_per_condition_cat==min(trials_per_condition_cat));
+    trials_per_condition = trials_per_condition_cat;
+    low_minnumtrials = min_cat;
+elseif min_dis<min_cat
+    removed_condition = find(trials_per_condition_dis==min(trials_per_condition_dis));
+    trials_per_condition = trials_per_condition_dis;
+    low_minnumtrials = min_dis;
+end    
 numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
 
 %exclude trials from removed scene 
@@ -86,7 +93,7 @@ included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numTimepoints);
+% decodingAccuracy=NaN(numPermutations,numTimepoints);
 % if removed_condition<=30
 %     num_conditions_artificial = 29;
 %     num_conditions_natural = 30; 
@@ -165,7 +172,7 @@ decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutat
 DA_1 = [decodingAccuracy_avg(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,numTimepoints,numTimepoints);...
     decodingAccuracy_avg(removed_condition:end,:,:,:)];
 DA_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints,numTimepoints),...
-    DA_1(:,removed_condition:end,:)];
+    DA_1(:,removed_condition:end,:,:)];
 timeg_decodingAccuracy_avg = DA_2;
 
 %% Save the decoding accuracy
