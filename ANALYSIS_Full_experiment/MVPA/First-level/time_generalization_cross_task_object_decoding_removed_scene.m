@@ -86,13 +86,13 @@ included_conditions = trials_per_condition>=numTrials;
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numTimepoints);
-if removed_condition<=30
-    num_conditions_artificial = 29;
-    num_conditions_natural = 30; 
-else
-    num_conditions_artificial = 30;
-    num_conditions_natural = 29; 
-end
+% if removed_condition<=30
+%     num_conditions_artificial = 29;
+%     num_conditions_natural = 30; 
+% else
+%     num_conditions_artificial = 30;
+%     num_conditions_natural = 29; 
+% end
 
 %Preallocate 
 % decodingAccuracy=NaN(numPermutations,numConditions,numConditions,50,50);
@@ -103,7 +103,7 @@ for perm = 1:numPermutations
     disp('Creating the data matrices');
     data_categorization = create_data_matrix(numConditions,timelock_triggers_categorization,numTrials,downsampled_timelock_data_categorization);
     data_distraction = create_data_matrix(numConditions,timelock_triggers_distraction,numTrials,downsampled_timelock_data_distraction);
-    data_categorization = data_categorization(included_conditions,:,:,:); 
+    data_distraction = data_distraction(included_conditions,:,:,:); 
 
     disp('Performing MVNN');
     data_categorization = multivariate_noise_normalization(data_categorization); 
