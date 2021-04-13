@@ -66,7 +66,7 @@ if strcmp(analysis,'object_decoding')
 elseif strcmp(analysis,'category_decoding')
     analysis_title = 'Category';
 end
-plot_title = sprintf('%s decoding per timepoint for %d subjects',numel(subjects),analysis_title);
+plot_title = sprintf('%s decoding per timepoint for %d subjects',analysis_title,numel(subjects));
 onset_time = 40; 
 xticks(0:10:200);
 ylim([45 80]);
@@ -113,12 +113,15 @@ if with_stats
         hold on;
         
         %peak latency and 95% confidence interval 
+        [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
         if strcmp(analysis,'object_decoding')
-            [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
-            quiver(peak_latency,80,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
-            quiver(CI(1),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
-            quiver(CI(2),80,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+            height = 80;
+        elseif strcmp(analysis,'category_decoding')
+            height = 75;
         end
+        quiver(peak_latency,height,0,-5,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
+        quiver(CI(1),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(CI(2),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
     end
 end 
 
