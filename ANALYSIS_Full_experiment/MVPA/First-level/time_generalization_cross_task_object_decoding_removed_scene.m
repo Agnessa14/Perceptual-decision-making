@@ -82,7 +82,7 @@ low_minnumtrials = min(trials_per_condition);
 numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
 
 %exclude trials from removed scene 
-included_conditions = trials_per_condition>=numTrials;
+included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
