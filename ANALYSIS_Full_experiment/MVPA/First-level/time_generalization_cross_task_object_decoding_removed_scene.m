@@ -133,11 +133,11 @@ for perm = 1:numPermutations
                     
                     %% Model 1: train on categorization, test on distraction
                     training_data_1 = [squeeze(pseudoTrials_categorization(condA,:,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,:,:,timePoint1))]; %(numbins-1)x63x1 each
-                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,:,:,timePoint2)) ; squeeze(pseudoTrials_distraction(condB,:,:,timePoint2))]; %1x63x1 each
+                    testing_data_1 = [squeeze(nanmean(pseudoTrials_distraction(condA,:,:,timePoint2),2))' ; squeeze(nanmean(pseudoTrials_distraction(condB,:,:,timePoint2),2))']; %1x63x1 each
 
                     % class labels
                     labels_train_1=[ones(1,numPTs_categorization) 2*ones(1,numPTs_categorization)]; %one label for each pseudotrial
-                    labels_test_1=[ones(1,numPTs_distraction) 2*ones(1,numPTs_distraction)]; %one label for each pseudotrial
+                    labels_test_1=[1 2]; %one label for each pseudotrial
                     
                     %train & test the model
                     train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
@@ -176,6 +176,6 @@ DA_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints,n
 timeg_decodingAccuracy_avg = DA_2;
 
 %% Save the decoding accuracy
-save(fullfile(results_dir,subname,sprintf('time_generalized_trained_on_cat_all_svm_decoding_accuracy_crosstask.mat')),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,sprintf('time_generalized_tested_1PT_svm_decoding_accuracy_crosstask.mat')),'timeg_decodingAccuracy_avg');
 
 end
