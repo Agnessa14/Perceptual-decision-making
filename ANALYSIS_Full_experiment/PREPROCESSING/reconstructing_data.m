@@ -40,28 +40,26 @@ if ~isequal(blockorderarray,blocks)
 end
 
 %% Take the task-related trials only
-behav.triggers = [];
-behav.RT = [];
-behav.points = [];
 behav.reconstructed_data = [];
 
 for block = 1:numel(filenamesSorted)
     block_name = filenamesSorted{block};
-%     if contains(block_name,task_name)
     t = 1;
     load(block_name);
-    behav.triggers = [behav.triggers;data.triggers];
-    behav.RT = [behav.RT; data.rt]; 
-    behav.points = [behav.points; data.points]; 
 
     %get the timing+triggers from  behavioural data
-    timing_minus_onset = [data.tStimStart-data.tOnset data.timePressed-data.tOnset];
-    timing_minus_onset(1,1) = 0;
+    timing_minus_onset = [(data.tStimStart-data.tOnset)*1000+1000 ((data.timePressed-data.tOnset)*1000)+1000];
+    timing_minus_onset(1,1) = 1000;
+%     timing_plus_onset(2,1) = 
     reshaped_rowmaj = reshape(timing_minus_onset.',[],1);
     with_triggers = [reshaped_rowmaj NaN(size(reshaped_rowmaj))];
     for s=1:size(reshaped_rowmaj,1)
         if mod(s,2) %odd
-            with_triggers(s,2) = data.triggers(t);
+            if contains(block_name,'Categorization')
+                with_triggers(s,2) = data.triggers(t);
+            elseif contains(block_name,'Fixation')
+                with_triggers(s,2) = data.triggers(t)+100;
+            end
             t=t+1;
         else
             with_triggers(s,2) = 222;
@@ -90,14 +88,14 @@ vmrk_cell{1,4} = 0;
 vmrk_cell{1,5} = 20201126171218962590;
 
 %Column 1
-vmrk_cell(rows,1) = arrayfun(@(x) sprintf( 'M%d',x),all_rows, 'UniformOutput',false);
+vmrk_cell(rows,1) = arrayfun(@(x) sprintf( 'Mk%d=Stimulus',x),rows, 'UniformOutput',false);
 
 %Column 2
 if subn==2
     onset_eeg = 202565; %taken manually from the vmrk file
 end
 
-vmrk_cell(rows,2) = arrayfun(@(x) behav.reconstructed_data(x,1)+onset_eeg,all_rows','UniformOutput',false);
+vmrk_cell(rows,2) = arrayfun(@(x) round(behav.reconstructed_data(x,1)+onset_eeg),all_rows','UniformOutput',false);
 
 %Column 3: Triggers
 vmrk_cell(rows,3) = arrayfun(@(x) sprintf( 'S%d',behav.reconstructed_data(x,2) ),all_rows','UniformOutput',false);
@@ -110,4 +108,9 @@ end
 
 keyboard;
 
+%% Turn into csv file
+T = cell2table(vmrk_cell);
+ 
+% Write the table to a CSV file
+writetable(T,sprintf('pdm_full_experiment_sub%s_test.csv',subname));
 
