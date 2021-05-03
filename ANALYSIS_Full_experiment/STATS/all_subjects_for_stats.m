@@ -34,7 +34,7 @@ for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,filename));
-    decoding_accuracies_all_subjects(subject,all_dimensions) = decodingAccuracy_avg;  
+    decoding_accuracies_all_subjects(subject,all_dimensions{:}) = decodingAccuracy_avg;  
 end   
 
 %% Average over Remove any NaN 
