@@ -38,9 +38,9 @@ for subject = subjects
         all_dimensions = ':'; % timepoints
     end
     load(fullfile(subject_results_dir,cat_filename));
-    decoding_accuracies_all_subjects_cat(subject,all_dimensions) = decodingAccuracy_avg;
+    decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
     load(fullfile(subject_results_dir,fix_filename));
-    decoding_accuracies_all_subjects_fix(subject,all_dimensions) = decodingAccuracy_avg;
+    decoding_accuracies_all_subjects_fix(subject,all_dimensions{:}) = decodingAccuracy_avg;
 end   
 
 %% Average over subjects + conditions and remove any NaN (for non-included subjects)
@@ -58,9 +58,8 @@ set(gcf, 'Position', get(0, 'Screensize'));
 color_cat = 'b';
 color_fix = 'm';
 plot(avg_over_conditions_all_subjects_cat,'Linewidth',3, 'Color', color_cat);
-hold on;
+hold on
 plot(avg_over_conditions_all_subjects_fix,'Linewidth',3, 'Color', color_fix);
-hold on;
 if strcmp(analysis,'object_decoding')
     analysis_title = 'Object';
 elseif strcmp(analysis,'category_decoding')
@@ -87,8 +86,8 @@ if with_stats
         end
         
         %error bars
-        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s.mat',...
-        numel(subjects),task_name,analysis));
+        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s.mat',...
+        subjects(1),subjects(end),task_name,analysis));
         if exist(filename_forstats,'file')
             load(filename_forstats);
         else
@@ -100,8 +99,8 @@ if with_stats
         hold on;
 
         %significant timepoints
-        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_%d_subjects_%s_task_%s.mat',...
-        numel(subjects),task_name,analysis));
+        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_task_%s.mat',...
+        subjects(1),subjects(end),task_name,analysis));
         if exist(filename_sign,'file')
             load(filename_sign);
         else
@@ -110,7 +109,6 @@ if with_stats
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
-        hold on;
         
         %peak latency and 95% confidence interval 
         [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
@@ -129,8 +127,8 @@ legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to a
 plotting_parameters(plot_title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
 
 %% Save the plot
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_%d_subjects_both_tasks',analysis,numel(subjects)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_%d_subjects_both_tasks.svg',analysis,numel(subjects)))); %save as svg
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
 
 end
