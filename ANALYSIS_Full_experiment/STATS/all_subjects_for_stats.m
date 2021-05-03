@@ -45,10 +45,11 @@ elseif strcmp(analysis,'category_decoding')
     for_stats = decoding_accuracies_all_subjects;
     for_stats = for_stats(~isnan(for_stats(:,1)),:); %for non-included subjects: if timepoint 1 is NaN, the subject is excluded
 end
-    %% Subtract 50 to get the difference with chance (needed for stats)
+
+%% Subtract 50 to get the difference with chance (needed for stats)
 for_stats = for_stats-50;
 
 %% Save
-save(fullfile(results_avg_dir,sprintf('for_stats_%d_subjects_%s_task_%s',numel(subjects),task_name,analysis)),'for_stats');
+save(fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s',subjects(1),subjects(end),task_name,analysis)),'for_stats');
 
 end
