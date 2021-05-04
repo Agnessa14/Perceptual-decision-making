@@ -12,6 +12,7 @@ function svm_fixed_analysis_pseudotrials_full_experiment(subjects,task_distance,
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
+results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 addpath(genpath(results_dir));
 task_name_distance = get_task_name(task_distance);
 task_name_RT = get_task_name(task_RT);
@@ -29,9 +30,6 @@ for subject = subjects
     subname = get_subject_name(subject);
     load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name_distance)));
     load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name_RT)));
-    if size(decisionValues_Avg,1)==58
-        keyboard;
-    end
     distances(subject,:,:) = decisionValues_Avg;   
     
     %normalize RTs
@@ -51,7 +49,7 @@ t = 1:numTimepoints;
 correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
 correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(artificial_conditions,x),medianRT_art','type','Spearman'),t);
 correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances(natural_conditions,x),medianRT_nat','type','Spearman'),t);
-correlation_dth_rt_avg = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
+correlation_dth_rt_avg  = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
 
 %% Plot 
 figure(abs(round(randn*10)));
@@ -64,15 +62,13 @@ color_avg = [0.7 0.2 0.7];
 plot(correlation_dth_rt_art,'LineWidth',2,'Color',color_art);
 hold on;
 plot(correlation_dth_rt_nat,'LineWidth',2,'Color',color_nat);
-hold on;
 plot(correlation_dth_rt_both,'LineWidth',2,'Color',color_both);
-hold on;
 plot(correlation_dth_rt_avg,'LineWidth',2,'Color',color_avg);
-hold on;
 
 %% Plot stats if needed
 if with_stats
     for c = 1:4
+        %Setup some plot variables
         if c == 1
             category = 'artificial';            
             plot_location = -0.75;
@@ -90,8 +86,23 @@ if with_stats
             plot_location = -0.9;
             color = color_avg;
         end
-
-        significant_timepoints = weighted_cluster_perm_stats(subjects,task,category,0);
+        
+        %Check if stats already exist, otherwise run the stats script
+        if isequal(task_distance,task_RT)
+            filename = 'dth_permutation_stats';
+        else
+            filename = 'dth_permutation_stats_crosstask';
+        end
+        filename_sign = fullfile(results_avg_dir,sprintf('%s_%s_%s_distance_subjects_%d_%d',...
+            filename,category,task_name_distance,subjects(1),subjects(end)));
+        if exist(filename_sign,'file')
+            load(filename_sign);
+            significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
+        else
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,0);
+        end
+        
+        %Plot the stats
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
@@ -126,13 +137,14 @@ dth_results.corr_natural = correlation_dth_rt_nat;
 dth_results.corr_avg_categories = correlation_dth_rt_avg;
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 if isequal(task_distance,task_RT)
-    save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s.mat',numel(subjects),task_name_distance)),'dth_results');
+    save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
+    saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
 else
-    save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_cross_task_%s_distances.mat',numel(subjects),task_name_distance)),'dth_results');
+    save(fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_cross_task_%s_distances.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
+    saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
+end
+close(gcf);
 end
 
-%figures
-saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s',numel(subjects),task_name))); 
-saveas(gcf,fullfile(save_path,sprintf('pseudotrials_SVM_DTH_%d_subjects_%s.svg',numel(subjects),task_name)));
-
-end
