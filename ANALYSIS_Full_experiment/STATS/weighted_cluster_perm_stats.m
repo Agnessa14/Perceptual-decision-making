@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,save)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,save,numPermutations)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -55,7 +55,6 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 1000;
 sample_correlations = NaN(numPermutations,numTimepoints);
 for perm = 1:numPermutations
     if ~mod(perm,100)
