@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task,category,save)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,save)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -16,7 +16,8 @@ results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 results_avg = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %% Get the distances from all subjects
-task_name = get_task_name(task);
+task_distance_name = get_task_name(task_distance);
+task_RT_name = get_task_name(task_RT);
 numTimepoints = 200;
 numConditions = 60;
 sorted_subjects = sort(subjects); %order by ID
@@ -25,8 +26,8 @@ RTs = NaN(numel(subjects),numConditions);
 
 for subject = subjects
     subname = get_subject_name(subject);
-    load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_name)));
-    load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_name)));
+    load(fullfile(results_dir,subname,sprintf('dth_pseudotrials_svm_decisionValues_%s.mat',task_distance_name)));
+    load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',task_RT_name)));
     distances(subject,:,:) = decisionValues_Avg;   
     RTs(subject,:) = normalize(RT_per_condition);
 end
@@ -124,7 +125,13 @@ if save == 1 && ~isempty(clustersize)
     permutation_stats.SignificantMaxClusterWeight = significantVarWei;
     permutation_stats.pValueClusterSize = pValMax;
     permutation_stats.pValueWeight = pValWeight;
-    save(fullfile(results_avg,sprintf('dth_permutation_stats_category_%s_%s_task_subjects_%d_%d',category,task_name,subjects(1),subjects(end))),'permutation_stats');
+    if isequal(task_distance,task_RT)
+        filename = 'dth_permutation_stats';
+    else
+        filename = 'dth_permutation_stats_crosstask';
+    end
+    save(fullfile(results_avg,sprintf('%s_%s_%s_distance_subjects_%d_%d',...
+        filename,category,task_name,subjects(1),subjects(end))),'permutation_stats');
 end
 
 end  
