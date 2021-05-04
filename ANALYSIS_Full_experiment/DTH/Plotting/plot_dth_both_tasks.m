@@ -14,18 +14,18 @@ results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 addpath(genpath(results_dir));
 
 %Load the correlations
-load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_categorization.mat',numel(subjects))));
+load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_categorization.mat',subjects(1),subjects(end))));
 corr_both_categorization = dth_results.corr_both_categories;
 clear dth_results;
-load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_fixation.mat',numel(subjects))));
+load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_fixation.mat',subjects(1),subjects(end))));
 corr_both_distraction = dth_results.corr_both_categories;
 clear dth_results;
 
 if with_cross_task   
-    load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_cross_task_categorization_distances.mat',numel(subjects))));
+    load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_cross_task_categorization_distances.mat',subjects(1),subjects(end))));
     corr_both_cross_task_categorization_dist = dth_results.corr_both_categories;
     clear dth_results;
-    load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_cross_task_fixation_distances.mat',numel(subjects))));
+    load(fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_cross_task_fixation_distances.mat',subjects(1),subjects(end))));
     corr_both_cross_task_distraction_dist = dth_results.corr_both_categories;
     clear dth_results;
 end
@@ -36,36 +36,35 @@ set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
 plot(corr_both_categorization,'LineWidth',2);
 hold on;
 plot(corr_both_distraction,'LineWidth',2);
-hold on;
 
 if with_cross_task
     plot(corr_both_cross_task_categorization_dist,'LineWidth',2)
     hold on;
     plot(corr_both_cross_task_distraction_dist,'LineWidth',2)
-    hold on;
 end
 
 %% Plot stats if needed
 if with_stats
+    num_perms = 10000;
     for task = 1:2
         task_name = get_task_name(task);
         if task == 1
-            plot_location = -0.8;
+            plot_location = -0.7;
             color = 'b';
         elseif task == 2
-            plot_location = -0.9;
+            plot_location = -0.75;
             color = 'm';
         end
    
         %Check if stats already exist, otherwise run the stats script
         filename = 'dth_permutation_stats';
-        filename_sign = fullfile(results_avg_dir,sprintf('%s_both_%s_distance_subjects_%d_%d',...
+        filename_sign = fullfile(results_dir,sprintf('%s_both_%s_distance_subjects_%d_%d.mat',...
             filename,task_name,subjects(1),subjects(end)));
         if exist(filename_sign,'file')
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = weighted_cluster_perm_stats(subjects,task_name,task_name,'both',1,10000);
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task,task,'both',1,num_perms);
         end
 
         %Plot the stats
@@ -86,14 +85,15 @@ else
     legend_plot = {'Scene categorization','Distraction'};
 end
 xticks(0:10:200);
+ylim([-0.8 0.4]);
 plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.7 0.85 0.1 0.01]
 
 %% Save
 if with_cross_task
-    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_both_tasks_with_crosstask',numel(subjects)))); 
-    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_both_tasks_with_crosstask.svg',numel(subjects))));
+    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks_with_crosstask',subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks_with_crosstask.svg',subjects(1),subjects(end))));
 else
-    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_both_tasks',numel(subjects)))); 
-    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_%d_subjects_both_tasks.svg',numel(subjects))));
+    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks',subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks.svg',subjects(1),subjects(end))));
 end
 end
