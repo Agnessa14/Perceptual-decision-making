@@ -124,7 +124,7 @@ if save == 1 && ~isempty(clustersize)
     permutation_stats.SignificantMaxClusterWeight = significantVarWei;
     permutation_stats.pValueClusterSize = pValMax;
     permutation_stats.pValueWeight = pValWeight;
-    save(fullfile(results_avg,sprintf('dth_permutation_stats_category_%s_%s_task_%d_subjects',category,task_name,numel(subjects))),'permutation_stats');
+    save(fullfile(results_avg,sprintf('dth_permutation_stats_category_%s_%s_task_subjects_%d_%d',category,task_name,subjects(1),subjects(end))),'permutation_stats');
 end
 
 end  
