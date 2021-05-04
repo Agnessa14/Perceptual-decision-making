@@ -55,7 +55,7 @@ true_correlation = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spea
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
 %% 1) Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-numPermutations = 10000;
+numPermutations = 1000;
 sample_correlations = NaN(numPermutations,numTimepoints);
 for perm = 1:numPermutations
     if ~mod(perm,100)
@@ -66,9 +66,13 @@ for perm = 1:numPermutations
 end
 
 %% 2) Calculate the p-value of the ground truth and of the permuted samples
+tail = 'left'; %because we are interested in the strength of negative correlations
 all_correlations = [true_correlation;sample_correlations];
-p_ground_and_samples = (numPermutations+1 - tiedrank(abs(all_correlations))) / numPermutations;
-           
+if strcmp(tail,'left')
+    p_ground_and_samples = (numPermutations+1 - tiedrank(all_correlations*-1)) / numPermutations;
+elseif strcmp(tail,'both')
+    p_ground_and_samples = (numPermutations+1 - tiedrank(abs(all_correlations))) / numPermutations;
+end 
                 %%%%% CLUSTER-BASED PT: ATTRIBUTE SIGNIFICANCE TO TIMEPOINTS %%%%%
 
 %% 1) Find maximum weighted cluster (highest sum of correlations) in the ground truth and the permutation samples
@@ -79,7 +83,11 @@ clusterMaxWei = NaN(numPermutations,1);
 
 %ground truth
 p_ground = squeeze(p_ground_and_samples(1,:));
-[clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(abs(true_correlation), p_ground<=cluster_th);
+if strcmp(tail,'left')
+    [clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(true_correlation*-1, p_ground<=cluster_th);
+elseif strcmp(tail,'both')
+    [clusterMaxSize_ground, clusterMaxWei_ground, clusters, clustersize, clusterweight]  = find_clusters_weight_alld(abs(true_correlation), p_ground<=cluster_th);
+end
 
 %permutation samples
 p_samples = p_ground_and_samples(2:end,:);
@@ -87,7 +95,11 @@ for perm = 1:numPermutations
     if ~mod(perm,100)
         fprintf('Permutation %d \n',perm);
     end
-    [clusterMaxSize(perm), clusterMaxWei(perm)] = find_clusters_weight_alld(squeeze(abs(sample_correlations(perm,:))), squeeze(p_samples(perm,:)<=cluster_th));
+    if strcmp(tail,'left')
+        [clusterMaxSize(perm), clusterMaxWei(perm)] = find_clusters_weight_alld(squeeze(sample_correlations(perm,:)*-1), squeeze(p_samples(perm,:)<=cluster_th));
+    elseif strcmp(tail,'both')
+        [clusterMaxSize(perm), clusterMaxWei(perm)] = find_clusters_weight_alld(squeeze(abs(sample_correlations(perm,:))), squeeze(p_samples(perm,:)<=cluster_th));
+    end
 end           
 
 %combine ground and permutation samples
@@ -96,6 +108,7 @@ clusterMaxWei_all = [clusterMaxWei_ground;clusterMaxWei];
 
 %% 3) Compare ground truth cluster to the permutation samples and identify significant timepoints, if any
 significance_th = 0.05;
+
 %find cluster threshold
 clusterMaxSize_sorted = sort(clusterMaxSize_all, 'descend');
 clusterMaxWei_sorted = sort(clusterMaxWei_all, 'descend');
@@ -125,6 +138,10 @@ if save == 1 && ~isempty(clustersize)
     permutation_stats.SignificantMaxClusterWeight = significantVarWei;
     permutation_stats.pValueClusterSize = pValMax;
     permutation_stats.pValueWeight = pValWeight;
+    permutation_stats.info.num_permutations = numPermutations;
+    permutation_stats.info.cluster_th = cluster_th;
+    permutation_stats.info.significance_th = significance_th;
+    permutation_stats.info.tail = tail;
     if isequal(task_distance,task_RT)
         filename = 'dth_permutation_stats';
     else
