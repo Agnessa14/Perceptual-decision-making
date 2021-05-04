@@ -31,33 +31,60 @@ if with_cross_task
 end
 
 %% Plot 
+%Colors
+color_cat = [0 0.45 0.75];
+color_dis =  [0.9 0.1 0];
+if with_cross_task
+    color_cross_1 = [0.2 0.3 0.4];
+    color_cross_2 = [0.7 0.2 0.7];
+end
 figure(abs(round(randn*10)));
 set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
-plot(corr_both_categorization,'LineWidth',2);
+plot(corr_both_categorization,'LineWidth',2,'Color',color_cat);
 hold on;
-plot(corr_both_distraction,'LineWidth',2);
+plot(corr_both_distraction,'LineWidth',2,'Color',color_dis);
 
 if with_cross_task
-    plot(corr_both_cross_task_categorization_dist,'LineWidth',2)
+    plot(corr_both_cross_task_categorization_dist,'LineWidth',2,'Color',color_cross_1)
     hold on;
-    plot(corr_both_cross_task_distraction_dist,'LineWidth',2)
+    plot(corr_both_cross_task_distraction_dist,'LineWidth',2,'Color',color_cross_2)
 end
 
 %% Plot stats if needed
 if with_stats
     num_perms = 10000;
-    for task = 1:2
-        task_name = get_task_name(task);
+    if with_cross_task
+        num_tasks = 4;
+    else
+        num_tasks = 2;
+    end
+    for task = 1:num_tasks
+        if task<3
+            task_name = get_task_name(task);
+        else
+            task_name = get_task_name(task-2); %for iteration 3: categ, iter 4: fix (distance task name)
+        end
+        
         if task == 1
             plot_location = -0.7;
-            color = 'b';
+            color = color_cat;
         elseif task == 2
             plot_location = -0.75;
-            color = 'm';
+            color = color_dis;
+        elseif task == 3
+            plot_location = -0.8;
+            color = color_cross_1;
+        elseif task == 4
+            plot_location = -0.85;
+            color = color_cross_2;
         end
    
         %Check if stats already exist, otherwise run the stats script
-        filename = 'dth_permutation_stats';
+        if task<3
+            filename = 'dth_permutation_stats';
+        elseif (task<=4)&&(task>2)
+            filename = 'dth_permutation_stats_crosstask';
+        end
         filename_sign = fullfile(results_dir,sprintf('%s_both_%s_distance_subjects_%d_%d.mat',...
             filename,task_name,subjects(1),subjects(end)));
         if exist(filename_sign,'file')
@@ -72,6 +99,7 @@ if with_stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
         hold on;   
+            
     end
 end 
 
@@ -85,9 +113,9 @@ else
     legend_plot = {'Scene categorization','Distraction'};
 end
 xticks(0:10:200);
-ylim([-0.8 0.4]);
+ylim([-1 0.4]);
 plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.7 0.85 0.1 0.01]
-
+% legend(legend_plot,'Location',[0.63 0.3 0.1 0.1])
 %% Save
 if with_cross_task
     saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks_with_crosstask',subjects(1),subjects(end)))); 
@@ -96,4 +124,5 @@ else
     saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks',subjects(1),subjects(end)))); 
     saveas(gcf,fullfile(results_dir,sprintf('pseudotrials_SVM_DTH_subjects_%d_%d_both_tasks.svg',subjects(1),subjects(end))));
 end
+close(gcf);
 end
