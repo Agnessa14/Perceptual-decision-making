@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,save,numPermutations)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,if_save,numPermutations)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -132,11 +132,11 @@ else
 end
 
 %% Save        
-if save == 1 && ~isempty(clustersize)
+if if_save == 1 && ~isempty(clustersize)
     permutation_stats.SignificantMaxClusterSize = significantVarMax;
     permutation_stats.SignificantMaxClusterWeight = significantVarWei;
     permutation_stats.pValueClusterSize = pValMax;
-    permutation_stats.pValueWeight = pValWeight;
+    permutation_stats.pValueWeight = pValWei;
     permutation_stats.info.num_permutations = numPermutations;
     permutation_stats.info.cluster_th = cluster_th;
     permutation_stats.info.significance_th = significance_th;
@@ -147,7 +147,7 @@ if save == 1 && ~isempty(clustersize)
         filename = 'dth_permutation_stats_crosstask';
     end
     save(fullfile(results_avg,sprintf('%s_%s_%s_distance_subjects_%d_%d',...
-        filename,category,task_name,subjects(1),subjects(end))),'permutation_stats');
+        filename,category,task_distance_name,subjects(1),subjects(end)) ),'permutation_stats');
 end
 
 end  
