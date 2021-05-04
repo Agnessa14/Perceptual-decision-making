@@ -99,7 +99,7 @@ if with_stats
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,0);
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,1,10000);
         end
         
         %Plot the stats
