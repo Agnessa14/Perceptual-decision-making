@@ -12,6 +12,7 @@ function dth_all_distances_median_RT(subjects,task,with_stats) %distance art, di
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
+results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 addpath(genpath(results_dir));
 task_name = get_task_name(task);
 
@@ -71,34 +72,42 @@ color_avg = [0.7 0.2 0.7];
 plot(avg_corr_art,'LineWidth',2,'Color',color_art);
 hold on;
 plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
-hold on;
 plot(avg_corr_both,'LineWidth',2,'Color',color_both);
-hold on;
 plot(avg_corr_avg,'LineWidth',2,'Color',color_avg);
-hold on;
 
 %% Plot stats if needed
 if with_stats
+    num_perms = 10000;
     for c = 1:4
         if c == 1
             category = 'artificial';            
-            plot_location = -0.75;
+            plot_location = -0.34;
             color = color_art;
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.8;
+            plot_location = -0.37;
             color = color_nat;
         elseif c == 3
             category = 'both';            
-            plot_location = -0.85;
+            plot_location = -0.4;
             color = color_both;
         elseif c == 4
             category = 'average';            
-            plot_location = -0.9;
+            plot_location = -0.43;
             color = color_avg;
         end
 
-        significant_timepoints = weighted_cluster_perm_stats(subjects,task,category,0);
+        %Check if stats already exist, otherwise run the stats script
+        filename_sign = fullfile(results_avg_dir,sprintf('non_fixed_dth_permutation_stats_%s_%s_distance_subjects_%d_%d.mat',...
+            category,task_name,subjects(1),subjects(end)));
+        if exist(filename_sign,'file')
+            load(filename_sign);
+            significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
+        else
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task,task,category,1,num_perms,'non-fixed');
+        end
+        
+        %Plot
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
@@ -117,11 +126,11 @@ legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
     'Average of artificial and natural scenes'}; %add stimulus onset?
 xticks(0:10:200);
 plotting_parameters(title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
-
+ylim([-0.5 0.4]);
 %% Save figures
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
-saveas(gcf,fullfile(save_path,sprintf('alldistances_medianRT_%d_subjects_%s',numel(subjects),task_name))); 
-saveas(gcf,fullfile(save_path,sprintf('alldistances_medianRT_%d_subjects_%s.svg',numel(subjects),task_name)));
+saveas(gcf,fullfile(save_path,sprintf('non_fixed_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name))); 
+saveas(gcf,fullfile(save_path,sprintf('non_fixed_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name)));
 close(gcf);
 end
 
