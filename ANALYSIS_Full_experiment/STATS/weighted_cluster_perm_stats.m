@@ -1,10 +1,13 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,if_save,numPermutations)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,if_save,numPermutations,method)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
 %Input: subject IDs, task (1 = categorization, 2 = distraction),
 %category ('artificial', 'natural', 'average' or 'both'), save (save the
-%structure or not)
+%structure (1) or not (0)), number of permutations for the stats (ex:
+%10000), method of calculating the DTH ('fixed', averaging over all RTs and
+%distances & correlating, or 'non-fixed', averaging over all RTs &
+%correlating with each subject's distances)
 %
 %Output: 1xP vector of significance (1) or not (0), where P is the number
 %of timepoints.
@@ -141,11 +144,17 @@ if if_save == 1 && ~isempty(clustersize)
     permutation_stats.info.cluster_th = cluster_th;
     permutation_stats.info.significance_th = significance_th;
     permutation_stats.info.tail = tail;
+    
     if isequal(task_distance,task_RT)
         filename = 'dth_permutation_stats';
     else
         filename = 'dth_permutation_stats_crosstask';
     end
+    
+    if strcmp(method,'non-fixed')
+        filename = sprintf('non_fixed_%s',filename);
+    end
+    
     save(fullfile(results_avg,sprintf('%s_%s_%s_distance_subjects_%d_%d',...
         filename,category,task_distance_name,subjects(1),subjects(end)) ),'permutation_stats');
 end
