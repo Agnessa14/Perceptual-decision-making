@@ -25,7 +25,8 @@ distances_distr = NaN(max(subjects),numConditions,numTimepoints);
 RTs = NaN(max(subjects),numConditions);
 RTs_art = NaN(max(subjects),numConditions/2);
 RTs_nat = NaN(size(RTs_art));
-
+artificial_conditions = 1:numConditions/2;
+natural_conditions = (numConditions/2)+1:numConditions;
 for subject = subjects
     subname = get_subject_name(subject);
     
@@ -40,6 +41,7 @@ for subject = subjects
     clear decisionValues_Avg;   
     
     %RTs
+    load(fullfile(results_dir,subname,'RTs_correct_trials_categorization.mat'));
     RTs(subject,:) = normalize(RT_per_condition);
     RTs_art(subject,:) = normalize(RT_per_condition(artificial_conditions));
     RTs_nat(subject,:) = normalize(RT_per_condition(natural_conditions));
