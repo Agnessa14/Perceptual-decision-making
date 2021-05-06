@@ -55,7 +55,7 @@ ylabel('RT distraction task (ms)');
 title(sprintf('Reaction times for each scene across subjects (N=%d)',num_subjects),'FontSize',20);
 
 %% Save
-saveas(gcf,fullfile(results_avg_dir,sprintf('RT_plot_cat_vs_fix_both_tasks_%d_subjects',num_subjects)));
-saveas(gcf,fullfile(results_avg_dir,sprintf('RT_plot_cat_vs_fix_both_tasks_%d_subjects.svg',num_subjects)));
+saveas(gcf,fullfile(results_avg_dir,sprintf('RT_plot_cat_vs_fix_both_tasks_subjects_%d_%d',subjects(1),subjects(end))));
+saveas(gcf,fullfile(results_avg_dir,sprintf('RT_plot_cat_vs_fix_both_tasks_subjects_%d_%d.svg',subjects(1),subjects(end))));
 close(gcf);
 end
