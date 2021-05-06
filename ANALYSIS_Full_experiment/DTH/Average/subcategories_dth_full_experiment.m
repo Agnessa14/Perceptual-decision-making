@@ -103,8 +103,8 @@ for c =  2%1:numCategories
     legend(legend_cell,'FontSize',12,'Location','Best');
 
     %% Save figures
-    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_%d_subjects',category_names{c},numel(subjects)))); 
-    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_%d_subjects.svg',category_names{c},numel(subjects))));
+    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d',category_names{c},numel(subjects)))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d.svg',category_names{c},numel(subjects))));
     close(gcf);
 end
 
