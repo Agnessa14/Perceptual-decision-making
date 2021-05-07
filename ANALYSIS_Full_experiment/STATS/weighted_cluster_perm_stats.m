@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,if_save,numPermutations,method)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,tail,if_save,numPermutations,method)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -68,7 +68,6 @@ for perm = 1:numPermutations
 end
 
 %% 2) Calculate the p-value of the ground truth and of the permuted samples
-tail = 'left'; %because we are interested in the strength of negative correlations
 all_correlations = [true_correlation;sample_correlations];
 if strcmp(tail,'left')
     p_ground_and_samples = (numPermutations+1 - tiedrank(all_correlations*-1)) / numPermutations;
