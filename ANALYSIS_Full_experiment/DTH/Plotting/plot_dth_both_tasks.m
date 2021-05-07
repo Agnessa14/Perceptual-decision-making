@@ -91,7 +91,7 @@ if with_stats
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = weighted_cluster_perm_stats(subjects,task,task,'left',1,num_perms); %'left'->only look at the strength of negative correlations
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task,task,'both','left',1,num_perms,'fixed'); %'left'->only look at the strength of negative correlations
         end
 
         %Plot the stats
