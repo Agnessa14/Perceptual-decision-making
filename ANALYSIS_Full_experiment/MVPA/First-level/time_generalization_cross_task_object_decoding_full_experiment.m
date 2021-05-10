@@ -74,7 +74,7 @@ numConditions = 60;
 numTrials = min(min_number_trials(timelock_triggers_categorization, numConditions),...
     min_number_trials(timelock_triggers_distraction,numConditions)); %minimum number of trials per scene
 numTimepoints = numResampledTps; 
-numPermutations=50; 
+numPermutations=25; 
 
 %Preallocate 
 % decodingAccuracy=NaN(numPermutations,numConditions,numConditions,50,50);
@@ -94,8 +94,8 @@ for perm = 1:numPermutations
     numTrialsPerBin = round(numTrials/6);
     [pseudoTrials_categorization,numPTs_categorization] = create_pseudotrials(numTrialsPerBin,data_categorization);
     [pseudoTrials_distraction,numPTs_distraction] = create_pseudotrials(numTrialsPerBin,data_distraction);
-    
-    %only get the upper diagonal
+   
+    %loop over conditions and timepoints
     for condA=1:numConditions 
         for condB = 1:numConditions 
             for timePoint1 = 1:numTimepoints 
@@ -104,11 +104,11 @@ for perm = 1:numPermutations
                         ', timepoints ->',num2str(timePoint1), ', and ->', num2str(timePoint2)]);
                     
                     %% Model 1: train on categorization, test on distraction
-                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,:,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,:,:,timePoint1))]; %(numbins-1)x63x1 each
-                    testing_data_1 = [squeeze(mean(pseudoTrials_distraction(condA,:,:,timePoint2),2))' ; squeeze(mean(pseudoTrials_distraction(condB,:,:,timePoint2),2))']; %1x63x1 each
+                    training_data_1 = [squeeze(pseudoTrials_categorization(condA,1:end-1,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,1:end-1,:,timePoint1))]; %(numbins-1)x63x1 each
+                    testing_data_1 = [squeeze(mean(pseudoTrials_distraction(condA,end,:,timePoint2),2))' ; squeeze(mean(pseudoTrials_distraction(condB,end,:,timePoint2),2))']; %1x63x1 each
 
                     % class labels
-                    labels_train_1=[ones(1,numPTs_categorization) 2*ones(1,numPTs_categorization)]; %one label for each pseudotrial
+                    labels_train_1=[ones(1,numPTs_categorization-1) 2*ones(1,numPTs_categorization-1)]; %one label for each pseudotrial
                     labels_test_1=[1 2]; %one label for each pseudotrial
                     
                     %train & test the model
@@ -141,6 +141,6 @@ end
 
 %% Save the decoding accuracy
 timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,'time_generalized_tested_1PT_svm_decoding_accuracy_crosstask.mat'),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,'time_generalized_25perms_svm_decoding_accuracy_crosstask.mat'),'timeg_decodingAccuracy_avg');
 
 end
