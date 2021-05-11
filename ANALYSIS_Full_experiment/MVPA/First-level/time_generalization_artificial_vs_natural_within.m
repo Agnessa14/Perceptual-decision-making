@@ -6,8 +6,7 @@ function time_generalization_artificial_vs_natural_within(subject,task)
 %
 %Input: subject ID, task (1=categorization, 2=fixation)
 %
-%Output: NxNxP vector of accuracies in %, where N is the number of conditions and
-%P is the number of timepoints. 
+%Output: PxP vector of accuracies in %, where P is the number of timepoints. 
 %
 %% Set-up prereqs
 %add paths
