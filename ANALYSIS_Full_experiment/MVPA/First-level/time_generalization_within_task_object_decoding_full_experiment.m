@@ -53,7 +53,7 @@ end
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numTimepoints = numResampledTps; 
-numPermutations=1; 
+numPermutations=50; 
 
 %Preallocate 
 % decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints,numTimepoints);
