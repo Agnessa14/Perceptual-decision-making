@@ -1,7 +1,8 @@
 function time_generalization_artificial_vs_natural_within(subject,task) 
-%TIME_GENERALIZATION_ARTIFICIAL_VS_NATURAL Perform category decoding
+%TIME_GENERALIZATION_ARTIFICIAL_VS_NATURAL_WITHIN Perform category decoding
 %(artificial vs natural) using the SVM classifier,
-%in a time-generalized manner (trained & tested on all timepoints).
+%in a time-generalized manner (trained & tested on all timepoints),
+%on data from one task.
 %
 %Input: subject ID, task (1=categorization, 2=fixation)
 %
