@@ -117,6 +117,6 @@ for perm = 1:numPermutations
 end
 
 %% Save the decoding accuracy
-decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,sprintf('time_gen_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
+timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
+save(fullfile(results_dir,subname,sprintf('time_gen_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'timeg_decodingAccuracy_avg');
 
