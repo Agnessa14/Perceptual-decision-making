@@ -53,7 +53,7 @@ end
 numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
-numTimepoints = size(timelock_data,3); %number of timepoints
+numTimepoints = numResampledTps; %number of timepoints
 numPermutations=100; 
 
 %minimum number of trials per scene
