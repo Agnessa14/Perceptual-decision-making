@@ -62,17 +62,6 @@ for perm = 1:numPermutations
     data_artificial = data(1:num_conditions_per_category,:,:,:);
     data_natural = data(num_conditions_per_category+1:end,:,:,:);
     
-    %%% Fix: 1) permute the conditions 2) take half of the conditions and
-    %%% mix the trials from the different scenes -> training set 
-        
-    
-    
-    
-    disp('Permute the conditions (scenes)');
-    conditions_order = randperm(num_conditions_per_category)';
-    data_artificial_avg = data_artificial_avg(conditions_order,:,:);
-    data_natural_avg = data_natural_avg(conditions_order,:,:);
-    
     disp('Training set: Reshape by taking the trials from half of the conditions for each category');
     size_data_category = size(data_artificial);
     data_artificial_reshaped = reshape(data_artificial,...
@@ -92,26 +81,15 @@ for perm = 1:numPermutations
     disp('Split into pseudotrials');
     numTrialsPerBin = 20; %try different combinations of bins/numTrialsPerBin
     [bins,numBins] = create_pseudotrials(numTrialsPerBin,data_both_categories);
+    testing_bins = 5; 
     
-    %%% Fix: 3) testing set is a vector of 30 conditions that were not used
-    %%% in the training
-%     disp('Testing set: Average over trials');
-%     data_artificial_avg = squeeze(mean(data_artificial,2));
-%     data_natural_avg = squeeze(mean(data_natural,2));
-%     data_testing_both = NaN([num_categories,size(data_artificial_avg)]);
-%     data_testing_both(1,:,:,:) = data_artificial_avg;
-%     data_testing_both(2,:,:,:) = data_natural_avg;
-
-%     testing_conditions = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins;
-
     for t = 1:numTimepoints 
         disp('Split into training and testing');
-        training_data = [squeeze(bins(1,:,:,t)); squeeze(bins(2,:,:,t))];  %train on half of the bins pseudotrials
-        testing_data  = [squeeze(data_testing_both(1,:,:,t)); squeeze(data_testing_both(2,:,:,t))]; %test on all conditions 
-        testing_data  = [squeeze(data_both_categories(1,testing_conditions,:,t)); squeeze(data_both_categories(2,testing_conditions,:,t))];
+        training_data = [squeeze(bins(1,1:end-testing_bins,:,t)); squeeze(bins(2,1:end-testing_bins,:,t))];  %train on all but one bin 
+        testing_data  = [squeeze(bins(1,end-testing_bins+1:end,:,t)); squeeze(bins(2,end-testing_bins+1:end,:,t))];
                  
-        labels_train  = [ones(numBins-num_bins_testing,1);2*ones(numBins-num_bins_testing,1)]; %one label for each pseudotrial
-        labels_test   = [ones(numel(testing_conditions),1);2*ones(numel(testing_conditions),1)];   
+        labels_train  = [ones(numBins-testing_bins,1);2*ones(numBins-testing_bins,1)]; %one label for each pseudotrial
+        labels_test   = [ones(testing_bins,1);2*ones(testing_bins,1)];   
         
         disp('Train the SVM');
         train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
@@ -126,5 +104,5 @@ end
 
 %% Save the decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
+save(fullfile(results_dir,subname,sprintf('pseudotrials_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
 
