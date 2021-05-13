@@ -62,10 +62,12 @@ for perm = 1:numPermutations
     data_artificial = data(1:num_conditions_per_category,:,:,:);
     data_natural = data(num_conditions_per_category+1:end,:,:,:);
     
-    
     %%% Fix: 1) permute the conditions 2) take half of the conditions and
     %%% mix the trials from the different scenes -> training set 
         
+    
+    
+    
     disp('Permute the conditions (scenes)');
     conditions_order = randperm(num_conditions_per_category)';
     data_artificial_avg = data_artificial_avg(conditions_order,:,:);
@@ -81,7 +83,6 @@ for perm = 1:numPermutations
     disp('Permute the trials')
     data_artificial_permuted = data_artificial_reshaped(randperm(size(data_artificial_reshaped,1)),:,:);
     data_natural_permuted = data_natural_reshaped(randperm(size(data_natural_reshaped,1)),:,:);
-    
     
     disp('Put both categories into one matrix');
     data_both_categories = NaN([num_categories,size(data_artificial_permuted)]);
