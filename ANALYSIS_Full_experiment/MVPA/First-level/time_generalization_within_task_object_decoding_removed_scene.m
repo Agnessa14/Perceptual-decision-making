@@ -63,7 +63,7 @@ included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 numTimepoints = numResampledTps; 
-numPermutations=1; 
+numPermutations=50; 
 
 %Preallocate 
 decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints,numTimepoints);
