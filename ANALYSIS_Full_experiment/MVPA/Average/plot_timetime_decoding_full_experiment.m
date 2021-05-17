@@ -1,5 +1,5 @@
-function plot_timetime_object_decoding_full_experiment(subjects,task,analysis)
-%PLOT_TIMETIME_OBJECT_DECODING_FULL_EXPERIMENT Plot the results from time-generalized object decoding, averaged over
+function plot_timetime_decoding_full_experiment(subjects,task,analysis)
+%PLOT_TIMETIME_DECODING_FULL_EXPERIMENT Plot the results from time-generalized object decoding, averaged over
 %all participants and subject-specific.
 %
 %Input: subject IDs (e.g., 1:13), task (1=categorization, 2=distraction,3=cross-task),
