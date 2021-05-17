@@ -31,6 +31,11 @@ end
 %task name
 if task < 3
     task_name = get_task_name(task);
+    if task == 1
+        task_name_title = task_name;
+    else
+        task_name_title = 'distraction';
+    end
 elseif task == 3
     if strcmp(analysis,'object_decoding')
         task_name = 'crosstask';
@@ -64,7 +69,7 @@ set(gcf, 'Position', get(0, 'Screensize'));
 set(h, 'EdgeColor', 'none');
 axis square;
 if task<3
-    plot_title = sprintf('Time-generalized %s decoding in a %s task (N=%d)',analysis_name,task_name,numel(subjects));
+    plot_title = sprintf('Time-generalized %s decoding in a %s task (N=%d)',analysis_name,task_name_title,numel(subjects));
 elseif task == 3 
     plot_title = sprintf('Time-generalized %s decoding across categorization and distraction tasks (N=%d)',analysis_name,numel(subjects));
 end
