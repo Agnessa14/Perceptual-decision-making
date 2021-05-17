@@ -73,7 +73,7 @@ end
 
 %% Define the required variables
 numTimepoints = numResampledTps; 
-numPermutations=100; 
+numPermutations=50; 
 numConditionsAll = 60;
 [min_cat,trials_per_condition_cat] = min_number_trials(timelock_triggers_categorization, numConditionsAll); 
 [min_dis,trials_per_condition_dis] = min_number_trials(timelock_triggers_distraction, numConditionsAll);
