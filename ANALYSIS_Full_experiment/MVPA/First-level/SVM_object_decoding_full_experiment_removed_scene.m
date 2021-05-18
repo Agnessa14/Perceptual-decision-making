@@ -8,6 +8,9 @@ function SVM_object_decoding_full_experiment_removed_scene(subject,task)
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
 %
+%Author: Agnessa Karapetian, 2021
+%
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -76,12 +79,7 @@ for perm = 1:numPermutations
                     ', timepoint ->',num2str(timePoint)]);
                 
                 % L-1 pseudo trials go to training set, the Lth to testing set
-                if numPTs == 2 %when only 1 PT for each condition
-                    training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint))' ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))']; %(numbins-1)x63x1 each
-                else
-                    training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each
-                end
-                
+                training_data=[squeeze(pseudoTrials(condA,1:end-1,:,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,:,timePoint))]; %(numbins-1)x63x1 each                
                 testing_data=[squeeze(pseudoTrials(condA,end,:,timePoint))' ; squeeze(pseudoTrials(condB,end,:,timePoint))']; %1x63x1 each
          
                 % class labels
