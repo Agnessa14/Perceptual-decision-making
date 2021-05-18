@@ -2,8 +2,8 @@ function significant_timepoints = run_permutation_stats(subjects,task,analysis,f
 %RUN_PERMUTATION_STATS Call on the permutation stats script to perform
 %cluster based permutation tests. 
 %
-%Input: subject IDs, task (1=categorization,2=distraction), analysis
-%('object_decoding' or 'category_decoding')
+%Input: subject IDs, task (1=categorization,2=distraction,3=cross-task), analysis
+%('object_decoding', 'category_decoding', 'time_object_decoding', 'time_category_decoding' or 'rsa_time_object')
 %
 %Output: SxP matrix containing decoding accuracies, where S is the number
 %of subjects and P is the number of timepoints.
@@ -12,7 +12,11 @@ function significant_timepoints = run_permutation_stats(subjects,task,analysis,f
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
-task_name = get_task_name(task);
+if task < 3
+    task_name = get_task_name(task);
+elseif task == 3
+    task_name = 'cross_task';
+end
 
 %% Parameters for the stats script  
 nperm = 10000;
