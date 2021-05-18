@@ -1,9 +1,12 @@
 function RSA_cross_task(subjects) 
 %RSA_CROSS_TASK Perform representational similarity analysis on SVM object decoding from both tasks. 
 %
-%Input: subject ID
+%Input: subject IDs
 %
-%Output: 1xP vector of correlations in, where P is the number of timepoints. 
+%Output: 
+% -NxNxP representational dissimilarity matrices (1-Pearson's
+% coefficient), one for each task
+% -PxP matrix of 1-Spearman's correlations, where P is the number of timepoints. 
 %
 %Author: Agnessa Karapetian, 2021
 %
@@ -24,8 +27,8 @@ decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numConditions,nu
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
-    cat_filename = 'svm_decoding_accuracy_categorization.mat'; %rdm_pearson
-    dis_filename = 'svm_decoding_accuracy_fixation.mat'; %rdm_pearson
+    cat_filename = 'rdm_pearson_categorization.mat'; %svm_decoding_accuracy
+    dis_filename = 'rdm_pearson_fixation.mat'; %svm_decoding_accuracy
 
     load(fullfile(subject_results_dir,cat_filename));
     decoding_accuracies_all_subjects_cat(subject,:,:,:) = decodingAccuracy_avg;
@@ -68,7 +71,9 @@ xlabel('Timepoints: Distraction task');
 ylabel('Timepoints: Categorization task');
 title(sprintf('Time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));
 
-%% Save
+%% Save RDMs, RSA results and figures
+save(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d',subjects(1),subjects(end))),'rdm_cat');
+save(fullfile(results_avg_dir,sprintf('average_rdm_fixation_subjects_%d_%d',subjects(1),subjects(end))),'rdm_dis');
 save(fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end))),'rsa');
 saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end)))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d.png',subjects(1),subjects(end)))); %save as png
