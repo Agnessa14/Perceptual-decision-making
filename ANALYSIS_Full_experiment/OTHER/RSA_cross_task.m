@@ -1,12 +1,14 @@
-function RSA_cross_task(subjects) 
+function RSA_cross_task(subjects,with_stats) 
 %RSA_CROSS_TASK Perform representational similarity analysis on SVM object decoding from both tasks. 
 %
-%Input: subject IDs
+%Input: subject IDs, with stats (1) or without (0)
 %
 %Output: 
-% -NxNxP representational dissimilarity matrices (1-Pearson's
+% 1)NxNxP representational dissimilarity matrices (1-Pearson's
 % coefficient), one for each task
-% -PxP matrix of 1-Spearman's correlations, where P is the number of timepoints. 
+% 2)PxP matrix of 1-Spearman's correlations, where P is the number of timepoints. 
+% 3)RSA time-time plot based on 2)
+% 4)If with stats, NxN plot of statistical significance
 %
 %Author: Agnessa Karapetian, 2021
 %
@@ -72,11 +74,53 @@ ylabel('Timepoints: Categorization task');
 title(sprintf('Time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));
 
 %% Save RDMs, RSA results and figures
+%Matrices
 save(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d',subjects(1),subjects(end))),'rdm_cat');
 save(fullfile(results_avg_dir,sprintf('average_rdm_fixation_subjects_%d_%d',subjects(1),subjects(end))),'rdm_dis');
 save(fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end))),'rsa');
+%Figures
 saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end)))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d.png',subjects(1),subjects(end)))); %save as png
 close(gcf);
+
+%% Plot stats if needed
+if with_stats
+    %load the subjects x timepoints matrix
+    task = 3; %for cross task
+    filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_cross_task_time_object_decoding.mat',...
+    subjects(1),subjects(end)));
+    if exist(filename_forstats,'file')
+        load(filename_forstats);
+    else
+        for_stats = all_subjects_for_stats(subjects,task,'rsa_time_object');
+    end
+    
+    %load the stats if they have been run already
+    filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_cross_task_time_object_decoding.mat',...
+    subjects(1),subjects(end)));
+    if exist(filename_sign,'file')
+        load(filename_sign);
+    else
+        significant_timepoints = run_permutation_stats(subjects,task,'rsa_time_object',for_stats);
+    end
+    
+    %plot the stats - different plot from the RSA
+    significant_timepoints(isnan(significant_timepoints))=0;
+    h = pcolor(significant_timepoints); 
+    set(gcf, 'Position', get(0, 'Screensize'));
+    set(h, 'EdgeColor', 'none');
+    axis square;
+    cbar = colorbar;
+    ylabel(cbar,'Significance');
+    xlabel('Timepoints: Distraction task');
+    ylabel('Timepoints: Categorization task');
+    title(sprintf('Statistical analysis of time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));  
+    
+    %save the plot
+    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_rsa_cross_task_subjects_%d_%d.png',subjects(1),subjects(end)))); 
+    close(gcf);
+end 
+
 end
     
