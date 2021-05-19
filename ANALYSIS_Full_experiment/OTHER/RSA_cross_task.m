@@ -22,8 +22,8 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 numConditions = 60;
 numTimepoints = 200;
 sorted_subjects = sort(subjects);
-decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+rdm_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+rdm_all_subjects_dis = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
 
 %% Loop: collect results from all subjects 
 for subject = subjects
@@ -33,14 +33,14 @@ for subject = subjects
     dis_filename = 'rdm_pearson_fixation.mat'; %svm_decoding_accuracy
 
     load(fullfile(subject_results_dir,cat_filename));
-    decoding_accuracies_all_subjects_cat(subject,:,:,:) = decodingAccuracy_avg;
+    rdm_all_subjects_cat(subject,:,:,:) = rdm_avg;
     load(fullfile(subject_results_dir,dis_filename));
-    decoding_accuracies_all_subjects_dis(subject,:,:,:) = decodingAccuracy_avg;
+    rdm_all_subjects_dis(subject,:,:,:) = rdm_avg;
 end   
 
 %% RSA: correlate the RDMs from both tasks at every timepoint 
-rdm_cat = squeeze(nanmean(decoding_accuracies_all_subjects_cat,1)); %avg over subjects
-rdm_dis = squeeze(nanmean(decoding_accuracies_all_subjects_dis,1)); 
+rdm_cat = squeeze(nanmean(rdm_all_subjects_cat,1)); %avg over subjects
+rdm_dis = squeeze(nanmean(rdm_all_subjects_dis,1)); 
 
 % Fill up the RDM so it's symmetrical: replace the NaNs by 0s & add the transpose of the upper diagonal
 rdm_cat(isnan(rdm_cat)) = 0;
