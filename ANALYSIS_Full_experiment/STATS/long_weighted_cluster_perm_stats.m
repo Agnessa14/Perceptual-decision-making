@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,tail,if_save,numPermutations,method)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = long_weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,tail,if_save,numPermutations,method)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
