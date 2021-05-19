@@ -1,4 +1,4 @@
-function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(medianRT,mean_distances,true_correlation,task_distance,task_RT,category,tail,if_save,numPermutations,method)
+function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluster_perm_stats(subjects,medianRT,mean_distances,true_correlation,task_distance,task_RT,category,tail,if_save,numPermutations,method)
 %WEIGHTED_CLUSTER_PERM_STATS Perform weighted cluster permutation stats to calculate the
 %significance of the timepoints in the distance-to-hyperplane analysis.
 %
@@ -28,20 +28,19 @@ results_avg = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 task_distance_name = get_task_name(task_distance);
 numTimepoints = 200;
 sample_correlations = NaN(numPermutations,numTimepoints);
-if strcmp(analysis,'random')
-   subject_corr = NaN(size(medianRT,1),numTimepoints);
+if strcmp(method,'random')
+   subject_corr = NaN(numel(subjects),numTimepoints);
 end
 for perm = 1:numPermutations
     if ~mod(perm,100)
         fprintf('Calculating the correlation %d \n',perm);
     end
-    if strcmp(analysis,'fixed')
-        permuted_RTs = medianRT(randperm(numel(medianRT)));
+    permuted_RTs = medianRT(randperm(numel(medianRT)));
+    if strcmp(method,'fixed')
         sample_correlations(perm,:) = arrayfun(@(x) corr(mean_distances(:,x),permuted_RTs','type','Spearman'),t);
-    elseif strcmp(analysis,'random')
-        permuted_RTs = medianRT(:,randperm(size(medianRT,2))); %permute for each subject
+    elseif strcmp(method,'random')
         for subject = subjects
-            subject_corr(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,:,x))',permuted_RTs','type','Spearman'), t);
+            subject_corr(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,:,x))',permuted_RTs','type','Spearman'), 1:numTimepoints);
         end
         sample_correlations(perm,:) = squeeze(mean(subject_corr,1));
     end     
