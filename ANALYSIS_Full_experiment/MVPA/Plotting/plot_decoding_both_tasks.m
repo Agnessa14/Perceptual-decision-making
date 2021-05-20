@@ -129,6 +129,10 @@ if with_stats
         end
         quiver(CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
+        save(fullfile(results_avg_dir,sprintf('peak_latency_subjects_%d_%d_%s_task_%s.mat',...
+        subjects(1),subjects(end),task_name,analysis)),'peak_latency');
+        save(fullfile(results_avg_dir,sprintf('confidence_interval_peak_latency_subjects_%d_%d_%s_task_%s.mat',...
+        subjects(1),subjects(end),task_name,analysis)),'CI');    
     end
 end 
 
@@ -146,8 +150,8 @@ plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy (%)');
 legend([p1,p2],legend_cell);
 
 %% Save the plot
-% saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
-% saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
 
 %% Plot the difference curve
