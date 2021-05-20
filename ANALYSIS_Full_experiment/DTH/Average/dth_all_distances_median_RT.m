@@ -79,7 +79,7 @@ plot(avg_corr_avg,'LineWidth',2,'Color',color_avg);
 
 %% Plot stats if needed
 if with_stats
-    num_perms = 10000;
+    num_perms = 1000;
     for c = 1:4
         if c == 1
             category = 'artificial';            
