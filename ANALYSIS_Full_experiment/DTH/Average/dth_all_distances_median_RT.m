@@ -146,7 +146,7 @@ legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
     'Average of artificial and natural scenes'}; %add stimulus onset?
 xticks(0:10:200);
 plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
-ylim([-0.5 0.4]);
+
 %% Save figures
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
