@@ -24,7 +24,7 @@ results_avg = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
-%% 1)Fixed effects: Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
+%% 1)Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
 task_distance_name = get_task_name(task_distance);
 numTimepoints = 200;
 sample_correlations = NaN(numPermutations,numTimepoints);
@@ -42,7 +42,7 @@ for perm = 1:numPermutations
         for subject = subjects
             subject_corr(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,:,x))',permuted_RTs','type','Spearman'), 1:numTimepoints);
         end
-        sample_correlations(perm,:) = squeeze(mean(subject_corr,1));
+        sample_correlations(perm,:) = squeeze(nanmean(subject_corr,1));
     end     
 end
 
@@ -56,7 +56,6 @@ end
                 %%%%% CLUSTER-BASED PT: ATTRIBUTE SIGNIFICANCE TO TIMEPOINTS %%%%%
 
 %% 1) Find maximum weighted cluster (highest sum of correlations) in the ground truth and the permutation samples
-%find maximum cluster size and maximum weighted cluster for all permutation samples
 cluster_th = 0.05;
 clusterMaxSize = NaN(numPermutations,1);
 clusterMaxWei = NaN(numPermutations,1);
@@ -86,7 +85,7 @@ end
 clusterMaxSize_all = [clusterMaxSize_ground;clusterMaxSize];
 clusterMaxWei_all = [clusterMaxWei_ground;clusterMaxWei];
 
-%% 3) Compare ground truth cluster to the permutation samples and identify significant timepoints, if any
+%% 2) Compare ground truth cluster to the permutation samples and identify significant timepoints, if any
 significance_th = 0.05;
 
 %find cluster threshold
