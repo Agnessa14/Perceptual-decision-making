@@ -95,8 +95,7 @@ end
 saveas(gcf,fullfile(results_avg_dir,sprintf('legend_%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
 
 %Save the plot without legend
-leg = legend;
-set(leg,'visible','off');
+legend('off');
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
 close(gcf);
