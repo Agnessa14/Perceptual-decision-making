@@ -45,8 +45,8 @@ end
 
 %% Average over subjects + conditions and remove any NaN (for non-included subjects)
 if strcmp(analysis,'object_decoding')
-    avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3));
-    avg_over_conditions_all_subjects_dis = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_dis,1),2),3));
+    avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3))';
+    avg_over_conditions_all_subjects_dis = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_dis,1),2),3))';
 elseif strcmp(analysis,'category_decoding')
     avg_over_conditions_all_subjects_cat = squeeze(nanmean(decoding_accuracies_all_subjects_cat,1));
     avg_over_conditions_all_subjects_dis = squeeze(nanmean(decoding_accuracies_all_subjects_dis,1));
@@ -59,18 +59,24 @@ set(gcf, 'Position', get(0, 'Screensize'));
 %% Plot stats if needed
 if with_stats
     for task = 1:2
+        %invert the task indices so the categorization task is plotted last
         if task == 1
+            task_plot = 2;
+        elseif task == 2
+            task_plot = 1;
+        end
+        if task_plot == 1
             task_name = 'categorization';
             data = avg_over_conditions_all_subjects_cat;
             plot_location = 47.5;
             color_err = [0.75 0.75 0.95]; %can't be the same one as that of the plot
-            color_data = [0 0.4 0.85];
-        elseif task == 2
+            color_data = [0 0.4 0.85];     
+        elseif task_plot == 2
             task_name = 'fixation';
             data = avg_over_conditions_all_subjects_dis;
             plot_location = 46;
             color_err = [0.95 0.75 0.9]; 
-            color_data = [0.9 0.2 0.8];
+            color_data = [0.9 0.2 0.8];       
         end
         
         %%error bars
@@ -79,7 +85,7 @@ if with_stats
         if exist(filename_forstats,'file')
             load(filename_forstats);
         else
-            for_stats = all_subjects_for_stats(subjects,task,analysis);
+            for_stats = all_subjects_for_stats(subjects,task_plot,analysis);
         end
         stdDM = std(for_stats); 
         err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
@@ -94,9 +100,9 @@ if with_stats
 
         %plot the data
         p = plot(data,'Linewidth',3, 'Color', color_data);
-        if task==1
+        if task_plot==1
             p1 = p; %for the legend
-        elseif task == 2
+        elseif task_plot == 2
             p2 = p;
         end
         
@@ -106,27 +112,29 @@ if with_stats
         if exist(filename_sign,'file')
             load(filename_sign);
         else
-            significant_timepoints = run_permutation_stats(subjects,task,analysis,for_stats);
+            significant_timepoints = run_permutation_stats(subjects,task_plot,analysis,for_stats);
         end
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color_data); 
         
         %peak latency and 95% confidence interval 
-        [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
+        [peak_latency, CI] = bootstrap_peak_latency(subjects,task_plot,analysis);
         if strcmp(analysis,'object_decoding')
-            height_cat = 80;
-            height_dis = 82;
+            arrow_x = 51;
+            height_cat = 82.5;
+            height_dis = 80;
         elseif strcmp(analysis,'category_decoding')
-            height_cat = 75;
-            height_dis = 73;
+            arrow_x = 60;
+            height_cat = 78;
+            height_dis = 75.5;
         end
-        quiver(peak_latency-10,data(peak_latency),6,0,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',0.75,'LineWidth',2);
-        if task == 1
+        if task_plot == 1
             height = height_cat;
-        elseif task == 2
+        elseif task_plot == 2 
             height = height_dis;
         end
+        quiver(arrow_x,data(peak_latency),6,0,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',0.75,'LineWidth',2);
         quiver(CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
         save(fullfile(results_avg_dir,sprintf('peak_latency_subjects_%d_%d_%s_task_%s.mat',...
