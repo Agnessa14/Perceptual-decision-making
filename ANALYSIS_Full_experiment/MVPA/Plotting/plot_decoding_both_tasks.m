@@ -18,10 +18,10 @@ numTimepoints = 200;
 sorted_subjects = sort(subjects);
 if strcmp(analysis,'object_decoding')
     decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-    decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+    decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
 elseif strcmp(analysis,'category_decoding')
     decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numTimepoints);
-    decoding_accuracies_all_subjects_fix = NaN(sorted_subjects(end),numTimepoints);
+    decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numTimepoints);
 end
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
@@ -30,29 +30,29 @@ for subject = subjects
     subject_results_dir = fullfile(results_dir,subname);
     if strcmp(analysis,'object_decoding')
         cat_filename = 'svm_decoding_accuracy_categorization.mat';
-        fix_filename = 'svm_decoding_accuracy_fixation.mat';
+        dis_filename = 'svm_decoding_accuracy_fixation.mat';
         all_dimensions = repmat({':'},1,3); %conditions x conditions x timepoints
     elseif strcmp(analysis,'category_decoding')
         cat_filename = 'svm_artificial_vs_natural_decoding_accuracy_categorization.mat';
-        fix_filename = 'svm_artificial_vs_natural_decoding_accuracy_fixation.mat';
+        dis_filename = 'svm_artificial_vs_natural_decoding_accuracy_fixation.mat';
         all_dimensions = {':'}; % timepoints
     end
     load(fullfile(subject_results_dir,cat_filename));
     decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
-    load(fullfile(subject_results_dir,fix_filename));
-    decoding_accuracies_all_subjects_fix(subject,all_dimensions{:}) = decodingAccuracy_avg;
+    load(fullfile(subject_results_dir,dis_filename));
+    decoding_accuracies_all_subjects_dis(subject,all_dimensions{:}) = decodingAccuracy_avg;
 end   
 
 %% Average over subjects + conditions and remove any NaN (for non-included subjects)
 if strcmp(analysis,'object_decoding')
     avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3));
-    avg_over_conditions_all_subjects_fix = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_fix,1),2),3));
+    avg_over_conditions_all_subjects_dis = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_dis,1),2),3));
 elseif strcmp(analysis,'category_decoding')
     avg_over_conditions_all_subjects_cat = squeeze(nanmean(decoding_accuracies_all_subjects_cat,1));
-    avg_over_conditions_all_subjects_fix = squeeze(nanmean(decoding_accuracies_all_subjects_fix,1));
+    avg_over_conditions_all_subjects_dis = squeeze(nanmean(decoding_accuracies_all_subjects_dis,1));
 end
 
-%% Plot the average of all subjects
+%% Setup the figure
 figure(abs(round(randn*10))); %Random figure number
 set(gcf, 'Position', get(0, 'Screensize'));
 
@@ -67,7 +67,7 @@ if with_stats
             color_data = [0 0.4 0.85];
         elseif task == 2
             task_name = 'fixation';
-            data = avg_over_conditions_all_subjects_fix;
+            data = avg_over_conditions_all_subjects_dis;
             plot_location = 46;
             color_err = [0.95 0.75 0.9]; 
             color_data = [0.9 0.2 0.8];
@@ -115,13 +115,20 @@ if with_stats
         %peak latency and 95% confidence interval 
         [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
         if strcmp(analysis,'object_decoding')
-            height = 80;
+            height_cat = 80;
+            height_dis = 82;
         elseif strcmp(analysis,'category_decoding')
-            height = 77;
+            height_cat = 75;
+            height_dis = 73;
         end
-        quiver(peak_latency,height,0,-4,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
-        quiver(CI(1),height,0,-4,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
-        quiver(CI(2),height,0,-4,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(peak_latency-10,data(peak_latency),6,0,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',0.75,'LineWidth',2);
+        if task == 1
+            height = height_cat;
+        elseif task == 2
+            height = height_dis;
+        end
+        quiver(CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
     end
 end 
 
@@ -139,8 +146,22 @@ plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy (%)');
 legend([p1,p2],legend_cell);
 
 %% Save the plot
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
+% saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
+% saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
+close(gcf);    
+
+%% Plot the difference curve
+diff_curve = avg_over_conditions_all_subjects_cat-avg_over_conditions_all_subjects_dis;
+figure(abs(round(randn*10))); %Random figure number
+set(gcf, 'Position', get(0, 'Screensize'));
+plot(diff_curve,'--','LineWidth',3,'Color','k');
+diff_title = sprintf('%s decoding: difference in accuracy between the categorization and the distraction tasks over time (N=%d)',analysis_title,numel(subjects));
+plotting_parameters(diff_title,'',onset_time,12,'best','%'); 
+legend('off');
+
+%Save
+saveas(gcf,fullfile(results_avg_dir,sprintf('diff_curve_svm_%s_subjects_%d_%d',analysis,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('diff_curve_svm_%s_subjects_%d_%d.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
 
 end
