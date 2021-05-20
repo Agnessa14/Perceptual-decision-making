@@ -89,8 +89,14 @@ if strcmp(analysis,'object_decoding')
     filename = 'svm_object_decoding_subjects';
 elseif strcmp(analysis,'category_decoding')
     filename = 'svm_artificial_vs_natural_subjects';
-end   
+end
 
+%Save the plot with legend
+saveas(gcf,fullfile(results_avg_dir,sprintf('legend_%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
+
+%Save the plot without legend
+leg = legend;
+set(leg,'visible','off');
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
 close(gcf);
