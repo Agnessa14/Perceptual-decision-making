@@ -118,7 +118,7 @@ if ~exist('StatMapPermPV') %if pvalues have not been precomputed
 
     %perform permutations
 
-    parfor i = 2:nperm %par
+    for i = 2:nperm %par
 
         if ~rem(i,100)
 
@@ -135,7 +135,7 @@ if ~exist('StatMapPermPV') %if pvalues have not been precomputed
         %permsample = mean(data_perm,1) ./ std(data_perm);
 
         %StatMapPerm(i,:) = permsample(:); %does this for multiple dimensions: 
-        StatMapPerm(i,:) = mean(data_perm,1) ./ std(data_perm);
+        StatMapPerm(i,cln{:}) = mean(data_perm,1) ./ std(data_perm); 
 
         
 
@@ -159,7 +159,7 @@ clear StatMapPerm;
 
 [clustermax(1),nclusters,clusters,clustersize] = find_clusters_alld(squeeze(StatMapPermPV(1,cln{:})<=cluster_th) , cluster_th);
 
-parfor i = 2:nperm
+for i = 2:nperm
 
     if ~rem(i,100)
 
