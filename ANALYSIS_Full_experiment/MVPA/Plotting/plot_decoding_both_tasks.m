@@ -35,7 +35,7 @@ for subject = subjects
     elseif strcmp(analysis,'category_decoding')
         cat_filename = 'svm_artificial_vs_natural_decoding_accuracy_categorization.mat';
         fix_filename = 'svm_artificial_vs_natural_decoding_accuracy_fixation.mat';
-        all_dimensions = ':'; % timepoints
+        all_dimensions = {':'}; % timepoints
     end
     load(fullfile(subject_results_dir,cat_filename));
     decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
@@ -55,37 +55,25 @@ end
 %% Plot the average of all subjects
 figure(abs(round(randn*10))); %Random figure number
 set(gcf, 'Position', get(0, 'Screensize'));
-color_cat = 'b';
-color_fix = 'm';
-plot(avg_over_conditions_all_subjects_cat,'Linewidth',3, 'Color', color_cat);
-hold on
-plot(avg_over_conditions_all_subjects_fix,'Linewidth',3, 'Color', color_fix);
-if strcmp(analysis,'object_decoding')
-    analysis_title = 'Object';
-elseif strcmp(analysis,'category_decoding')
-    analysis_title = 'Category';
-end
-plot_title = sprintf('%s decoding per timepoint for %d subjects',analysis_title,numel(subjects));
-onset_time = 40; 
-xticks(0:10:200);
-ylim([45 80]);
 
 %% Plot stats if needed
 if with_stats
     for task = 1:2
         if task == 1
             task_name = 'categorization';
-            plot_name = avg_over_conditions_all_subjects_cat;
+            data = avg_over_conditions_all_subjects_cat;
             plot_location = 47.5;
-            color = color_cat;
+            color_err = [0.75 0.75 0.95]; %can't be the same one as that of the plot
+            color_data = [0 0.4 0.85];
         elseif task == 2
             task_name = 'fixation';
-            plot_name = avg_over_conditions_all_subjects_fix;
+            data = avg_over_conditions_all_subjects_fix;
             plot_location = 46;
-            color = color_fix;
+            color_err = [0.95 0.75 0.9]; 
+            color_data = [0.9 0.2 0.8];
         end
         
-        %error bars
+        %%error bars
         filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s.mat',...
         subjects(1),subjects(end),task_name,analysis));
         if exist(filename_forstats,'file')
@@ -93,11 +81,25 @@ if with_stats
         else
             for_stats = all_subjects_for_stats(subjects,task,analysis);
         end
-        stdDM = std(for_stats); %std(26x200)
-        err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects
-        errorbar(plot_name, err, 'Color',color); %plot
+        stdDM = std(for_stats); 
+        err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
+        
+        %plot as a shaded area
+        top_curve = data + err;
+        bottom_curve = data - err;
+        x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
+        shaded_area = [top_curve, fliplr(bottom_curve)];
+        fill(x2, shaded_area, color_err);
         hold on;
 
+        %plot the data
+        p = plot(data,'Linewidth',3, 'Color', color_data);
+        if task==1
+            p1 = p; %for the legend
+        elseif task == 2
+            p2 = p;
+        end
+        
         %significant timepoints
         filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_task_%s.mat',...
         subjects(1),subjects(end),task_name,analysis));
@@ -108,7 +110,7 @@ if with_stats
         end
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
-        plot(st,'*','Color',color); 
+        plot(st,'*','Color',color_data); 
         
         %peak latency and 95% confidence interval 
         [peak_latency, CI] = bootstrap_peak_latency(subjects,task,analysis);
@@ -117,14 +119,24 @@ if with_stats
         elseif strcmp(analysis,'category_decoding')
             height = 77;
         end
-        quiver(peak_latency,height,0,-4,0,'Color',color,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
-        quiver(CI(1),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
-        quiver(CI(2),height,0,-4,0,'Color',color,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(peak_latency,height,0,-4,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',1,'LineWidth',2) %kind of ugly arrow..check the mathworks page
+        quiver(CI(1),height,0,-4,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(CI(2),height,0,-4,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
     end
 end 
 
+%Plot parameters
+if strcmp(analysis,'object_decoding')
+    analysis_title = 'Object';
+elseif strcmp(analysis,'category_decoding')
+    analysis_title = 'Category';
+end
+plot_title = sprintf('%s decoding over time (N=%d)',analysis_title,numel(subjects));
+onset_time = 40; 
+xticks(0:10:200);
 legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to add the arrowws and CIs to the legend
-plotting_parameters(plot_title,legend_cell,onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
+plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
+legend([p1,p2],legend_cell);
 
 %% Save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
