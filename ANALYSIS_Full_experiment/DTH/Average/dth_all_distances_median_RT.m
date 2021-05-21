@@ -162,12 +162,12 @@ dth_results.corr_avg_categories = avg_corr_avg;
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 if isequal(task_distance,task_RT)
     save(fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
-%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
+    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
+    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
 else
     save(fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s_cross_task.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
-%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
+    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
+    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
 end
 
 close(gcf);
