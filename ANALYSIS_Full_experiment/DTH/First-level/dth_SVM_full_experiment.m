@@ -11,6 +11,7 @@ function dth_SVM_full_experiment(subject,task)
 %   - Nx1 vector of minimum trial #s. 
 %
 %Author: Agnessa Karapetian, 2021
+
 %% Add paths
 %toolboxes and helper functions
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
