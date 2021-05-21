@@ -1,5 +1,5 @@
 function dth_SVM_full_experiment(subject,task)
-%DTH_SVM_PILOT_2 Performs the distance-to-hyperplane analysis using SVM on
+%DTH_SVM_PILOT_full_experiment Performs the distance-to-hyperplane analysis using SVM on
 %a balanced dataset. 
 %
 %Input: subject ID (integer)
@@ -9,7 +9,8 @@ function dth_SVM_full_experiment(subject,task)
 %   and P is the number of timepoints.
 %   - Nx1 vector of RTs. 
 %   - Nx1 vector of minimum trial #s. 
-
+%
+%Author: Agnessa Karapetian, 2021
 %% Add paths
 %toolboxes and helper functions
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
