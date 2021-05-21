@@ -1,4 +1,4 @@
-function significant_timepoints = run_permutation_stats(subjects,task,analysis,for_stats) 
+function significant_timepoints = run_permutation_stats(subjects,task,analysis,for_stats,nperm,cluster_threshold,significance_threshold) 
 %RUN_PERMUTATION_STATS Call on the permutation stats script to perform
 %cluster based permutation tests. 
 %
@@ -19,9 +19,6 @@ elseif task == 3
 end
 
 %% Parameters for the stats script  
-nperm = 10000;
-cluster_threshold = 0.05;
-significance_threshold = 0.05;
 tail = 'right'; 
 
 %% Run the stats script 
