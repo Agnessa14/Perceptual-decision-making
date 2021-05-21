@@ -86,12 +86,16 @@ end
 ylabel(cbar,'Decoding accuracy (%)');
 
 %% Save the plot
-saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s.png',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
+% saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
+% saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s.png',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
 close(gcf)
 
 %% Plot stats if needed
 if with_stats
+    num_perms = 1000;
+    cluster_th = 0.1;
+    significance_th = 0.1;
+    
     %load the subjects x timepoints matrix
     filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_time_%s.mat',...
     subjects(1),subjects(end),task_name,analysis));
@@ -107,7 +111,7 @@ if with_stats
     if exist(filename_sign,'file')
         load(filename_sign);
     else
-        significant_timepoints = run_permutation_stats(subjects,task,sprintf('time_%s',analysis),for_stats);
+        significant_timepoints = run_permutation_stats(subjects,task,sprintf('time_%s',analysis),for_stats,num_perms,cluster_th,significance_th);
     end
     
     %plot the stats - different plot from the RSA
