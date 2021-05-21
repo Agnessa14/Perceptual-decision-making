@@ -112,8 +112,13 @@ if with_stats
         end
 
         %Check if stats already exist, otherwise run the stats script
-        filename_sign = fullfile(results_avg_dir,sprintf('random_dth_permutation_stats_%s_%s_distance_subjects_%d_%d.mat',...
+        if isequal(task_distance,task_RT)
+            filename_sign = fullfile(results_avg_dir,sprintf('random_dth_permutation_stats_%s_%s_distance_subjects_%d_%d.mat',...
             category,task_name_distance,subjects(1),subjects(end)));
+        else
+            filename_sign = fullfile(results_avg_dir,sprintf('random_dth_permutation_stats_crosstask_%s_%s_distance_subjects_%d_%d.mat',...
+            category,task_name_distance,subjects(1),subjects(end)));
+        end
         if exist(filename_sign,'file')
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
@@ -147,15 +152,22 @@ legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
 xticks(0:10:200);
 plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); %[0.4 0.8 0.1 0.1
 
-%% Save figures
-save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
+%% Save correlations and figures
+%correlations
+dth_results.corr_both_categories = avg_corr_both;
+dth_results.corr_artificial = avg_corr_art;
+dth_results.corr_natural = avg_corr_nat;
+dth_results.corr_avg_categories = avg_corr_avg;
 
+save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 if isequal(task_distance,task_RT)
-    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
-    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
+    save(fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
+%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
 else
-    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
-    saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
+    save(fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_%s_cross_task.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
+%     saveas(gcf,fullfile(save_path,sprintf('random_effects_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
 end
 
 close(gcf);
