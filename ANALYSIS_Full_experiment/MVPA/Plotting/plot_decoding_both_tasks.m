@@ -58,6 +58,10 @@ set(gcf, 'Position', get(0, 'Screensize'));
 
 %% Plot stats if needed
 if with_stats
+    num_perms = 10000;
+    cluster_th = 0.05;
+    significance_th = 0.05;
+    
     for task = 1:2
         %invert the task indices so the categorization task is plotted last
         if task == 1
@@ -112,7 +116,8 @@ if with_stats
         if exist(filename_sign,'file')
             load(filename_sign);
         else
-            significant_timepoints = run_permutation_stats(subjects,task_plot,analysis,for_stats);
+            significant_timepoints = run_permutation_stats(subjects,task_plot,analysis,...
+                for_stats,num_perms,cluster_th,significance_th);
         end
         st = (significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
