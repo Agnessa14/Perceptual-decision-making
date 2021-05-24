@@ -17,7 +17,11 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 if task < 3
     task_name = get_task_name(task);
 elseif task == 3
-    task_name = 'crosstask';
+    if strcmp(analysis,'object_decoding') || strcmp(analysis,'time_object_decoding')
+        task_name = 'crosstask';
+    elseif strcmp(analysis,'category_decoding') || strcmp(analysis,'time_category_decoding')
+        task_name = 'cross_task';
+    end
 end
 
 %% Preallocate
@@ -49,7 +53,6 @@ all_dimensions = repmat({':'},1,dimensionality);
 
 %% Loop: collect results from all subjects + plot each subject individually on the same plot
 for subject = subjects
-    disp(subject);
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,filename));
