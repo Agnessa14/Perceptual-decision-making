@@ -95,7 +95,6 @@ if with_stats
     num_perms = 1000;
     cluster_th = 0.1;
     significance_th = 0.1;
-    
     %load the subjects x timepoints matrix
     filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_time_%s.mat',...
     subjects(1),subjects(end),task_name,analysis));
@@ -127,8 +126,8 @@ if with_stats
     title(sprintf('Statistical analysis of time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));  
     
     %save the plot
-    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_subjects_%d_%d',task_name,subjects(1),subjects(end)))); 
-    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_subjects_%d_%d.png',task_name,subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_%s_subjects_%d_%d',task_name,analysis,subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_%s_subjects_%d_%d.png',task_name,analysis,subjects(1),subjects(end)))); 
     close(gcf);
 end 
 
