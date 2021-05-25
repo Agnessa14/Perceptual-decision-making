@@ -52,16 +52,37 @@ medianRT = nanmedian(RTs,1);
 medianRT_art = nanmedian(RTs_art,1);
 medianRT_nat = nanmedian(RTs_nat,1);
 
-mean_distances_categ = squeeze(nanmean(distances_categ,1)); %avg over subjects
-mean_distances_distr = squeeze(nanmean(distances_distr,1)); 
-mean_distances = mean(cat(3,mean_distances_categ,mean_distances_distr),3);
+% mean_distances_categ = squeeze(nanmean(distances_categ,1)); %avg over subjects
+% mean_distances_distr = squeeze(nanmean(distances_distr,1)); 
+
+mean_distances = nanmean(cat(4,distances_categ,distances_distr),4);
 
 %% Correlate DTH and RT
+% t = 1:numTimepoints;
+% correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
+% correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(artificial_conditions,x),medianRT_art','type','Spearman'),t);
+% correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances(natural_conditions,x),medianRT_nat','type','Spearman'),t);
+% correlation_dth_rt_avg  = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
+
 t = 1:numTimepoints;
-correlation_dth_rt_both = arrayfun(@(x) corr(mean_distances(:,x),medianRT','type','Spearman'),t);
-correlation_dth_rt_art  = arrayfun(@(x) corr(mean_distances(artificial_conditions,x),medianRT_art','type','Spearman'),t);
-correlation_dth_rt_nat  = arrayfun(@(x) corr(mean_distances(natural_conditions,x),medianRT_nat','type','Spearman'),t);
-correlation_dth_rt_avg  = mean([correlation_dth_rt_art;correlation_dth_rt_nat],1);
+size_corr = [max(subjects),numTimepoints];
+correlation_art = NaN(size_corr);
+correlation_nat = NaN(size_corr);
+correlation_both = NaN(size_corr);
+correlation_avg = NaN(size_corr);
+
+for subject = subjects
+    correlation_art(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,artificial_conditions,x))',medianRT_art','type','Spearman'), t);
+    correlation_nat(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,natural_conditions,x))',medianRT_nat','type','Spearman'), t);
+    correlation_both(subject,:) = arrayfun(@(x) corr(squeeze(mean_distances(subject,:,x))',medianRT','type','Spearman'), t);
+    correlation_avg(subject,:) = mean([squeeze(correlation_art(subject,:));squeeze(correlation_nat(subject,:))],1);
+end
+
+%% Average over participants
+avg_corr_art = squeeze(nanmean(correlation_art,1));
+avg_corr_nat = squeeze(nanmean(correlation_nat,1));
+avg_corr_both = squeeze(nanmean(correlation_both,1));
+avg_corr_avg = squeeze(nanmean(correlation_avg,1));
 
 %% Plot 
 figure(abs(round(randn*10)));
@@ -71,44 +92,59 @@ color_nat =  [0.9 0.1 0];
 color_both = [0 0 0];
 color_avg = [0.7 0.2 0.7];
 
-plot(correlation_dth_rt_art,'LineWidth',2,'Color',color_art);
+plot(avg_corr_art,'LineWidth',2,'Color',color_art);
 hold on;
-plot(correlation_dth_rt_nat,'LineWidth',2,'Color',color_nat);
-plot(correlation_dth_rt_both,'LineWidth',2,'Color',color_both);
-plot(correlation_dth_rt_avg,'LineWidth',2,'Color',color_avg);
+plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
+plot(avg_corr_both,'LineWidth',2,'Color',color_both);
+plot(avg_corr_avg,'LineWidth',2,'Color',color_avg);
 
 %% Plot stats if needed
 if with_stats
-    num_perms = 10000;
+    task_distance = 4;
+    task_RT = 1;
+    num_perms = 1000;
     for c = 1:4
         %Setup some plot variables
         if c == 1
             category = 'artificial';            
             plot_location = -0.75;
             color = color_art;
+            medianRT_stats = medianRT_art;
+            distances_stats = mean_distances(:,artificial_conditions,:);  
+            true_correlation = avg_corr_art;
         elseif c == 2
             category = 'natural';            
             plot_location = -0.8;
             color = color_nat;
+            medianRT_stats = medianRT_nat;
+            distances_stats = mean_distances(:,natural_conditions,:);    
+            true_correlation = avg_corr_nat;
         elseif c == 3
             category = 'both';            
             plot_location = -0.85;
             color = color_both;
+            medianRT_stats = medianRT;      
+            true_correlation = avg_corr_both;
+            distances_stats = mean_distances;
         elseif c == 4
             category = 'average';            
             plot_location = -0.9;
             color = color_avg;
+            medianRT_stats = medianRT;
+            true_correlation = avg_corr_avg;
+            distances_stats = mean_distances;
         end
         
         %Check if stats already exist, otherwise run the stats script
-        filename = 'both_tasks_distances_dth_permutation_stats';
+        filename = 'random_both_tasks_distances_dth_permutation_stats';
         filename_sign = fullfile(results_avg_dir,sprintf('%s_%s_distance_subjects_%d_%d.mat',...
             filename,category,subjects(1),subjects(end)));
         if exist(filename_sign,'file')
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = distances_both_tasks_weighted_cluster_perm_stats(subjects,category,1,num_perms,'fixed');
+            significant_timepoints = weighted_cluster_perm_stats(subjects,medianRT_stats,distances_stats,true_correlation,task_distance,task_RT,category,'left',0,num_perms,'random');
+%             significant_timepoints = distances_both_tasks_weighted_cluster_perm_stats(subjects,category,1,num_perms,'fixed');
         end
         
         %Plot the stats
@@ -133,9 +169,9 @@ dth_results.corr_artificial = correlation_dth_rt_art;
 dth_results.corr_natural = correlation_dth_rt_nat;
 dth_results.corr_avg_categories = correlation_dth_rt_avg;
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
-save(fullfile(save_path,sprintf('distances_both_tasks_SVM_DTH_subjects_%d_%d_distances.mat',subjects(1),subjects(end))),'dth_results');
-saveas(gcf,fullfile(save_path,sprintf('distances_both_tasks_SVM_DTH_subjects_%d_%d_distances',subjects(1),subjects(end))));
-saveas(gcf,fullfile(save_path,sprintf('distances_both_tasks_SVM_DTH_subjects_%d_%d_distances.svg',subjects(1),subjects(end))));
+save(fullfile(save_path,sprintf('random_distances_both_tasks_SVM_DTH_subjects_%d_%d_distances.mat',subjects(1),subjects(end))),'dth_results');
+saveas(gcf,fullfile(save_path,sprintf('random_distances_both_tasks_SVM_DTH_subjects_%d_%d_distances',subjects(1),subjects(end))));
+saveas(gcf,fullfile(save_path,sprintf('random_distances_both_tasks_SVM_DTH_subjects_%d_%d_distances.svg',subjects(1),subjects(end))));
 
 close(gcf);
 end
