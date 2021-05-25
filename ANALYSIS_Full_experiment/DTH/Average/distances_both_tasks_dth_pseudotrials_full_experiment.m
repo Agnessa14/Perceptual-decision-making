@@ -107,28 +107,28 @@ if with_stats
         %Setup some plot variables
         if c == 1
             category = 'artificial';            
-            plot_location = -0.75;
+            plot_location = -0.34;
             color = color_art;
             medianRT_stats = medianRT_art;
             distances_stats = mean_distances(:,artificial_conditions,:);  
             true_correlation = avg_corr_art;
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.8;
+            plot_location = -0.37;
             color = color_nat;
             medianRT_stats = medianRT_nat;
             distances_stats = mean_distances(:,natural_conditions,:);    
             true_correlation = avg_corr_nat;
         elseif c == 3
             category = 'both';            
-            plot_location = -0.85;
+            plot_location = -0.4;
             color = color_both;
             medianRT_stats = medianRT;      
             true_correlation = avg_corr_both;
             distances_stats = mean_distances;
         elseif c == 4
             category = 'average';            
-            plot_location = -0.9;
+            plot_location = -0.43;
             color = color_avg;
             medianRT_stats = medianRT;
             true_correlation = avg_corr_avg;
@@ -143,8 +143,7 @@ if with_stats
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = weighted_cluster_perm_stats(subjects,medianRT_stats,distances_stats,true_correlation,task_distance,task_RT,category,'left',0,num_perms,'random');
-%             significant_timepoints = distances_both_tasks_weighted_cluster_perm_stats(subjects,category,1,num_perms,'fixed');
+            significant_timepoints = weighted_cluster_perm_stats(subjects,medianRT_stats,distances_stats,true_correlation,task_distance,task_RT,category,'left',1,num_perms,'random');
         end
         
         %Plot the stats
@@ -164,10 +163,11 @@ plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient
 
 %% Save
 %correlations
-dth_results.corr_both_categories = correlation_dth_rt_both;
-dth_results.corr_artificial = correlation_dth_rt_art;
-dth_results.corr_natural = correlation_dth_rt_nat;
-dth_results.corr_avg_categories = correlation_dth_rt_avg;
+dth_results.corr_both_categories = avg_corr_both;
+dth_results.corr_artificial = avg_corr_art;
+dth_results.corr_natural = avg_corr_nat;
+dth_results.corr_avg_categories = avg_corr_avg;
+
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 save(fullfile(save_path,sprintf('random_distances_both_tasks_SVM_DTH_subjects_%d_%d_distances.mat',subjects(1),subjects(end))),'dth_results');
 saveas(gcf,fullfile(save_path,sprintf('random_distances_both_tasks_SVM_DTH_subjects_%d_%d_distances',subjects(1),subjects(end))));
