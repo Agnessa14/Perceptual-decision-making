@@ -4,7 +4,7 @@ function [significantVarWei,significantVarMax,pValWei,pValMax] = weighted_cluste
 %
 %Input: 
 % - medianRT: matrix of reaction times, either averaged over subjects (fixed effects), or per subject (random effects)
-% - task for the EEG data (1 = categorization, 2 = distraction),
+% - task for the EEG data (1 = categorization, 2 = distraction, 4 = both tasks),
 % - task for the reaction times (1 = categorization, 2 = distraction)
 % - category ('artificial', 'natural', 'average' or 'both')
 % - save (save the structure (1) or not (0))
@@ -25,8 +25,12 @@ results_avg = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
 %% 1)Permute the objects' RTs 10 000 times and calculate the correlation at each timepoint
-task_distance_name = get_task_name(task_distance);
-numTimepoints = 200;
+if task_distance < 4
+    task_distance_name = get_task_name(task_distance);
+elseif task_distance == 4
+    task_distance_name = 'both_tasks';
+end
+    numTimepoints = 200;
 sample_correlations = NaN(numPermutations,numTimepoints);
 if strcmp(method,'random')
    subject_corr = NaN(numel(subjects),numTimepoints);
