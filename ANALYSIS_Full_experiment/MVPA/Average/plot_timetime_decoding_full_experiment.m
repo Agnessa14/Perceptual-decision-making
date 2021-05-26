@@ -121,8 +121,14 @@ if with_stats
     axis square;
     cbar = colorbar;
     ylabel(cbar,'Significance');
-    xlabel('Timepoints: Distraction task');
-    ylabel('Timepoints: Categorization task');
+    if strcmp(analysis,'object_decoding')
+        ylabel('Timepoints trained on');
+        xlabel('Timepoints tested on');
+    elseif strcmp(analysis,'category_decoding')
+        ylabel('Timepoints trained on: Categorization task');
+        xlabel('Timepoints tested on: Distraction task');
+    end
+
     title(sprintf('Statistical analysis of time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));  
     
     %save the plot
