@@ -1,4 +1,4 @@
-function rdm_rsa = representational_SA(rdm_1,rdm_2,numTimepoints)
+function [rdm_rsa,rdm_1_flattened,rdm_2_flattened] = representational_SA(rdm_1,rdm_2,numTimepoints)
 %REPRESENTATIONAL_SA Perform the representational similarity analysis on
 %two representational dissimilarity matrices of choice, over time.
 %
