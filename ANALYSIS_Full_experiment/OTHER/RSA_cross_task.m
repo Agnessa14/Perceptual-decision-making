@@ -21,9 +21,8 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %% Preallocate
 numConditions = 60;
 numTimepoints = 200;
-sorted_subjects = sort(subjects);
-rdm_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-rdm_all_subjects_dis = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+rdm_all_subjects_cat = NaN(max(subjects),numConditions,numConditions,numTimepoints);
+rdm_all_subjects_dis = NaN(max(subjects),numConditions,numConditions,numTimepoints);
 
 %% Loop: collect results from all subjects 
 for subject = subjects
@@ -38,32 +37,13 @@ for subject = subjects
     rdm_all_subjects_dis(subject,:,:,:) = rdm_avg;
 end   
 
-%% RSA: correlate the RDMs from both tasks at every timepoint 
+%% Average over subjects and if method 2, perform RSA
 rdm_cat = squeeze(nanmean(rdm_all_subjects_cat,1)); %avg over subjects
 rdm_dis = squeeze(nanmean(rdm_all_subjects_dis,1)); 
-
-% Fill up the RDM so it's symmetrical: replace the NaNs by 0s & add the transpose of the upper diagonal
-rdm_cat(isnan(rdm_cat)) = 0;
-rdm_dis(isnan(rdm_dis)) = 0;
-
-rdm_cat_flattened_cell = arrayfun(@(x) squareform(rdm_cat(:,:,x)+(rdm_cat(:,:,x))'),...
-    1:numTimepoints,'UniformOutput',false);
-rdm_dis_flattened_cell = arrayfun(@(x) squareform(rdm_dis(:,:,x)+(rdm_dis(:,:,x))'),...
-    1:numTimepoints,'UniformOutput',false);
-
-rdm_cat_flattened = reshape(cell2mat(rdm_cat_flattened_cell),[],numTimepoints);
-rdm_dis_flattened = reshape(cell2mat(rdm_dis_flattened_cell),[],numTimepoints);
-
-% Perfom RSA at each combination of timepoints
-rsa = NaN(numTimepoints,numTimepoints);
-for tp1 = 1:numTimepoints
-    for tp2 = 1:numTimepoints
-        rsa(tp1,tp2) = 1-corr(rdm_cat_flattened(:,tp1),rdm_dis_flattened(:,tp2),'type','Spearman');
-    end
-end
+[rdm_rsa,rdm_cat_flattened,rdm_dis_flattened] = representational_SA(rdm_cat,rdm_dis,numTimepoints);
 
 %% Plot
-h = pcolor(rsa); 
+h = pcolor(rdm_rsa); 
 set(gcf, 'Position', get(0, 'Screensize'));
 set(h, 'EdgeColor', 'none');
 axis square;
@@ -73,39 +53,32 @@ xlabel('Timepoints: Distraction task');
 ylabel('Timepoints: Categorization task');
 title(sprintf('Time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));
 
-%% Save RDMs, RSA results and figures
+% Save RDMs, RSA results and figures
 %Matrices
-save(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d',subjects(1),subjects(end))),'rdm_cat');
-save(fullfile(results_avg_dir,sprintf('average_rdm_fixation_subjects_%d_%d',subjects(1),subjects(end))),'rdm_dis');
-save(fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end))),'rsa');
+save(fullfile(results_avg_dir,sprintf('average_rdm_categorization_method_%d_subjects_%d_%d',method,subjects(1),subjects(end))),'rdm_cat');
+save(fullfile(results_avg_dir,sprintf('average_rdm_fixation_method_%d_subjects_%d_%d',method,subjects(1),subjects(end))),'rdm_dis');
+save(fullfile(results_avg_dir,sprintf('rsa_cross_task_method_%d_subjects_%d_%d',method,subjects(1),subjects(end))),'rdm_rsa');
+
 %Figures
-saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d',subjects(1),subjects(end)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_subjects_%d_%d.png',subjects(1),subjects(end)))); %save as png
+saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_method_%d_subjects_%d_%d',method,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('rsa_cross_task_method_%d_subjects_%d_%d.png',method,subjects(1),subjects(end)))); %save as png
 close(gcf);
 
 %% Plot stats if needed
 if with_stats
-    %load the subjects x timepoints matrix
-    task = 3; %for cross task
-    filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_cross_task_time_object_decoding.mat',...
-    subjects(1),subjects(end)));
-    if exist(filename_forstats,'file')
-        load(filename_forstats);
-    else
-        for_stats = all_subjects_for_stats(subjects,task,'rsa_time_object');
-    end
+    num_perms = 1000;
     
     %load the stats if they have been run already
-    filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_cross_task_time_object_decoding.mat',...
-    subjects(1),subjects(end)));
+    filename_sign = fullfile(results_avg_dir,sprintf('permutation_stats_rsa_cross_task_subjects_%d_%d.mat',...
+        subjects(1),subjects(end)));
     if exist(filename_sign,'file')
         load(filename_sign);
+        significant_timepoints = permutation_stats.SignificantMaxClusterSize; 
     else
-        significant_timepoints = run_permutation_stats(subjects,task,'rsa_time_object',for_stats);
+        [~,significant_timepoints] = rsa_weighted_cluster_perm_stats(subjects,rdm_cat_flattened,rdm_dis_flattened,rdm_rsa,'left',1,num_perms);
     end
     
     %plot the stats - different plot from the RSA
-    significant_timepoints(isnan(significant_timepoints))=0;
     h = pcolor(significant_timepoints); 
     set(gcf, 'Position', get(0, 'Screensize'));
     set(h, 'EdgeColor', 'none');
