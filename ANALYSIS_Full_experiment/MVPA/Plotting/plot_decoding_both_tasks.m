@@ -7,6 +7,9 @@ function plot_decoding_both_tasks(subjects,with_stats,analysis)
 %
 %Output: curve of decoding accuracies per timepoint, for two tasks
 %
+%Author: Agnessa Karapetian, 2021
+%
+
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
@@ -71,14 +74,14 @@ if with_stats
         end
         if task_plot == 1
             task_name = 'categorization';
-            data = avg_over_conditions_all_subjects_cat;
-            plot_location = 47.5;
+            data = avg_over_conditions_all_subjects_cat-50;
+            plot_location = -5;
             color_err = [0.75 0.75 0.95]; %can't be the same one as that of the plot
             color_data = [0 0.4 0.85];     
         elseif task_plot == 2
             task_name = 'fixation';
-            data = avg_over_conditions_all_subjects_dis;
-            plot_location = 46;
+            data = avg_over_conditions_all_subjects_dis-50;
+            plot_location = -7;
             color_err = [0.95 0.75 0.9]; 
             color_data = [0.9 0.2 0.8];       
         end
@@ -99,7 +102,7 @@ if with_stats
         bottom_curve = data - err;
         x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
         shaded_area = [top_curve, fliplr(bottom_curve)];
-        fill(x2, shaded_area, color_err);
+        fill(x2, shaded_area, color_err,'FaceAlpha',0.5);
         hold on;
 
         %plot the data
@@ -127,12 +130,12 @@ if with_stats
         [peak_latency, CI] = bootstrap_peak_latency(subjects,task_plot,analysis);
         if strcmp(analysis,'object_decoding')
             arrow_x = 51;
-            height_cat = 82.5;
-            height_dis = 80;
+            height_cat = 32.5;
+            height_dis = 30;
         elseif strcmp(analysis,'category_decoding')
             arrow_x = 60;
-            height_cat = 78;
-            height_dis = 75.5;
+            height_cat = 27.5;
+            height_dis = 25;
         end
         if task_plot == 1
             height = height_cat;
@@ -149,36 +152,28 @@ if with_stats
     end
 end 
 
-%Plot parameters
+%% Plot the difference curve
 if strcmp(analysis,'object_decoding')
     analysis_title = 'Object';
 elseif strcmp(analysis,'category_decoding')
     analysis_title = 'Category';
 end
-plot_title = sprintf('%s decoding over time (N=%d)',analysis_title,numel(subjects));
+diff_curve = avg_over_conditions_all_subjects_cat-avg_over_conditions_all_subjects_dis;
+d = plot(diff_curve,'--','LineWidth',3,'Color','k');
+hold on;
+
+%% Plot parameters
 onset_time = 40; 
+plot_title = sprintf('%s decoding over time (N=%d)',analysis_title,numel(subjects));
 xticks(0:10:200);
-legend_cell = {'Scene categorization','Distraction'}; %can figure out a way to add the arrowws and CIs to the legend
-plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy (%)'); %[0.75 0.7 0.1 0.1]
-legend([p1,p2],legend_cell);
+legend_cell = {'Scene categorization','Distraction', 'Scene categorization-distraction'}; 
+plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy-50 (%)'); %[0.75 0.7 0.1 0.1]
+legend([p1,p2,d],legend_cell);
+ylim([-10,35]);
 
 %% Save the plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
-close(gcf);    
-
-%% Plot the difference curve
-diff_curve = avg_over_conditions_all_subjects_cat-avg_over_conditions_all_subjects_dis;
-figure(abs(round(randn*10))); %Random figure number
-set(gcf, 'Position', get(0, 'Screensize'));
-plot(diff_curve,'--','LineWidth',3,'Color','k');
-diff_title = sprintf('%s decoding: difference in accuracy between the categorization and the distraction tasks over time (N=%d)',analysis_title,numel(subjects));
-plotting_parameters(diff_title,'',onset_time,12,'best','%'); 
-legend('off');
-
-%Save
-saveas(gcf,fullfile(results_avg_dir,sprintf('diff_curve_svm_%s_subjects_%d_%d',analysis,subjects(1),subjects(end)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('diff_curve_svm_%s_subjects_%d_%d.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
 
 end
