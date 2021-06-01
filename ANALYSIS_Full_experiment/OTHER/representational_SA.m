@@ -28,7 +28,7 @@ rdm_2_flattened = reshape(cell2mat(rdm_2_flattened_cell),[],numTimepoints);
 rdm_rsa = NaN(numTimepoints,numTimepoints);
 for tp1 = 1:numTimepoints
     for tp2 = 1:numTimepoints
-        rdm_rsa(tp1,tp2) = 1-corr(rdm_1_flattened(:,tp1),rdm_2_flattened(:,tp2),'type','Spearman');
+        rdm_rsa(tp1,tp2) = corr(rdm_1_flattened(:,tp1),rdm_2_flattened(:,tp2),'type','Spearman');
     end
 end
 
