@@ -7,7 +7,8 @@ function time_generalization_artificial_vs_natural_within(subject,task)
 %Input: subject ID, task (1=categorization, 2=fixation)
 %
 %Output: PxP vector of accuracies in %, where P is the number of timepoints. 
-%
+
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -67,7 +68,7 @@ rng('shuffle');
 for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
-    data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
+    data = create_data_matrix(numConditions,timelock_triggers,numTrials,downsampled_timelock_data);
 
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data); %returns: numConditions x numTrials x numElectrodes x numTimepoints
@@ -93,8 +94,9 @@ for perm = 1:numPermutations
     disp('Split into bins of scenes');
     numScenesPerBin = 5;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
-    num_bins_testing = 3;  
-    testing_conditions = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins;
+    num_bins_testing = 2;  
+    flipped_conditions = 30:-1:1;
+    testing_conditions = fliplr(flipped_conditions(1:numScenesPerBin*num_bins_testing));
     
     for tp1 = 1:numTimepoints 
         disp('Split into training and testing');
