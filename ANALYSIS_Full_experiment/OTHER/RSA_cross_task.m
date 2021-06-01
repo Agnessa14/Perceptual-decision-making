@@ -48,7 +48,7 @@ set(gcf, 'Position', get(0, 'Screensize'));
 set(h, 'EdgeColor', 'none');
 axis square;
 cbar = colorbar;
-ylabel(cbar,'1-Spearman''s coefficient');
+ylabel(cbar,'Spearman''s coefficient');
 xlabel('Timepoints: Distraction task');
 ylabel('Timepoints: Categorization task');
 title(sprintf('Time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));
