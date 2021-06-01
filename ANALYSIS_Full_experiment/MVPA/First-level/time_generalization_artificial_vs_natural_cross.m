@@ -132,7 +132,8 @@ for perm = 1:numPermutations
     [bins_dis,numBins_dis] = create_pseudotrials(numScenesPerBin,data_both_categories_dis);
 
     num_bins_testing = 2;  
-    testing_conditions = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins_cat;
+    flipped_conditions = 30:-1:1;
+    testing_conditions = fliplr(flipped_conditions(1:numScenesPerBin*num_bins_testing));
     
     for tp1 = 1:numTimepoints 
         %train model 1: on categorization data
