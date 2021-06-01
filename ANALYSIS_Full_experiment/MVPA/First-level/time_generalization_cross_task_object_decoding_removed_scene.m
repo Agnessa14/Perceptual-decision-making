@@ -93,7 +93,8 @@ included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints,numTimepoints);
+decodingAccuracy_1=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints,numTimepoints);
+decodingAccuracy_2=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints,numTimepoints);
     
 %% Decoding
 for perm = 1:numPermutations
@@ -111,26 +112,38 @@ for perm = 1:numPermutations
     disp('Binning data into pseudotrials');
     numTrialsPerBin = round(numTrials/6);
     [pseudoTrials_categorization,numPTs_categorization] = create_pseudotrials(numTrialsPerBin,data_categorization);
-    [pseudoTrials_distraction,~] = create_pseudotrials(numTrialsPerBin,data_distraction);
+    [pseudoTrials_distraction,numPTs_distraction] = create_pseudotrials(numTrialsPerBin,data_distraction);
     
     %loop over conditions and timepoints
     for condA=1:numConditionsIncluded-1
         for condB = condA+1:numConditionsIncluded 
-            for timePoint1 = 1:numTimepoints                
-                %train the model
-                training_data = [squeeze(pseudoTrials_categorization(condA,1:end-1,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,1:end-1,:,timePoint1))]; %(numbins-1)x63x1 each
+            for timePoint1 = 1:numTimepoints  
+                
+                %train model 1: on categorization data
+                training_data_1 = [squeeze(pseudoTrials_categorization(condA,1:end-1,:,timePoint1)) ; squeeze(pseudoTrials_categorization(condB,1:end-1,:,timePoint1))]; %(numbins-1)x63x1 each
                 labels_train=[ones(1,numPTs_categorization-1) 2*ones(1,numPTs_categorization-1)]; %one label for each pseudotrial
                 train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
-                model=svmtrain_01(labels_train',training_data,train_param_str); 
-
+                model_1=svmtrain_01(labels_train',training_data_1,train_param_str);
+                
+                %train model 2: on distraction data
+                training_data_2 = [squeeze(pseudoTrials_distraction(condA,1:end-1,:,timePoint1)) ; squeeze(pseudoTrials_distraction(condB,1:end-1,:,timePoint1))]; %1x63x1 each
+                labels_train=[ones(1,numPTs_distraction-1) 2*ones(1,numPTs_distraction-1)]; %one label for each pseudotrial
+                model_2=svmtrain_01(labels_train',training_data_2,train_param_str);
+                
                 for timePoint2 = 1:numTimepoints
                     disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoints ->',num2str(timePoint1), ', and ->', num2str(timePoint2)]);
-                    %test the model
-                    testing_data = [squeeze(pseudoTrials_distraction(condA,end,:,timePoint2))' ; squeeze(pseudoTrials_distraction(condB,end,:,timePoint2))']; %1x63x1 each
+                    
+                    %test model 1: on distraction data
+                    testing_data_1 = [squeeze(pseudoTrials_distraction(condA,end,:,timePoint2))' ; squeeze(pseudoTrials_distraction(condB,end,:,timePoint2))']; %1x63x1 each
                     labels_test=[1 2]; 
-                    [~, accuracy, ~,] = svmpredict(labels_test',testing_data,model);
-                    decodingAccuracy(perm,condA,condB,timePoint1,timePoint2)=accuracy(1);  
+                    [~, accuracy_1, ~,] = svmpredict(labels_test',testing_data_1,model_1);
+                    decodingAccuracy_1(perm,condA,condB,timePoint1,timePoint2)=accuracy_1(1);
+                    
+                    %test model 2: on categorization data
+                    testing_data_2 = [squeeze(pseudoTrials_categorization(condA,end,:,timePoint2))' ; squeeze(pseudoTrials_categorization(condB,end,:,timePoint2))']; %1x63x1 each
+                    [~, accuracy_2, ~,] = svmpredict(labels_test',testing_data_2,model_2);
+                    decodingAccuracy_2(perm,condA,condB,timePoint1,timePoint2)=accuracy_2(1);
                 end
             end 
         end 
@@ -138,13 +151,32 @@ for perm = 1:numPermutations
     toc
 end
 
+            
+
 %% Add NaN to the removed scene
-timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-DA_1 = [timeg_decodingAccuracy_avg(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,numTimepoints,numTimepoints);...
-    timeg_decodingAccuracy_avg(removed_condition:end,:,:,:)];
-DA_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints,numTimepoints),...
+da1 = squeeze(mean(decodingAccuracy_1,1));
+da2 = squeeze(mean(decodingAccuracy_2,1));
+
+%model 1
+DA_1 = [da1(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,numTimepoints,numTimepoints);...
+    da1(removed_condition:end,:,:,:)];
+DA_1_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints,numTimepoints),...
     DA_1(:,removed_condition:end,:,:)];
-timeg_decodingAccuracy_avg = DA_2;
+
+%model 2
+DA_2 = [da2(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,numTimepoints,numTimepoints);...
+    da2(removed_condition:end,:,:,:)];
+DA_2_2 = [DA_2(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints,numTimepoints),...
+    DA_2(:,removed_condition:end,:,:)];
+
+%% Average over both models 
+DA_1_2(isnan(DA_1_2)) = 0;
+DA_2_2(isnan(DA_2_2)) = 0;
+
+da1_symm = squeeze(mean(DA_1_2+DA_1_2'),1);
+da2_symm = squeeze(mean(DA_2_2+DA_2_2'),1);
+
+timeg_decodingAccuracy_avg = squeeze(mean([da1_symm,da2_symm'],1:2));
 
 %% Save the decoding accuracy
 save(fullfile(results_dir,subname,sprintf('time_generalized_svm_object_decoding_crosstask.mat')),'timeg_decodingAccuracy_avg');
