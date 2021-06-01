@@ -77,7 +77,7 @@ numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
 numTimepoints = numResampledTps; %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %minimum number of trials per scene
 numTrials = min(min_number_trials(timelock_triggers_categorization, numConditions),...
@@ -165,11 +165,8 @@ for perm = 1:numPermutations
 end
 
 %% Average over both models 
-%Avg over permutations
-da1 = squeeze(mean(decodingAccuracy_1,1)); 
+da1 = squeeze(mean(decodingAccuracy_1,1)); %Avg over permutations
 da2 = squeeze(mean(decodingAccuracy_2,1));
-
-%Avg over model 1 and model 2's transpose
 timeg_decodingAccuracy_avg = (da1+da2)/2;
 
 %% Save the decoding accuracy
