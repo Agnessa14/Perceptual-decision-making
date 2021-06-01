@@ -9,6 +9,8 @@ function time_generalization_artificial_vs_natural_within_removed_scene(subject,
 %
 %Output: PxP vector of accuracies in %, where P is the number of timepoints. 
 %
+%Author: Agnessa Karapetian, 2021
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -121,13 +123,16 @@ for perm = 1:numPermutations
     numScenesPerBin = 5;
     [bins,numBins] = create_pseudotrials(numScenesPerBin,data_both_categories);
     num_bins_testing = 2;  
+    flipped_conditions = 30:-1:1;
+    testing_conditions = fliplr(flipped_conditions(1:numScenesPerBin*num_bins_testing));
     if removed_condition<=30
-        testing_conditions_artificial = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins-1;
-        testing_conditions_natural = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins;
+        testing_conditions_artificial = testing_conditions(1:end-1);
+        testing_conditions_natural = testing_conditions;
     else
-        testing_conditions_artificial = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins;
-        testing_conditions_natural = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins-1;
+        testing_conditions_artificial = testing_conditions;
+        testing_conditions_natural = testing_conditions(1:end-1);
     end    
+    
     for tp1 = 1:numTimepoints 
         disp('Split into training and testing');
         training_data = [squeeze(bins(1,1:end-num_bins_testing,:,tp1)); squeeze(bins(2,1:end-num_bins_testing,:,tp1))]; %train on half of the bins                 
@@ -150,5 +155,5 @@ end
 
 %% Save the decoding accuracy
 timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,sprintf('3PT_time_gen_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,sprintf('time_gen_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'timeg_decodingAccuracy_avg');
 
