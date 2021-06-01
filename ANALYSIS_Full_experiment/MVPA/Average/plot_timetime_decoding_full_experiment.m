@@ -75,14 +75,13 @@ elseif task == 3
 end
 title(plot_title);
 cbar = colorbar;
-if strcmp(analysis,'object_decoding')
+if task < 3
     ylabel('Timepoints trained on');
     xlabel('Timepoints tested on');
-elseif strcmp(analysis,'category_decoding')
+elseif task == 3
     ylabel('Timepoints trained on: Categorization task');
     xlabel('Timepoints tested on: Distraction task');
 end
-
 ylabel(cbar,'Decoding accuracy (%)');
 
 %% Save the plot
