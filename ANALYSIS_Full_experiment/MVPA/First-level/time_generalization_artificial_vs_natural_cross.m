@@ -8,6 +8,8 @@ function time_generalization_artificial_vs_natural_cross(subject)
 %
 %Output: PxP vector of accuracies in %, where P is the number of timepoints. 
 %
+%Author: Agnessa Karapetian, 2021
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -75,14 +77,15 @@ numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
 numTimepoints = numResampledTps; %number of timepoints
-numPermutations=100; 
+numPermutations=1; 
 
 %minimum number of trials per scene
 numTrials = min(min_number_trials(timelock_triggers_categorization, numConditions),...
     min_number_trials(timelock_triggers_distraction,numConditions)); %minimum number of trials per scene
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numTimepoints,numTimepoints);
+decodingAccuracy_1=NaN(numPermutations,numTimepoints,numTimepoints);
+decodingAccuracy_2=NaN(numPermutations,numTimepoints,numTimepoints);
 
 %% Decoding
 rng('shuffle');
@@ -126,32 +129,49 @@ for perm = 1:numPermutations
     disp('Split into bins of scenes');
     numScenesPerBin = 5;
     [bins_cat,numBins_cat] = create_pseudotrials(numScenesPerBin,data_both_categories_cat);
-%     [bins_dis,numBins_dis] = create_pseudotrials(numScenesPerBin,data_both_categories_dis);
+    [bins_dis,numBins_dis] = create_pseudotrials(numScenesPerBin,data_both_categories_dis);
 
-    num_bins_testing = 3;  
+    num_bins_testing = 2;  
     testing_conditions = (numScenesPerBin*num_bins_testing)+1:numScenesPerBin*numBins_cat;
     
     for tp1 = 1:numTimepoints 
-        disp('Split into training and testing');
-        training_data = [squeeze(bins_cat(1,1:end-num_bins_testing,:,tp1)); squeeze(bins_cat(2,1:end-num_bins_testing,:,tp1))]; %train on half of the bins                 
+        %train model 1: on categorization data
+        training_data_1 = [squeeze(bins_cat(1,1:end-num_bins_testing,:,tp1)); squeeze(bins_cat(2,1:end-num_bins_testing,:,tp1))];                 
         labels_train  = [ones(numBins_cat-num_bins_testing,1);2*ones(numBins_cat-num_bins_testing,1)]; %one label for each pseudotrial
-        
-        disp('Train the SVM');
         train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
-        model=svmtrain_01(labels_train,training_data,train_param_str); 
+        model_1=svmtrain_01(labels_train,training_data_1,train_param_str); 
+        
+        %train model 2: on distraction data
+        training_data_2 = [squeeze(bins_dis(1,1:end-num_bins_testing,:,tp1)); squeeze(bins_dis(2,1:end-num_bins_testing,:,tp1))];               
+        labels_train  = [ones(numBins_dis-num_bins_testing,1);2*ones(numBins_dis-num_bins_testing,1)]; 
+        train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; 
+        model_2=svmtrain_01(labels_train,training_data_2,train_param_str); 
         
         for tp2 = 1:numTimepoints
-            disp('Test the SVM');
-            testing_data  = [squeeze(data_both_categories_dis(1,testing_conditions,:,tp2)); squeeze(data_both_categories_dis(2,testing_conditions,:,tp2))];
+            %test model 1: on distraction data
+            testing_data_1  = [squeeze(data_both_categories_dis(1,testing_conditions,:,tp2)); squeeze(data_both_categories_dis(2,testing_conditions,:,tp2))];
             labels_test   = [ones(numel(testing_conditions),1);2*ones(numel(testing_conditions),1)];   
-            [~, accuracy, ~] = svmpredict(labels_test,testing_data,model);
-            decodingAccuracy(perm,tp1,tp2)=accuracy(1);         
+            [~, accuracy_1, ~] = svmpredict(labels_test,testing_data_1,model_1);
+            decodingAccuracy_1(perm,tp1,tp2)=accuracy_1(1);         
+            
+            %test model 2: on categorization data
+            testing_data_2  = [squeeze(data_both_categories_cat(1,testing_conditions,:,tp2)); squeeze(data_both_categories_cat(2,testing_conditions,:,tp2))];
+            labels_test   = [ones(numel(testing_conditions),1);2*ones(numel(testing_conditions),1)];   
+            [~, accuracy_2, ~] = svmpredict(labels_test,testing_data_2,model_2);
+            decodingAccuracy_2(perm,tp1,tp2)=accuracy_2(1);  
         end
     end   
     toc
 end
 
+%% Average over both models 
+%Avg over permutations
+da1 = squeeze(mean(decodingAccuracy_1,1)); 
+da2 = squeeze(mean(decodingAccuracy_2,1));
+
+%Avg over model 1 and model 2's transpose
+timeg_decodingAccuracy_avg = (da1+da2)/2;
+
 %% Save the decoding accuracy
-timeg_decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-save(fullfile(results_dir,subname,'time_gen_svm_artificial_vs_natural_decoding_accuracy_cross_task.mat'),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,'2_models_time_gen_svm_artificial_vs_natural_decoding_accuracy_cross_task.mat'),'timeg_decodingAccuracy_avg');
 
