@@ -133,16 +133,20 @@ for perm = 1:numPermutations
 end
 
 %% Average over both models 
-da1 = squeeze(mean(decodingAccuracy_1,1));
+%Avg over permutations
+da1 = squeeze(mean(decodingAccuracy_1,1)); 
 da2 = squeeze(mean(decodingAccuracy_2,1));
 
+%Replace NaNs by 0s
 da1(isnan(da1)) = 0;
 da2(isnan(da2)) = 0;
 
-da1_symm = squeeze(mean(da1+da1'),1);
-da2_symm = squeeze(mean(da2+da2'),1);
+%Fill up the lower triangular with the transpose of the upper triangular
+da1_symm = da1+da1';
+da2_symm = da2+da2';
 
-timeg_decodingAccuracy_avg = squeeze(mean([da1_symm,da2_symm'],1:2));
+%Avg over model 1 and model 2's transpose
+timeg_decodingAccuracy_avg = (da1_symm+da2_symm')/2;
 
 %% Save the decoding accuracy
 save(fullfile(results_dir,subname,'2models_time_generalized_svm_object_decoding_crosstask.mat'),'timeg_decodingAccuracy_avg');
