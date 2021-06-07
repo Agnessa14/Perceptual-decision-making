@@ -173,12 +173,12 @@ DA_2_2 = [DA_2(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numTimepoints
 DA_1_2(isnan(DA_1_2)) = 0;
 DA_2_2(isnan(DA_2_2)) = 0;
 
-da1_symm = squeeze(mean(DA_1_2+DA_1_2'),1);
-da2_symm = squeeze(mean(DA_2_2+DA_2_2'),1);
+da1_symm = DA_1_2+permute(DA_1_2,[2 1 3 4]);
+da2_symm = DA_2_2+permute(DA_2_2,[2 1 3 4]);
 
-timeg_decodingAccuracy_avg = squeeze(mean([da1_symm,da2_symm'],1:2));
+timeg_decodingAccuracy_avg = (da1_symm+permute(da2_symm,[1 2 4 3]))/2;
 
 %% Save the decoding accuracy
-save(fullfile(results_dir,subname,sprintf('time_generalized_svm_object_decoding_crosstask.mat')),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,sprintf('2_models_time_generalized_svm_object_decoding_crosstask.mat')),'timeg_decodingAccuracy_avg');
 
 end
