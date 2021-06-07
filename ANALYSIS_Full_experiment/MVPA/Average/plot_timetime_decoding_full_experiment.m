@@ -1,6 +1,6 @@
 function plot_timetime_decoding_full_experiment(subjects,task,analysis,with_stats)
 %PLOT_TIMETIME_DECODING_FULL_EXPERIMENT Plot the results from time-generalized object decoding, averaged over
-%all participants and subject-specific.
+%all participants.
 %
 %Input: subject IDs (e.g., 1:13), task (1=categorization, 2=distraction,3=cross-task),
 %analysis('object_decoding' or 'category_decoding'), with stats (1) or
@@ -49,10 +49,18 @@ for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     if strcmp(analysis,'object_decoding')
-        load(fullfile(subject_results_dir,sprintf('time_generalized_svm_object_decoding_%s.mat',task_name)));
+        filename = 'time_generalized_svm_object_decoding';
     elseif strcmp(analysis,'category_decoding')
-        load(fullfile(subject_results_dir,sprintf('3PT_time_gen_svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)));
-    end    
+        filename = 'time_gen_svm_artificial_vs_natural_decoding_accuracy';
+    end
+    
+    %for cross task, add a prefix
+    if task == 3
+        filename = sprintf('2_models_%s',filename);
+    end
+    
+    %load & fill the preallocated matrix
+    load(fullfile(subject_results_dir,sprintf('%s_%s.mat',filename,task_name)));
     decoding_accuracies_all_subjects(subject,all_dimensions{:}) = timeg_decodingAccuracy_avg;
 end   
 
@@ -68,6 +76,7 @@ h = pcolor(avg_over_conditions_all_subjects);
 set(gcf, 'Position', get(0, 'Screensize'));
 set(h, 'EdgeColor', 'none');
 axis square;
+hold on;
 if task<3
     plot_title = sprintf('Time-generalized %s decoding in a %s task (N=%d)',analysis_name,task_name_title,numel(subjects));
 elseif task == 3 
@@ -84,9 +93,14 @@ elseif task == 3
 end
 ylabel(cbar,'Decoding accuracy (%)');
 
+%Plot a black line over the diagonal for cross-task
+if task == 3
+    plot(1:numTimepoints,1:numTimepoints,'LineWidth',2.5,'Color','k');
+end
+
 %% Save the plot
-% saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
-% saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s.png',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s.png',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
 close(gcf)
 
 %% Plot stats if needed
