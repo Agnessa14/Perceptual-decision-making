@@ -142,13 +142,13 @@ da1(isnan(da1)) = 0;
 da2(isnan(da2)) = 0;
 
 %Fill up the lower triangular with the transpose of the upper triangular
-da1_symm = da1+da1';
-da2_symm = da2+da2';
+da1_symm = da1+permute(da1,[2 1 3 4]);
+da2_symm = da2+permute(da2,[2 1 3 4]);
 
 %Avg over model 1 and model 2's transpose
-timeg_decodingAccuracy_avg = (da1_symm+da2_symm')/2;
+timeg_decodingAccuracy_avg = (da1_symm+permute(da2_symm,[1 2 4 3]))/2;
 
 %% Save the decoding accuracy
-save(fullfile(results_dir,subname,'2models_time_generalized_svm_object_decoding_crosstask.mat'),'timeg_decodingAccuracy_avg');
+save(fullfile(results_dir,subname,'2_models_time_generalized_svm_object_decoding_crosstask.mat'),'timeg_decodingAccuracy_avg');
 
 end
