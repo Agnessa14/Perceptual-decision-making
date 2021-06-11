@@ -1,4 +1,4 @@
-function [significantVarMax, significantVarWei, pValMax, pValWei, clusters] = permutation_cluster_1sample_weight_alld (data, nperm, cluster_th, significance_th, tail)
+function [significantVarWei,significantVarMax,pValWei,pValMax,clusters] = permutation_cluster_1sample_weight_alld (data, nperm, cluster_th, significance_th, tail)
 % Performs one-sided (>0) or two-sided cluster-size/weight test on the 'data'.
 % The data array can have any number of dimensions (1D, 2D, 3D, 4D etc) in
 % the order [observations x variable1 x variable2 x ...]
@@ -35,6 +35,8 @@ function [significantVarMax, significantVarWei, pValMax, pValWei, clusters] = pe
 %decide one-sided (right) or two-sided (both) test
 if ~exist('tail','var') || strcmp(tail,'right')
     func = '';
+elseif strcmp(tail,'left')
+    func  = '-';
 else %if two-sided test
     func = 'abs';
 end
@@ -54,7 +56,7 @@ StatMapPerm = single(zeros([nperm nvariable]));
 StatMapPerm(1,cln{:}) = mean(data,1) ./ std(data);
 
 %perform permutations
-parfor i = 2:nperm
+for i = 2:nperm
     if ~rem(i,100)
         disp(['Create permutation samples: ' num2str(i) ' out of ' num2str(nperm)]);
     end
@@ -67,15 +69,23 @@ end
 
 %convert to pvalues
 eval([ 'StatMapPermPV = (nperm+1 - tiedrank(' func '(StatMapPerm)))/nperm;' ]);
-StatMapPermPV = StatMapPermPV;
 
 %find maximum cluster size and maximum weighted cluster for all permutation samples
-[clusterMaxSize(1), clusterMaxWei(1), clusters, clustersize, clusterweight] = find_clusters_weight_alld(squeeze(StatMapPerm(1,cln{:})), squeeze(StatMapPermPV(1,cln{:})<=cluster_th));
-parfor i = 2:nperm
+if strcmp(tail,'left')
+    [clusterMaxSize(1), clusterMaxWei(1), clusters, clustersize, clusterweight] = find_clusters_weight_alld(squeeze(StatMapPerm(1,cln{:})*-1), squeeze(StatMapPermPV(1,cln{:})<=cluster_th));
+else
+    [clusterMaxSize(1), clusterMaxWei(1), clusters, clustersize, clusterweight] = find_clusters_weight_alld(abs(squeeze(StatMapPerm(1,cln{:}))), squeeze(StatMapPermPV(1,cln{:})<=cluster_th));
+end
+
+for i = 2:nperm
     if ~rem(i,100)
         disp(['Compute maximum cluster: ' num2str(i) ' out of ' num2str(nperm)]);
     end
-    [clusterMaxSize(i), clusterMaxWei(i)] = find_clusters_weight_alld(squeeze(StatMapPerm(i,cln{:})), squeeze(StatMapPermPV(i,cln{:})<=cluster_th));
+    if strcmp(tail,'left')
+        [clusterMaxSize(i), clusterMaxWei(i)] = find_clusters_weight_alld(squeeze(StatMapPerm(i,cln{:})*-1), squeeze(StatMapPermPV(i,cln{:})<=cluster_th));
+    else
+        [clusterMaxSize(i), clusterMaxWei(i)] = find_clusters_weight_alld(abs(squeeze(StatMapPerm(i,cln{:}))), squeeze(StatMapPermPV(i,cln{:})<=cluster_th));
+    end
 end
 
 %find cluster threshold
