@@ -41,8 +41,8 @@ addpath(results_dir);
 
 %% Prepare data
 %load data
-load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
-load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
+load(fullfile(data_dir,sprintf('timelock_%s',task_name)),'timelock'); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'behav');
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); 
@@ -64,6 +64,7 @@ numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
 decisionValues = NaN(numPermutations,numConditionsIncluded,numTimepoints);
+decodingAccuracy = NaN(numPermutations,numTimepoints);
 if removed_condition<=30
     num_conditions_artificial = 29;
     num_conditions_natural = 30; 
@@ -136,7 +137,8 @@ for perm = 1:numPermutations
         model=svmtrain_01(labels_train,training_data,train_param_str); 
         
         disp('Test the SVM');
-        [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  
+        [~, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);  
+        decodingAccuracy(perm,t) = accuracy(1);
         
         disp('Putting the decision values into the big matrix');
         decisionValues(perm,:,t) = abs(decision_values);
@@ -150,8 +152,11 @@ decisionValues_Avg = squeeze(mean(decisionValues,1));
 DV_1 = [decisionValues_Avg(1:removed_condition-1,:);NaN(1,numTimepoints);decisionValues_Avg(removed_condition:end,:)];
 decisionValues_Avg = DV_1;
 
-%% Save the decision values
-save(fullfile(results_dir,sprintf('cross_validated_dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
+%% Save the decision values and decoding accuracy
+decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); 
+filename = 'cross_validated_dth_pseudotrials_svm_decisionValues';
+save(fullfile(results_dir,sprintf('%s_decisionValues_%s.mat',filename,task_name)),'decisionValues_Avg');
+save(fullfile(results_dir,sprintf('%s_decodingAccuracy_%s.mat',filename,task_name)),'decodingAccuracy_avg');
 
 end
    
