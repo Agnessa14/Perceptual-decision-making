@@ -6,6 +6,8 @@ function plot_decoding_full_experiment(subjects,task,analysis)
 %('object_decoding' or 'category_decoding')
 %
 %Output: curve of decoding accuracies per timepoint
+%
+%Author: Agnessa Karapetian, 2021
 
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
@@ -19,15 +21,14 @@ numTimepoints = 200;
 
 % Set up the figure for plotting
 figure(abs(round(randn*10))); %Random figure number
-set(gcf, 'Position', get(0, 'Screensize'));
-sorted_subjects = sort(subjects); %order by ID
+%for full screen: % set(gcf, 'Position', get(0, 'Screensize'));
 if strcmp(analysis,'object_decoding')
-    decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+    decoding_accuracies_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepoints);
 elseif strcmp(analysis,'category_decoding')
-    decoding_accuracies_all_subjects = NaN(sorted_subjects(end),numTimepoints);
+    decoding_accuracies_all_subjects = NaN(max(subjects),numTimepoints);
 end
    
-legend_cell = cell(1,sorted_subjects(end));
+legend_cell = cell(1,max(subjects));
 legend_cell(:) = {NaN};
 
 cmap = jet(max(subjects));
@@ -37,10 +38,13 @@ for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     if strcmp(analysis,'object_decoding')
-        load(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy_%s.mat',task_name)));
+        load(fullfile(subject_results_dir,sprintf('svm_decoding_accuracy_%s.mat',task_name)),...
+            'decodingAccuracy_avg');
         decoding_accuracies_all_subjects(subject,:,:,:) = decodingAccuracy_avg;
     elseif strcmp(analysis,'category_decoding')
-        load(fullfile(subject_results_dir,sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)));
+        load(fullfile(subject_results_dir,...
+            sprintf('cross_validated_dth_pseudotrials_svm_decodingAccuracy_%s.mat',task_name)),...
+            'decodingAccuracy_avg');
         decoding_accuracies_all_subjects(subject,:) = decodingAccuracy_avg;
     end
     
@@ -77,12 +81,18 @@ elseif strcmp(analysis,'category_decoding')
     analysis_title = 'Category';
 end
 
-plot_title = sprintf('%s decoding per timepoint for %d subjects in a %s task',analysis_title,numel(subjects),task_title);
-onset_time = 40; 
+plot_title = sprintf('%s decoding per timepoint for %d subjects in a %s task',...
+    analysis_title,numel(subjects),task_title);
+title_boolean = 0;
 legend_cell{numel(subjects)+1} = 'Average over all subjects';
 legend_cell{numel(subjects)+2} = 'Stimulus onset'; %last legend element
-xticks(0:10:200);
-plotting_parameters(plot_title,legend_cell,onset_time,8,'best','Decoding accuracy (%)'); %'best' location or specify position [0.75 0.7 0.1 0.1]  
+legend_boolean = 0;
+legend_location = 'best';
+font_size = 8;
+ylim([40 100]);
+y_label = 'Decoding accuracy (%)';
+plotting_parameters(plot_title,title_boolean,legend_cell,...
+    legend_boolean,font_size,legend_location,y_label); 
 
 %% Save the plot
 if strcmp(analysis,'object_decoding')
@@ -91,12 +101,14 @@ elseif strcmp(analysis,'category_decoding')
     filename = 'svm_artificial_vs_natural_subjects';
 end
 
-%Save the plot with legend
-saveas(gcf,fullfile(results_avg_dir,sprintf('legend_%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
-
-%Save the plot without legend
-legend('off');
-saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg
+%Save the plot with or without legend
+if legend_boolean == 1
+    saveas(gcf,fullfile(results_avg_dir,sprintf('legend_%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('legend_%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); 
+else
+    saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
+    saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg    
+end
 close(gcf);
+
 end
