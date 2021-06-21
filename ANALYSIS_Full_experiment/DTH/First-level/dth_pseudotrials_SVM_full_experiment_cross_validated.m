@@ -40,8 +40,8 @@ addpath(results_dir);
 
 %% Prepare data
 %load data
-load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
-load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
+load(fullfile(data_dir,sprintf('timelock_%s',task_name)),'timelock'); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'behav');
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); 
@@ -58,6 +58,7 @@ numPermutations=100;
 
 %Preallocate 
 decisionValues = NaN(numPermutations,numConditions,numTimepoints);
+decodingAccuracy=NaN(numPermutations,numTimepoints);
 
 %% Running the MVPA
 rng('shuffle');
@@ -119,8 +120,9 @@ for perm = 1:numPermutations
         model=svmtrain_01(labels_train,training_data,train_param_str); 
         
         disp('Test the SVM');
-        [~, ~, decision_values] = svmpredict(labels_test,testing_data,model);  
-        
+        [~, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);  
+        decodingAccuracy(perm,t)=accuracy(1);        
+                
         disp('Putting the decision values into the big matrix');
         decisionValues(perm,:,t) = abs(decision_values);
         
@@ -128,9 +130,12 @@ for perm = 1:numPermutations
     toc
 end
 
-%% Save the decision values
-decisionValues_Avg = squeeze(mean(decisionValues,1));
-save(fullfile(results_dir,sprintf('cross_validated_dth_pseudotrials_svm_decisionValues_%s',task_name)),'decisionValues_Avg');
+%% Save the decision values + decoding accuracy
+decisionValues_Avg = squeeze(mean(decisionValues,1)); %average over permutations
+decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); 
+filename = 'cross_validated_dth_pseudotrials_svm_decisionValues';
+save(fullfile(results_dir,sprintf('%s_decisionValues_%s.mat',filename,task_name)),'decisionValues_Avg');
+save(fullfile(results_dir,sprintf('%s_decodingAccuracy_%s.mat',filename,task_name)),'decodingAccuracy_avg');
 
 end
    
