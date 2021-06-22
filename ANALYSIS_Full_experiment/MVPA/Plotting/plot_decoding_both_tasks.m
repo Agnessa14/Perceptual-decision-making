@@ -18,16 +18,15 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %% Preallocate
 numConditions = 60;
 numTimepoints = 200;
-sorted_subjects = sort(subjects);
 if strcmp(analysis,'object_decoding')
-    decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
-    decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numConditions,numConditions,numTimepoints);
+    decoding_accuracies_all_subjects_cat = NaN(max(subjects),numConditions,numConditions,numTimepoints);
+    decoding_accuracies_all_subjects_dis = NaN(max(subjects),numConditions,numConditions,numTimepoints);
 elseif strcmp(analysis,'category_decoding')
-    decoding_accuracies_all_subjects_cat = NaN(sorted_subjects(end),numTimepoints);
-    decoding_accuracies_all_subjects_dis = NaN(sorted_subjects(end),numTimepoints);
+    decoding_accuracies_all_subjects_cat = NaN(max(subjects),numTimepoints);
+    decoding_accuracies_all_subjects_dis = NaN(max(subjects),numTimepoints);
 end
 
-%% Loop: collect results from all subjects + plot each subject individually on the same plot
+%% Loop: collect results from all subjects
 for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
@@ -44,70 +43,66 @@ for subject = subjects
     decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
     load(fullfile(subject_results_dir,dis_filename),'decodingAccuracy_avg');
     decoding_accuracies_all_subjects_dis(subject,all_dimensions{:}) = decodingAccuracy_avg;
-end   
-
-%% Average over subjects + conditions and remove any NaN (for non-included subjects)
-if strcmp(analysis,'object_decoding')
-    avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_cat,1),2),3))';
-    avg_over_conditions_all_subjects_dis = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_dis,1),2),3))';
-elseif strcmp(analysis,'category_decoding')
-    avg_over_conditions_all_subjects_cat = squeeze(nanmean(decoding_accuracies_all_subjects_cat,1));
-    avg_over_conditions_all_subjects_dis = squeeze(nanmean(decoding_accuracies_all_subjects_dis,1));
 end
+
+%% For stats matrix: num subjects x num timepoints (average over conditions)
+if strcmp(analysis,'object_decoding')
+    for_stats_cat = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects_cat,2),3));
+    for_stats_dis = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects_dis,2),3));
+elseif strcmp(analysis,'category_decoding')
+    for_stats_cat = decoding_accuracies_all_subjects_cat;
+    for_stats_dis = decoding_accuracies_all_subjects_dis;
+end
+
+%% Difference between tasks
+for_stats_cat = for_stats_cat(subjects,:);
+for_stats_dis = for_stats_dis(subjects,:);
+for_stats_diff = for_stats_cat-for_stats_dis;
+diff_curve = squeeze(nanmean(for_stats_diff,1));
+
+%% Average over subjects 
+avg_over_conditions_all_subjects_cat = squeeze(nanmean(for_stats_cat,1));
+avg_over_conditions_all_subjects_dis = squeeze(nanmean(for_stats_dis,1));
 
 %% Setup the figure
 figure(abs(round(randn*10))); %Random figure number
-set(gcf, 'Position', get(0, 'Screensize'));
+legend_plot = cell(3,1);
 
-%% Plot stats if needed
-if with_stats
-    %Stat parameters
-    num_perms = 10000;
-    cluster_th = 0.05;
-    significance_th = 0.05;
-    tail = 'right';
-    
-    %loop over both tasks
-    for task = 1:2
-        %invert the task indices so the categorization task is plotted last
-        if task == 1
-            task_plot = 2;
-        elseif task == 2
-            task_plot = 1;
-        end
-        if task_plot == 1
-            task_name = 'categorization';
-            data = avg_over_conditions_all_subjects_cat-50;
-            plot_location = -5;
-            color_err = [0.75 0.75 0.95]; %error bars color: can't be the same one as that of the plot
-            color_data = [0 0.4 0.85];     
-        elseif task_plot == 2
-            task_name = 'fixation';
-            data = avg_over_conditions_all_subjects_dis-50;
-            plot_location = -7;
-            color_err = [0.95 0.75 0.9]; 
-            color_data = [0.9 0.2 0.8];       
-        end
-        
-        %error bars
-        filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s.mat',...
-        subjects(1),subjects(end),task_name,analysis));
-        if exist(filename_forstats,'file')
-            load(filename_forstats);
-        else
-            for_stats = all_subjects_for_stats(subjects,task_plot,analysis);
-        end
-        stdDM = std(for_stats); 
-        err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
-        
-        %plot as a shaded area
-        top_curve = data + err;
-        bottom_curve = data - err;
-        x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
-        shaded_area = [top_curve, fliplr(bottom_curve)];
-        fill(x2, shaded_area, color_err,'FaceAlpha',0.5);
-        hold on;
+%% Plot
+%loop over both tasks
+for task = 1:3
+    %invert the task indices so the categorization task is plotted last
+    if task == 1
+        task_plot = 2;
+    elseif task == 2
+        task_plot = 1;
+    elseif task == 3
+        task_plot = 3;
+    end
+    if task_plot == 1
+        task_name = 'categorization';
+        data = avg_over_conditions_all_subjects_cat-50;
+        plot_location = -5;
+        color_err = [0.75 0.75 0.95]; %error bars color: can't be the same one as that of the plot
+        color_data = [0 0.4 0.85];    
+        for_stats_data = for_stats_cat-50;
+    elseif task_plot == 2
+        task_name = 'fixation';
+        data = avg_over_conditions_all_subjects_dis-50;
+        plot_location = -7;
+        color_err = [0.95 0.75 0.9]; 
+        color_data = [0.9 0.2 0.8];   
+        for_stats_data = for_stats_dis-50;
+    elseif task_plot == 3
+        task_name = 'difference';
+        data = diff_curve;
+        plot_location = -9;
+        color_err = [0.5 0.5 0.5];%/255;
+        color_data = 'k';
+        for_stats_data = for_stats_diff;
+    end
 
+    if ~with_stats
         %plot the data
         p = plot(data,'Linewidth',3, 'Color', color_data);
         if task_plot==1
@@ -116,75 +111,108 @@ if with_stats
         elseif task_plot == 2
             p2 = p;
             legend_plot{task_plot} = 'Distraction';
+        elseif task_plot == 3
+            p3 = p;
+            legend_plot{task_plot} = 'Scene categorization-distraction';
+        end
+    else
+        %Stat parameters
+        stats_decoding.num_perms = 10000;
+        stats_decoding.cluster_th = 0.05;
+        stats_decoding.significance_th = 0.05;
+        stats_decoding.tail = 'right';
+        filename = fullfile(results_avg_dir,...
+            sprintf('stats_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+        if exist(filename,'file')
+            load(filename,'stats_decoding');
+        else
+            [stats_decoding.significant_timepoints,stats_decoding.pvalues]...
+                = permutation_cluster_1sample_alld(for_stats_data,stats_decoding.num_perms,...
+                stats_decoding.cluster_th,stats_decoding.significance_th,stats_decoding.tail);
+            [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
+            save(filename,'stats_decoding');
         end
         
-        %significant timepoints
-        filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_task_%s.mat',...
-        subjects(1),subjects(end),task_name,analysis));
-        if exist(filename_sign,'file')
-            load(filename_sign);
-        else
-            [significant_timepoints,~] = permutation_cluster_1sample_alld(for_stats,num_perms,...
-                cluster_th,significance_th,tail);
-        end
-        st = (significant_timepoints*plot_location); %depending on the stats
+        %1) significant timepoints
+        st = (stats_decoding.significant_timepoints*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color_data); 
+        hold on;
         
-        %peak latency and 95% confidence interval 
-        [peak_latency, CI] = bootstrap_peak_latency(subjects,task_plot,analysis);
+        %2) error bars
+        stdDM = std(for_stats_data); 
+        err = stdDM/sqrt(size(for_stats_data,1)); %standard deviation/sqrt of num subjects  
+
+        %plot as a shaded area
+        top_curve = data + err;
+        bottom_curve = data - err;
+        x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
+        shaded_area = [top_curve, fliplr(bottom_curve)];
+        fill(x2, shaded_area, color_err,'FaceAlpha',0.5);
+        hold on;
+        
+        %3) plot the data - on top of the error bars
+        p = plot(data,'Linewidth',3, 'Color', color_data);
+        hold on;
+        if task_plot==1
+            p1 = p; %for the legend
+            legend_plot{task_plot} = 'Scene categorization';
+        elseif task_plot == 2
+            p2 = p;
+            legend_plot{task_plot} = 'Distraction';
+        elseif task_plot == 3
+            p3 = p;
+            legend_plot{task_plot} = 'Scene categorization-distraction';
+        end
+
+        %4) peak latency and 95% confidence interval 
         if strcmp(analysis,'object_decoding')
-            arrow_x = 51;
-            height_cat = 32.5;
-            height_dis = 30;
+            arrow_x = 20;
+            height_cat = 35;
+            height_dis = 32.5;
+            height_diff = 30;
         elseif strcmp(analysis,'category_decoding')
-            arrow_x = 60;
-            height_cat = 27.5;
-            height_dis = 25;
+            arrow_x = 20;
+            height_cat = 30;
+            height_dis = 27.5;
+            height_diff = 25;
         end
         if task_plot == 1
             height = height_cat;
         elseif task_plot == 2 
             height = height_dis;
+        elseif task_plot == 3
+            height = height_diff;
         end
-        quiver(arrow_x,data(peak_latency),6,0,0,'Color',color_data,'ShowArrowHead','on','MaxHeadSize',0.75,'LineWidth',2);
-        quiver(CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
-        quiver(CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
         
-        %save the stats
-        save(fullfile(results_avg_dir,sprintf('peak_latency_subjects_%d_%d_%s_task_%s.mat',...
-        subjects(1),subjects(end),task_name,analysis)),'peak_latency');
-        save(fullfile(results_avg_dir,sprintf('confidence_interval_peak_latency_subjects_%d_%d_%s_task_%s.mat',...
-        subjects(1),subjects(end),task_name,analysis)),'CI');   
-        save(fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_task_%s',...
-        subjects(1),subjects(end),task_name,analysis)),'significant_timepoints');
-        save(fullfile(results_avg_dir,sprintf('pvalues_subjects_%d_%d_%s_task_%s',...
-        subjects(1),subjects(end),task_name,analysis)),'pvalues');
+        %plot arrows and lines for peak latency and CI
+        peak_acc = data(stats_decoding.peak_latency);
+        peak_latency_ms = (stats_decoding.peak_latency-40)*5;
+        str_pl = num2str(peak_latency_ms);
+        quiver(stats_decoding.CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
+        quiver(stats_decoding.CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
+        if strcmp(analysis,'category_decoding') && task_plot == 2 
+            text(arrow_x+60,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data);
+        else
+            text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data);
+        end
+        
     end
 end 
 
-%% Plot the difference curve + its stats
-if strcmp(analysis,'object_decoding')
-    analysis_title = 'Object';
-elseif strcmp(analysis,'category_decoding')
-    analysis_title = 'Category';
-end
-diff_curve = avg_over_conditions_all_subjects_cat-avg_over_conditions_all_subjects_dis;
-
-d = plot(diff_curve,'LineWidth',3,'Color','k');
-hold on;
-
 %% Plot parameters
-onset_time = 40; 
-plot_title = sprintf('%s decoding over time (N=%d)',analysis_title,numel(subjects));
-xticks(0:10:200);
-% legend_cell = {'Scene categorization','Distraction', 'Scene categorization-distraction'}; 
-legend_plot{3} = 'Scene categorization-distraction';
-plotting_parameters(plot_title,'',onset_time,12,'best','Decoding accuracy-50 (%)'); %[0.75 0.7 0.1 0.1]
-legend([p1,p2,d],legend_cell);
-ylim([-10,35]);
+plot_title = sprintf('%s over time (N=%d)',analysis,numel(subjects));
+legend_bool = 0;
+title_bool = 0;
+plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,12,'best','Decoding accuracy-50 (%)');
+if legend_bool==1
+    legend([p1,p2,p3],legend_plot);
+end
+ylim([-10,40]);
 
-%% Save the plot
+%% Save the plot and matrices
+save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_both_tasks.mat',analysis,subjects(1),subjects(end))),'for_stats_cat'); 
+save(fullfile(results_avg_dir,sprintf('for_stats_dis_svm_%s_subjects_%d_%d_both_tasks.mat',analysis,subjects(1),subjects(end))),'for_stats_dis'); 
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
