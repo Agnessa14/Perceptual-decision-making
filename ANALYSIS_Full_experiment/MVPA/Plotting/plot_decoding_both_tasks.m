@@ -105,6 +105,7 @@ for task = 1:3
     if ~with_stats
         %plot the data
         p = plot(data,'Linewidth',3, 'Color', color_data);
+        hold on;
         if task_plot==1
             p1 = p; %for the legend
             legend_plot{task_plot} = 'Scene categorization';
@@ -202,7 +203,7 @@ end
 
 %% Plot parameters
 plot_title = sprintf('%s over time (N=%d)',analysis,numel(subjects));
-legend_bool = 0;
+legend_bool = 1;
 title_bool = 0;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,12,'best','Decoding accuracy-50 (%)');
 if legend_bool==1
