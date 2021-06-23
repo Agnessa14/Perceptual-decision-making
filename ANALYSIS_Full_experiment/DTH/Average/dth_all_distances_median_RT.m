@@ -35,7 +35,7 @@ for subject = subjects
     load(fullfile(results_dir,subname,sprintf('RTs_correct_trials_%s.mat',...
         task_name_RT)),'RT_per_condition');
     distances(subject,:,:) = decisionValues_Avg;   
-    RTs(subject,:) = RT_per_condition; %normalize?
+    RTs(subject,:) = RT_per_condition; 
     RTs_art(subject,:) = RT_per_condition(artificial_conditions);
     RTs_nat(subject,:) = RT_per_condition(natural_conditions);
 end
@@ -51,7 +51,6 @@ size_corr = [max(subjects),numTimepoints];
 correlation_art = NaN(size_corr);
 correlation_nat = NaN(size_corr);
 correlation_both = NaN(size_corr);
-correlation_avg = NaN(size_corr);
 
 for subject = subjects
     %Find any missing scenes and exclude them
@@ -78,39 +77,36 @@ for subject = subjects
     correlation_both(subject,:) = arrayfun(@(x) ...
         corr(squeeze(distances_subject(all_conditions_subject,x)),...
         medianRT(all_conditions_subject)','type','Spearman'), t);
-    correlation_avg(subject,:) = mean([squeeze(correlation_art(subject,:));...
-        squeeze(correlation_nat(subject,:))],1);
 end
 
 %% Average over participants
 avg_corr_art = squeeze(nanmean(correlation_art,1));
 avg_corr_nat = squeeze(nanmean(correlation_nat,1));
 avg_corr_both = squeeze(nanmean(correlation_both,1));
-avg_corr_avg = squeeze(nanmean(correlation_avg,1));
 
 %% Plot
 figure(abs(round(randn*10)));
-set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
-color_art = [0 0.45 0.75];
-color_nat =  [0.9 0.1 0];
-color_both = [0 0 0];
-color_avg = [0.7 0.2 0.7];
+cmap_1 = cool;
+cmap_2 = summer;
+color_art = cmap_1(200,:); %purple
+color_nat = cmap_2(100,:); %green
+color_both = 'k';
 
 plot(avg_corr_art,'LineWidth',2,'Color',color_art);
 hold on;
 plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
 plot(avg_corr_both,'LineWidth',2,'Color',color_both);
-plot(avg_corr_avg,'LineWidth',2,'Color',color_avg);
 
 %% Plot stats if needed
 if with_stats
     
     %define some variables for the stats and the plot
-    num_perms = 1000;
     analysis = 'random_dth';
-    cluster_th = 0.05;
-    significance_th = 0.05;
-    for c = 1:4
+    permutation_stats.num_perms = 1000;
+    permutation_stats.cluster_th = 0.05;
+    permutation_stats.significance_th = 0.05;
+    permutation_stats.tail = 'left';
+    for c = 1:3
         if c == 1
             category = 'artificial';            
             plot_location = -0.34;
@@ -126,11 +122,6 @@ if with_stats
             plot_location = -0.4;
             color = color_both;
             for_stats = correlation_both(subjects,:);
-        elseif c == 4
-            category = 'average';            
-            plot_location = -0.43;
-            color = color_avg;
-            for_stats = correlation_avg(subjects,:);
         end
 
         %Check if stats already exist, otherwise run the stats script
@@ -138,24 +129,24 @@ if with_stats
             filename_sign = 'dth_permutation_stats';
         else
             filename_sign = 'dth_permutation_stats_crosstask';
-        end
-    
-        fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s',filename_sign,subjects(1),subjects(end),...
-            task_name_distance,analysis,category));
-
-        if exist(filename_sign,'file')
-            load(filename_sign);
-            significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
+        end     
+        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s.mat',filename_sign,...
+            subjects(1),subjects(end),task_name_distance,analysis,category));
+        if exist(filename,'file')
+            load(filename,'permutation_stats');
         else
-            significant_timepoints = weighted_run_permutation_stats(subjects,task_distance,...
-                task_RT,analysis,category,for_stats,num_perms,cluster_th,significance_th);
+            [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
+                permutation_stats.SignificantMaxClusterSize,permutation_stats.pValSize] = ...
+                permutation_cluster_1sample_weight_alld(for_stats,permutation_stats.num_perms,...
+                permutation_stats.cluster_th,permutation_stats.significance_th,permutation_stats.tail); 
+        save(filename,'permutation_stats');
         end
         
         %Plot
-        st = (significant_timepoints*plot_location); %depending on the stats
+        st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
-        hold on;        
+        hold on;
     end
 end 
 
@@ -172,28 +163,27 @@ elseif task_distance==1 && task_RT==2
 elseif task_distance==2 && task_RT==1
     plot_title =  sprintf('Correlation between the distance to hyperplane from a distraction task and reaction time from a categorization task (N=%d)',numel(subjects));
 end
-legend_plot = {'Artificial scenes','Natural scenes','All scenes',...
-    'Average of artificial and natural scenes'}; 
-xticks(0:10:200);
-ylim([-0.5 0.4]);
-plotting_parameters(plot_title,legend_plot,40,12,'best','Spearman''s coefficient'); 
-
+legend_plot = {'Artificial scenes','Natural scenes','All scenes'}; 
+ylim([-0.5 0.3]);
+legend_bool = 0;
+title_bool = 0;
+font_size = 12;
+plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
 
 %% Save correlations and figures
 dth_results.corr_both_categories = avg_corr_both;
 dth_results.corr_artificial = avg_corr_art;
 dth_results.corr_natural = avg_corr_nat;
-dth_results.corr_avg_categories = avg_corr_avg;
 
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 if isequal(task_distance,task_RT)
-    save(fullfile(save_path,sprintf('cv_perm_stats_random_effects_dth_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('cv_perm_stats_random_effects_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
-    saveas(gcf,fullfile(save_path,sprintf('cv_perm_stats_random_effects_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
+    save(fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
+    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
 else
-    save(fullfile(save_path,sprintf('cv_random_effects_dth_subjects_%d_%d_cross_task_%s_distances.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('cv_random_effects_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
-    saveas(gcf,fullfile(save_path,sprintf('cv_random_effects_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
+    save(fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
+    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
 end
 
 close(gcf);
