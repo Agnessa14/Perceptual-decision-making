@@ -4,6 +4,7 @@ function plotting_parameters(plot_title,title_bool,plot_legend,legend_bool,font_
 %Input: title of the plot, title bool (with or without title), legend of the plot, stimulus onset, font size,
 %legend location, label of the y axis
 %
+set(gca,'FontName','Arial')
 xticks(0:20:200);
 xticklabels(-200:100:800);
 xlim([0 201]);
