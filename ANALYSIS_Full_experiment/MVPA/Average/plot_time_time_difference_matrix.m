@@ -1,8 +1,9 @@
-function plot_time_time_difference_matrix(subjects,analysis)
+function plot_time_time_difference_matrix(subjects,analysis,with_stats)
 %PLOT_TIME_TIME_DIFFERENCE_MATRIX Plot the difference between categorization & distraction within-task 
 %time-generalization, averaged over all participants.
 %
-%Input: subject IDs (e.g., 1:13), analysis('object_decoding' or 'category_decoding')
+%Input: subject IDs (e.g., 1:13), analysis('object_decoding' or
+%'category_decoding'), with or without stats (1/0)
 %
 %Output: 2D heatmap of difference between decoding accuracies. 
 %
@@ -10,70 +11,79 @@ function plot_time_time_difference_matrix(subjects,analysis)
 
 %% Paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
-results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
-%% Preallocate & collect results from all subjects
+%% Load the data
 numTimepoints = 50;
-numConditions = 60;
-if strcmp(analysis,'object_decoding')
-    decoding_accuracies_all_subjects_categorization = NaN(max(subjects),numConditions,numConditions,numTimepoints,numTimepoints);
-    decoding_accuracies_all_subjects_distraction = NaN(max(subjects),numConditions,numConditions,numTimepoints,numTimepoints);
-    all_dimensions = repmat({':'},1,4);  
-    analysis_name = analysis(1:6);
-elseif strcmp(analysis,'category_decoding')
-    decoding_accuracies_all_subjects_categorization = NaN(max(subjects),numTimepoints,numTimepoints);
-    decoding_accuracies_all_subjects_distraction = NaN(max(subjects),numTimepoints,numTimepoints);
-    all_dimensions = repmat({':'},1,2);
-    analysis_name = analysis(1:8);
-end
+filename_for_stats_cat = fullfile(results_avg_dir,sprintf('for_stats_timegen_svm_%s_subjects_%d_%d_categorization.mat',analysis,...
+    subjects(1),subjects(end)));
 
-%Loop over subjects
-for subject = subjects
-    subname = get_subject_name(subject);
-    subject_results_dir = fullfile(results_dir,subname);
-    if strcmp(analysis,'object_decoding')
-        filename = 'time_generalized_svm_object_decoding';
-    elseif strcmp(analysis,'category_decoding')
-        filename = 'time_generalized_svm_object_decoding';
-    end
-    load(fullfile(subject_results_dir,sprintf('%s_categorization.mat',filename)));
-    decoding_accuracies_all_subjects_categorization(subject,all_dimensions{:}) = timeg_decodingAccuracy_avg;
-    load(fullfile(subject_results_dir,sprintf('%s_fixation.mat',filename)));
-    decoding_accuracies_all_subjects_distraction(subject,all_dimensions{:}) = timeg_decodingAccuracy_avg; 
-end   
+filename_for_stats_fix = fullfile(results_avg_dir,sprintf('for_stats_timegen_svm_%s_subjects_%d_%d_fixation.mat',analysis,...
+    subjects(1),subjects(end)));
 
-%% Average over subjects and conditions and remove any NaN (for non-included subjects and conditions)
-if strcmp(analysis,'object_decoding')
-    avg_over_conditions_all_subjects_cat = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_categorization,1),2),3)); 
-    avg_over_conditions_all_subjects_dis = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects_distraction,1),2),3)); 
-elseif strcmp(analysis,'category_decoding')
-    avg_over_conditions_all_subjects_cat = squeeze(nanmean(decoding_accuracies_all_subjects_categorization,1)); 
-    avg_over_conditions_all_subjects_dis = squeeze(nanmean(decoding_accuracies_all_subjects_distraction,1)); 
+if exist(filename_for_stats_cat,'file') && exist(filename_for_stats_fix,'file')
+    load(filename_for_stats_cat,'for_stats');
+    for_stats_cat = for_stats;
+    load(filename_for_stats_fix,'for_stats');
+    for_stats_fix = for_stats;
+else
+    error('Run ''plot_timetime_decoding_full_experiment'' first.')
 end
 
 %% Plot the difference
-diff_matrix = avg_over_conditions_all_subjects_cat - avg_over_conditions_all_subjects_dis;
+for_stats_diff = for_stats_cat - for_stats_fix;
+diff_matrix = squeeze(nanmean(for_stats_diff,1));
 h = pcolor(diff_matrix); 
-set(gcf, 'Position', get(0, 'Screensize'));
 set(h, 'EdgeColor', 'none');
 axis square;
-plot_title = sprintf('Difference in time-generalized %s decoding between categorization and distraction tasks (N=%d)',analysis_name,numel(subjects));
-title(plot_title);
+hold on;
+plot_title = sprintf('Difference in time-generalized %s between categorization and distraction tasks (N=%d)',analysis,numel(subjects));
+title_bool = 0;
+if title_bool==1
+    title(plot_title);
+end
 cbar = colorbar;
 ylabel('Timepoints trained on');
 xlabel('Timepoints tested on');
-ylabel(cbar,'Decoding accuracy (%)');
+ylabel(cbar,'%');
+caxis([-5 20]);
+xticks(0:5:50);
+xticklabels(-200:100:800);
+yticklabels(-200:100:800);
+yticks(0:5:50);
+xline(10,'--','Color','w');
+yline(10,'--','Color','w');
 
-%% Save the matrices and plot
-save(fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_categorization',...
-    analysis_name,subjects(1),subjects(end))),'avg_over_conditions_all_subjects_cat');
-save(fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_fixation',...
-    analysis_name,subjects(1),subjects(end))),'avg_over_conditions_all_subjects_dis');
-save(fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_decoding_subjects_%d_%d',...
-    analysis_name,subjects(1),subjects(end))),'diff_matrix');
-saveas(gcf,fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_decoding_subjects_%d_%d',analysis_name,subjects(1),subjects(end)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_decoding_subjects_%d_%d.png',analysis_name,subjects(1),subjects(end)))); %save as png
+set(gca,'FontName','Arial','FontSize',11)
+%Plot a black line over the diagonal for cross-task
+plot(1:numTimepoints,1:numTimepoints,'LineWidth',2.5,'Color','k');
+
+if with_stats
+
+    stats_decoding.num_perms = 1000;
+    stats_decoding.qvalue = 0.01;
+    stats_decoding.tail = 'right';
+    filename = fullfile(results_avg_dir,...
+        sprintf('stats_fdr_timetime_diff_%s_subjects_%d_%d.mat',analysis,subjects(1),subjects(end)));
+    if exist(filename,'file')
+        load(filename,'stats_decoding');
+    else
+        [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
+            stats_decoding.crit_p,stats_decoding.adjusted_pvalues]...
+            = fdr_permutation_cluster_1sample_alld(for_stats-50,...
+            stats_decoding.num_perms,stats_decoding.tail,stats_decoding.qvalue);
+        save(filename,'stats_decoding');
+    end
+    
+    %plot contour
+    contour(stats_decoding.significant_timepoints,1,'LineColor','w','LineWidth',2);
+
+end
+
+%% Save the matrix plot
+save(fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_subjects_%d_%d',analysis,subjects(1),subjects(end))),'diff_matrix');
+saveas(gcf,fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_subjects_%d_%d',analysis,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('diff_matrix_timegen_svm_%s_subjects_%d_%d.png',analysis,subjects(1),subjects(end)))); %save as png
 close(gcf)
 
 
