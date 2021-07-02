@@ -15,18 +15,9 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
-%% Preallocate & collect results from all subjects
+%% Define some variables
 numTimepoints = 50;
 numConditions = 60;
-if strcmp(analysis,'object_decoding')
-    decoding_accuracies_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepoints,numTimepoints);
-    all_dimensions = repmat({':'},1,4);
-    analysis_name = analysis(1:6);
-elseif strcmp(analysis,'category_decoding')
-    decoding_accuracies_all_subjects = NaN(max(subjects),numTimepoints,numTimepoints);
-    all_dimensions = repmat({':'},1,2);
-    analysis_name = analysis(1:8);
-end
 
 %task name
 if task < 3
@@ -44,45 +35,75 @@ elseif task == 3
     end
 end
 
-%Loop over subjects
-for subject = subjects
-    subname = get_subject_name(subject);
-    subject_results_dir = fullfile(results_dir,subname);
+%Check if the matrix of averaged accuracies exists
+filename_data = fullfile(results_avg_dir,sprintf('timegen_svm_%s_subjects_%d_%d_%s.mat',analysis,...
+    subjects(1),subjects(end),task_name));
+filename_for_stats = fullfile(results_avg_dir,sprintf('for_stats_timegen_svm_%s_subjects_%d_%d_%s.mat',analysis,...
+    subjects(1),subjects(end),task_name));
+if exist(filename_data,'file') && exist(filename_for_stats,'file')
+    load(filename_data,'avg_over_conditions_all_subjects');
+    load(filename_for_stats,'for_stats');
+else
+    %Preallocate
     if strcmp(analysis,'object_decoding')
-        filename = 'time_generalized_svm_object_decoding';
+        decoding_accuracies_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepoints,numTimepoints);
+        all_dimensions = repmat({':'},1,4);
     elseif strcmp(analysis,'category_decoding')
-        filename = 'time_gen_svm_artificial_vs_natural_decoding_accuracy';
+        decoding_accuracies_all_subjects = NaN(max(subjects),numTimepoints,numTimepoints);
+        all_dimensions = repmat({':'},1,2);
     end
     
-    %for cross task, add a prefix
-    if task == 3
-        filename = sprintf('2_models_%s',filename);
+    %Loop over subjects
+    for subject = subjects
+        subname = get_subject_name(subject);
+        subject_results_dir = fullfile(results_dir,subname);
+        if strcmp(analysis,'object_decoding')
+            filename = 'time_generalized_svm_object_decoding';
+        elseif strcmp(analysis,'category_decoding')
+            filename = 'time_gen_svm_artificial_vs_natural_decoding_accuracy';
+        end
+        
+        %for cross task, add a prefix
+        if task == 3
+            filename = sprintf('2_models_%s',filename);
+        end
+        
+        %load & fill the preallocated matrix
+        load(fullfile(subject_results_dir,sprintf('%s_%s.mat',filename,task_name)),'timeg_decodingAccuracy_avg');
+        decoding_accuracies_all_subjects(subject,all_dimensions{:}) = timeg_decodingAccuracy_avg;
     end
     
-    %load & fill the preallocated matrix
-    load(fullfile(subject_results_dir,sprintf('%s_%s.mat',filename,task_name)));
-    decoding_accuracies_all_subjects(subject,all_dimensions{:}) = timeg_decodingAccuracy_avg;
+    %% Average over conditions (use for stats) and remove any NaN (for non-included conditions)
+    if strcmp(analysis,'object_decoding')
+        for_stats = squeeze(nanmean(nanmean(decoding_accuracies_all_subjects(subjects,:,:,:,:),2),3));
+    elseif strcmp(analysis,'category_decoding')
+        for_stats = decoding_accuracies_all_subjects(subjects,:,:,:,:);
+    end
+    save(filename_for_stats,'for_stats');
+
+    %% Average over subjects, remove NaNs
+    avg_over_conditions_all_subjects = squeeze(mean(for_stats,1));
+    
+    %% Save the matrix
+    save(filename_data,'avg_over_conditions_all_subjects');
+
 end   
 
-%% Average over subjects and conditions and remove any NaN (for non-included subjects and conditions)
-if strcmp(analysis,'object_decoding')
-    avg_over_conditions_all_subjects = squeeze(nanmean(nanmean(nanmean(decoding_accuracies_all_subjects,1),2),3)); 
-elseif strcmp(analysis,'category_decoding')
-    avg_over_conditions_all_subjects = squeeze(nanmean(decoding_accuracies_all_subjects,1)); 
-end
-
 %% Plot the average of all subjects
-h = pcolor(avg_over_conditions_all_subjects); 
-set(gcf, 'Position', get(0, 'Screensize'));
+h = pcolor(avg_over_conditions_all_subjects-50);
 set(h, 'EdgeColor', 'none');
+set(gca,'FontName','Arial');
 axis square;
 hold on;
 if task<3
-    plot_title = sprintf('Time-generalized %s decoding in a %s task (N=%d)',analysis_name,task_name_title,numel(subjects));
-elseif task == 3 
-    plot_title = sprintf('Time-generalized %s decoding across categorization and distraction tasks (N=%d)',analysis_name,numel(subjects));
+    plot_title = sprintf('Time-generalized %s in a %s task (N=%d)',analysis,task_name_title,numel(subjects));
+elseif task == 3
+    plot_title = sprintf('Time-generalized %s across categorization and distraction tasks (N=%d)',analysis,numel(subjects));
 end
-title(plot_title);
+title_bool = 0;
+if title_bool==1
+    title(plot_title);
+end
 cbar = colorbar;
 if task < 3
     ylabel('Timepoints trained on');
@@ -91,64 +112,48 @@ elseif task == 3
     ylabel('Timepoints trained on: Categorization task');
     xlabel('Timepoints tested on: Distraction task');
 end
-ylabel(cbar,'Decoding accuracy (%)');
-
+ylabel(cbar,'Decoding accuracy-50 (%)');
+caxis([-5 20]);
+xticks(0:5:50);
+xticklabels(-200:100:800);
+yticks(0:5:50);
+xline(10,'--','Color','w');
+yline(10,'--','Color','w');
+yticklabels(-200:100:800);
+set(gca,'FontName','Arial','FontSize',11)
 %Plot a black line over the diagonal for cross-task
 if task == 3
     plot(1:numTimepoints,1:numTimepoints,'LineWidth',2.5,'Color','k');
 end
 
-%% Save the plot
-saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_decoding_subjects_%d_%d_%s.png',analysis_name,subjects(1),subjects(end),task_name))); %save as matlab figure
-close(gcf)
 
 %% Plot stats if needed
 if with_stats
-    num_perms = 1000;
-    cluster_th = 0.1;
-    significance_th = 0.1;
-    %load the subjects x timepoints matrix
-    filename_forstats = fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_time_%s.mat',...
-    subjects(1),subjects(end),task_name,analysis));
-    if exist(filename_forstats,'file')
-        load(filename_forstats);
+
+    stats_decoding.num_perms = 1000;
+    stats_decoding.qvalue = 0.01;
+    stats_decoding.tail = 'right';
+    filename = fullfile(results_avg_dir,...
+        sprintf('stats_fdr_timetime_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+    if exist(filename,'file')
+        load(filename,'stats_decoding');
     else
-        for_stats = all_subjects_for_stats(subjects,task,sprintf('time_%s',analysis));
-    end
-    
-    %load the stats if they have been run already
-    filename_sign = fullfile(results_avg_dir,sprintf('significant_timepoints_subjects_%d_%d_%s_%s_time_%s.mat',...
-    subjects(1),subjects(end),task_name,analysis));
-    if exist(filename_sign,'file')
-        load(filename_sign);
-    else
-        significant_timepoints = run_permutation_stats(subjects,task,sprintf('time_%s',analysis),for_stats,num_perms,cluster_th,significance_th);
-    end
-    
-    %plot the stats - different plot from the RSA
-    significant_timepoints(isnan(significant_timepoints))=0;
-    h = pcolor(significant_timepoints); 
-    set(gcf, 'Position', get(0, 'Screensize'));
-    set(h, 'EdgeColor', 'none');
-    axis square;
-    cbar = colorbar;
-    ylabel(cbar,'Significance');
-    if strcmp(analysis,'object_decoding')
-        ylabel('Timepoints trained on');
-        xlabel('Timepoints tested on');
-    elseif strcmp(analysis,'category_decoding')
-        ylabel('Timepoints trained on: Categorization task');
-        xlabel('Timepoints tested on: Distraction task');
+        [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
+            stats_decoding.crit_p,stats_decoding.adjusted_pvalues]...
+            = fdr_permutation_cluster_1sample_alld(for_stats-50,...
+            stats_decoding.num_perms,stats_decoding.tail,stats_decoding.qvalue);
+        save(filename,'stats_decoding');
     end
 
-    title(sprintf('Statistical analysis of time-generalized RSA of scene processing in categorization and distraction tasks (N=%d)',numel(subjects)));  
-    
-    %save the plot
-    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_%s_subjects_%d_%d',task_name,analysis,subjects(1),subjects(end)))); 
-    saveas(gcf,fullfile(results_avg_dir,sprintf('stats_time_%s_%s_subjects_%d_%d.png',task_name,analysis,subjects(1),subjects(end)))); 
-    close(gcf);
-end 
+    %plot the stats
+    contour(stats_decoding.significant_timepoints,1,'LineColor','w','LineWidth',2);
+
+end
+
+%% Save the plot
+saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_subjects_%d_%d_%s',analysis,subjects(1),subjects(end),task_name))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('timegen_svm_%s_subjects_%d_%d_%s.png',analysis,subjects(1),subjects(end),task_name))); %save as matlab figure
+close(gcf)
 
 end
 
