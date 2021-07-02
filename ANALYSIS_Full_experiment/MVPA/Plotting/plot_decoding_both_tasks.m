@@ -118,9 +118,6 @@ for task = 1:3
         end
     else
         %Stat parameters
-        stats_decoding.num_perms = 10000;
-        stats_decoding.cluster_th = 0.05;
-        stats_decoding.significance_th = 0.05;
 %         stats_decoding.tail = 'right';
 %         filename = fullfile(results_avg_dir,...
 %             sprintf('stats_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
@@ -138,14 +135,16 @@ for task = 1:3
         %     stats_decoding.cluster_th = 0.05;
         %     stats_decoding.significance_th = 0.05;
         stats_decoding.tail = 'right';
+        stats_decoding.qvalue = 0.01;
         filename = fullfile(results_avg_dir,...
             sprintf('stats_fdr_timetime_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'stats_decoding');
         else
-            [stats_decoding.significant_timepoints,stats_decoding.pvalues]...
+            [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
+                stats_decoding.crit_p, stats_decoding.adjusted_pvalues]...
                 = fdr_permutation_cluster_1sample_alld(for_stats_data,...
-                stats_decoding.num_perms,stats_decoding.tail);
+                stats_decoding.num_perms,stats_decoding.tail,stats_decoding.qvalue);
             save(filename,'stats_decoding');
         end
         [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
@@ -209,7 +208,7 @@ for task = 1:3
         str_pl = num2str(peak_latency_ms);
         quiver(stats_decoding.CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(stats_decoding.CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
-        if strcmp(analysis,'category_decoding') && task_plot == 2 
+        if task_plot == 2
             text(arrow_x+60,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data);
         else
             text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data);
