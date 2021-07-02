@@ -52,7 +52,7 @@ for subject = subjects
     if strcmp(analysis,'object_decoding')
         decodingAccuracy_avg = squeeze(nanmean(nanmean(decodingAccuracy_avg,1),2)); %avg over conditions
     end
-    plot(decodingAccuracy_avg, 'Linewidth',2, 'Color', cmap(subject, :));
+    plot(decodingAccuracy_avg-50, 'Linewidth',2, 'Color', cmap(subject, :));
     hold on;
     legend_cell{subject} = sprintf('Subject %d',subject);   
 end   
@@ -67,7 +67,7 @@ end
 legend_cell(cellfun(@(x) any(isnan(x)),legend_cell)) = [];
 
 %% Plot the average of all subjects
-plot(avg_over_conditions_all_subjects,'--','Color','k','Linewidth',3);
+plot(avg_over_conditions_all_subjects-50,'--','Color','k','Linewidth',3);
 hold on;
 if task==1
     task_title = 'scene categorization';
@@ -89,8 +89,9 @@ legend_cell{numel(subjects)+2} = 'Stimulus onset'; %last legend element
 legend_boolean = 0;
 legend_location = 'best';
 font_size = 8;
-ylim([40 100]);
-y_label = 'Decoding accuracy (%)';
+set(gca,'FontName','Arial');
+ylim([-10 50]);
+y_label = 'Decoding accuracy-50 (%)';
 plotting_parameters(plot_title,title_boolean,legend_cell,...
     legend_boolean,font_size,legend_location,y_label); 
 
