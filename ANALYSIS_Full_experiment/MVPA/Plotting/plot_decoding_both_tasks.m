@@ -121,18 +121,35 @@ for task = 1:3
         stats_decoding.num_perms = 10000;
         stats_decoding.cluster_th = 0.05;
         stats_decoding.significance_th = 0.05;
+%         stats_decoding.tail = 'right';
+%         filename = fullfile(results_avg_dir,...
+%             sprintf('stats_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+%         if exist(filename,'file')
+%             load(filename,'stats_decoding');
+%         else
+%             [stats_decoding.significant_timepoints,~,~,stats_decoding.pvalues]...
+%                 = permutation_cluster_1sample_alld(for_stats_data,stats_decoding.num_perms,...
+%                 stats_decoding.cluster_th,stats_decoding.significance_th,stats_decoding.tail);
+%             [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
+%             save(filename,'stats_decoding');
+%         end
+
+        stats_decoding.num_perms = 1000;
+        %     stats_decoding.cluster_th = 0.05;
+        %     stats_decoding.significance_th = 0.05;
         stats_decoding.tail = 'right';
         filename = fullfile(results_avg_dir,...
-            sprintf('stats_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
-        if exist(filename,'file')
+            sprintf('stats_fdr_timetime_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+        if exist('filename','file')
             load(filename,'stats_decoding');
         else
             [stats_decoding.significant_timepoints,stats_decoding.pvalues]...
-                = permutation_cluster_1sample_alld(for_stats_data,stats_decoding.num_perms,...
-                stats_decoding.cluster_th,stats_decoding.significance_th,stats_decoding.tail);
-            [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
+                = fdr_permutation_cluster_1sample_alld(for_stats_data,...
+                stats_decoding.num_perms,stats_decoding.tail);
             save(filename,'stats_decoding');
         end
+        [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
+
         
         %1) significant timepoints
         st = (stats_decoding.significant_timepoints*plot_location); %depending on the stats
@@ -203,12 +220,13 @@ end
 
 %% Plot parameters
 plot_title = sprintf('%s over time (N=%d)',analysis,numel(subjects));
-legend_bool = 1;
+legend_bool = 0;
 title_bool = 0;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,12,'best','Decoding accuracy-50 (%)');
 if legend_bool==1
     legend([p1,p2,p3],legend_plot);
 end
+set(gca,'FontName','Arial');
 ylim([-10,40]);
 
 %% Save the plot and matrices
