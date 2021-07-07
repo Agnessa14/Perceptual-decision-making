@@ -1,5 +1,5 @@
 function within_task_pearson_object_decoding_full_experiment(subject,task) 
-%PEARSON_OBJECT_DECODING_FULL_EXPERIMENT Perform object decoding (average of pairwise object decoding) 
+%WITHIN_TASK_PEARSON_OBJECT_DECODING_FULL_EXPERIMENT Perform object decoding (average of pairwise object decoding) 
 %using correlation distance (1-Pearson's correlation). Meant for
 %within-task RSA, therefore the trials are split in half, resulting in 2
 %RDMs per timepoint.
@@ -50,42 +50,44 @@ numPermutations=100;
 %Preallocate 
 numPseudotrials = 6;
 numTrialsPerBin = round(numTrials/numPseudotrials);
-rdm=NaN(2,numPermutations,numPseudotrials,numConditions,numConditions,numTimepoints);
-    
+rdm=NaN(numPermutations,2,numPseudotrials/2,numConditions,numConditions,numTimepoints);
+
+%Split data in two halves
+data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
+data = multivariate_noise_normalization(data); 
+half_data_1 = data(:,1:round(numTrials/2),:,:);
+half_data_2 = data(:,round(numTrials/2)+1:end,:,:);
+
 %% Decoding
+rng('shuffle');
 for perm = 1:numPermutations
     tic   
-    disp('Creating the data matrix');
-    data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
-
-    disp('Performing MVNN');
-    data = multivariate_noise_normalization(data); 
+    disp('Permuting the trials');
+    half_data_1_perm = half_data_1(:,randperm(size(half_data_1,2)),:,:);
+    half_data_2_perm = half_data_2(:,randperm(size(half_data_2,2)),:,:);
 
     disp('Binning data into pseudotrials');
-    [pseudoTrials,numPseudotrials] = create_pseudotrials(numTrialsPerBin,data);    
+    [pseudoTrials_1,numPseudotrials_1] = create_pseudotrials(numTrialsPerBin,half_data_1_perm);    
+    [pseudoTrials_2,numPseudotrials_2] = create_pseudotrials(numTrialsPerBin,half_data_2_perm);    
+    min_num_PTs = min([numPseudotrials_1 numPseudotrials_2]);
     
     %only get the upper diagonal
-    for h = 1:2 %each half of pseudotrials
-        if h == 1
-            half_pseudotr = pseudoTrials(:,1:numPseudotrials/2,:,:);
-        else
-            half_pseudotr = pseudoTrials(:,(numPseudotrials/2)+1:end,:,:);
-        end
-        for condA=1:numConditions-1 %1:59
-            for condB = condA+1:numConditions %2:60
-                for tp = 1:numTimepoints 
-                    for pt = 1:numPseudotrials/2
-                        rdm(perm,h,pt,condA,condB,tp) = 1-corr(squeeze(half_pseudotr(condA,pt,:,tp)),squeeze(half_pseudotr(condB,pt,:,tp)),'type','Pearson');
-                        disp(rdm(perm,h,pt,condA,condB,tp));
-                    end
-                end 
+    for condA=1:numConditions-1 %1:59
+        for condB = condA+1:numConditions %2:60
+            for tp = 1:numTimepoints 
+                for pt = min_num_PTs
+                    rdm(perm,1,pt,condA,condB,tp) = 1-corr(squeeze(pseudoTrials_1(condA,pt,:,tp)),squeeze(pseudoTrials_1(condB,pt,:,tp)),'type','Pearson');
+                    disp(1-corr(squeeze(pseudoTrials_1(condA,pt,:,tp)),squeeze(pseudoTrials_1(condB,pt,:,tp)),'type','Pearson'));
+                    rdm(perm,2,pt,condA,condB,tp) = 1-corr(squeeze(pseudoTrials_2(condA,pt,:,tp)),squeeze(pseudoTrials_2(condB,pt,:,tp)),'type','Pearson');
+                    disp(1-corr(squeeze(pseudoTrials_2(condA,pt,:,tp)),squeeze(pseudoTrials_2(condB,pt,:,tp)),'type','Pearson'));
+                end
             end 
         end 
-    end
+    end 
     toc
 end
 
 %% Save the representational dissimilarity matrix
-rdm_avg = squeeze(mean(rdm,[1,3])); %average over permutations and pseudotrials
-save(fullfile(results_dir,subname,sprintf('within_task_rdm_pearson_%s.mat',task_name)),'rdm_avg');
+rdm_avg = squeeze(nanmean(nanmean(rdm,1),3)); %average over permutations and pseudotrials
+save(fullfile(results_dir,subname,sprintf('split_within_task_rdm_pearson_%s.mat',task_name)),'rdm_avg');
 
