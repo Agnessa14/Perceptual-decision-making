@@ -77,9 +77,7 @@ for perm = 1:numPermutations
             for tp = 1:numTimepoints 
                 for pt = min_num_PTs
                     rdm(perm,1,pt,condA,condB,tp) = 1-corr(squeeze(pseudoTrials_1(condA,pt,:,tp)),squeeze(pseudoTrials_1(condB,pt,:,tp)),'type','Pearson');
-                    disp(1-corr(squeeze(pseudoTrials_1(condA,pt,:,tp)),squeeze(pseudoTrials_1(condB,pt,:,tp)),'type','Pearson'));
                     rdm(perm,2,pt,condA,condB,tp) = 1-corr(squeeze(pseudoTrials_2(condA,pt,:,tp)),squeeze(pseudoTrials_2(condB,pt,:,tp)),'type','Pearson');
-                    disp(1-corr(squeeze(pseudoTrials_2(condA,pt,:,tp)),squeeze(pseudoTrials_2(condB,pt,:,tp)),'type','Pearson'));
                 end
             end 
         end 
