@@ -113,10 +113,11 @@ if with_cross_task
 else
     legend_plot = {'Scene categorization','Distraction'};
 end
+font_size = 18;
+set(gca,'FontName','Arial','FontSize',font_size);
 ylim([-0.5 0.3]);
 legend_bool = 0;
 title_bool = 0;
-font_size = 12;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
 if with_cross_task && legend_bool==1
     legend([categ,distr_eeg,distr,categ_eeg],legend_plot);
