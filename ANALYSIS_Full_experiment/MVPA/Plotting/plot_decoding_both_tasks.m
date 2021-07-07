@@ -65,7 +65,8 @@ avg_over_conditions_all_subjects_cat = squeeze(nanmean(for_stats_cat,1));
 avg_over_conditions_all_subjects_dis = squeeze(nanmean(for_stats_dis,1));
 
 %% Setup the figure
-figure(abs(round(randn*10))); %Random figure number
+f = figure(abs(round(randn*10))); %Random figure number
+f.Position(3:4) = f.Position(3:4)*1.5;
 legend_plot = cell(3,1);
 
 %% Plot
@@ -137,7 +138,7 @@ for task = 1:3
         stats_decoding.tail = 'right';
         stats_decoding.qvalue = 0.01;
         filename = fullfile(results_avg_dir,...
-            sprintf('stats_fdr_timetime_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+            sprintf('stats_fdr_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
         if exist(filename,'file')
             load(filename,'stats_decoding');
         else
@@ -184,12 +185,10 @@ for task = 1:3
 
         %4) peak latency and 95% confidence interval 
         if strcmp(analysis,'object_decoding')
-            arrow_x = 20;
             height_cat = 35;
             height_dis = 32.5;
             height_diff = 30;
         elseif strcmp(analysis,'category_decoding')
-            arrow_x = 20;
             height_cat = 30;
             height_dis = 27.5;
             height_diff = 25;
@@ -203,15 +202,21 @@ for task = 1:3
         end
         
         %plot arrows and lines for peak latency and CI
+        fontsize = 20;
         peak_acc = data(stats_decoding.peak_latency);
         peak_latency_ms = (stats_decoding.peak_latency-40)*5;
         str_pl = num2str(peak_latency_ms);
         quiver(stats_decoding.CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(stats_decoding.CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
         if task_plot == 2
-            text(arrow_x+60,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data);
-        else
-            text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data);
+            arrow_x = stats_decoding.peak_latency+8;
+            text(arrow_x,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data,'FontSize',fontsize);
+        elseif task_plot == 1
+            arrow_x = stats_decoding.peak_latency-50;
+            text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);
+        elseif task_plot == 3
+            arrow_x = stats_decoding.peak_latency-50;
+            text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);    
         end
         
     end
@@ -225,7 +230,7 @@ plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,12,'best','Dec
 if legend_bool==1
     legend([p1,p2,p3],legend_plot);
 end
-set(gca,'FontName','Arial');
+set(gca,'FontName','Arial','FontSize',18);
 ylim([-10,40]);
 
 %% Save the plot and matrices
