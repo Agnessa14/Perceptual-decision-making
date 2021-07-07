@@ -92,7 +92,6 @@ end
 %% Plot the average of all subjects
 h = pcolor(avg_over_conditions_all_subjects-50);
 set(h, 'EdgeColor', 'none');
-set(gca,'FontName','Arial');
 axis square;
 hold on;
 if task<3
@@ -109,8 +108,8 @@ if task < 3
     ylabel('Timepoints trained on');
     xlabel('Timepoints tested on');
 elseif task == 3
-    ylabel('Timepoints trained on: Categorization task');
-    xlabel('Timepoints tested on: Distraction task');
+    ylabel({'Timepoints trained on:';'Categorization task'});
+    xlabel({'Timepoints tested on:'; 'Distraction task'});
 end
 ylabel(cbar,'Decoding accuracy-50 (%)');
 caxis([-5 20]);
@@ -120,12 +119,12 @@ yticks(0:5:50);
 xline(10,'--','Color','w');
 yline(10,'--','Color','w');
 yticklabels(-200:100:800);
-set(gca,'FontName','Arial','FontSize',11)
+set(gca,'FontName','Arial','FontSize',18)
+
 %Plot a black line over the diagonal for cross-task
 if task == 3
-    plot(1:numTimepoints,1:numTimepoints,'LineWidth',2.5,'Color','k');
+    plot(1:numTimepoints,1:numTimepoints,'--','LineWidth',2.5,'Color','k');
 end
-
 
 %% Plot stats if needed
 if with_stats
