@@ -90,16 +90,13 @@ cmap_1 = cool;
 cmap_2 = summer;
 color_art = cmap_1(200,:); %purple
 color_nat = cmap_2(100,:); %green
-color_both = 'k';
 
 plot(avg_corr_art,'LineWidth',2,'Color',color_art);
 hold on;
 plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
-plot(avg_corr_both,'LineWidth',2,'Color',color_both);
 
 %% Plot stats if needed
-if with_stats
-    
+if with_stats   
     %define some variables for the stats and the plot
     analysis = 'random_dth';
     permutation_stats.num_perms = 1000;
@@ -119,8 +116,6 @@ if with_stats
             for_stats = correlation_nat(subjects,:);
         elseif c == 3
             category = 'both';            
-            plot_location = -0.4;
-            color = color_both;
             for_stats = correlation_both(subjects,:);
         end
 
@@ -143,10 +138,12 @@ if with_stats
         end
         
         %Plot
-        st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
-        st(st==0) = NaN;
-        plot(st,'*','Color',color); 
-        hold on;
+        if c < 3
+            st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
+            st(st==0) = NaN;
+            plot(st,'*','Color',color); 
+            hold on;
+        end
     end
 end 
 
@@ -163,11 +160,12 @@ elseif task_distance==1 && task_RT==2
 elseif task_distance==2 && task_RT==1
     plot_title =  sprintf('Correlation between the distance to hyperplane from a distraction task and reaction time from a categorization task (N=%d)',numel(subjects));
 end
-legend_plot = {'Artificial scenes','Natural scenes','All scenes'}; 
+font_size = 18;
+set(gca,'FontName','Arial','FontSize',font_size);
+legend_plot = {'Artificial scenes','Natural scenes'}; 
 ylim([-0.5 0.3]);
 legend_bool = 0;
 title_bool = 0;
-font_size = 12;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
 
 %% Save correlations and figures
