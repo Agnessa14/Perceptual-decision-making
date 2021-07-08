@@ -31,14 +31,14 @@ end
 filename_rsa = fullfile(results_avg_dir,sprintf('rsa_%s_subjects_%d_%d.mat',task_name,subjects(1),subjects(end)));
 filename_rdms = fullfile(results_avg_dir,sprintf('average_rdms_%s_subjects_%d_%d.mat',task_name,subjects(1),subjects(end)));
     
-if exist('filename_rsa','file') && exist(filename_rdms,'file')
+if exist(filename_rsa,'file') && exist(filename_rdms,'file')
     load(filename_rsa,'rdm_rsa');
     load(filename_rdms,'rdm_avg_subjects');
 else
     if task == 3
-        rdm_all_subjects = NaN(max(subjects),2,numConditions,numConditions,numTimepoints);
-    else
         rdm_all_subjects = NaN(max(subjects),2,2,numConditions,numConditions,numTimepoints); %2 tasks, 2 halves each
+    else
+        rdm_all_subjects = NaN(max(subjects),2,numConditions,numConditions,numTimepoints); 
     end
         
     %% Loop: collect results from all subjects 
@@ -65,13 +65,12 @@ else
         rdm_1 = squeeze(rdm_avg_subjects(1,:,:,:));
         rdm_2 = squeeze(rdm_avg_subjects(2,:,:,:));
         rdm_rsa = representational_SA(rdm_1,rdm_2,numTimepoints);
-
     else 
         rdm_rsa = NaN(2,2,numTimepoints,numTimepoints);
         for h = 1:2
             for j = 1:2
-                rdm_1 = squeeze(rdm_avg_subjects(1,h,:,:));
-                rdm_2 = squeeze(rdm_avg_subjects(1,j,:,:));
+                rdm_1 = squeeze(rdm_avg_subjects(1,h,:,:,:));
+                rdm_2 = squeeze(rdm_avg_subjects(2,j,:,:,:));
                 rdm_rsa(h,j,:,:) = representational_SA(rdm_1,rdm_2,numTimepoints);
             end
         end
@@ -112,7 +111,7 @@ yline(40,'--','Color','w');
 set(gca,'FontName','Arial','FontSize',18);
 
 if task == 3
-    plot(1:numTimepoints,1:numTimepoints,'LineWidth',2.5,'Color','k');
+    plot(1:numTimepoints,1:numTimepoints,'--','LineWidth',2.5,'Color','k');
 end
 
 %% Plot stats if needed
