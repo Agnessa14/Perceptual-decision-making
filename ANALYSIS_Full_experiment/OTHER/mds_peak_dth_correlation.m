@@ -43,13 +43,39 @@ data_peak_symm = data_peak+data_peak';
 
 %mds
 mds = cmdscale(data_peak_symm,2);
-figure(abs(round(randn*10))); %Random figure number
-% scatter(1:60,mds,'filled');
+cmap_1 = cool;
+cmap_2 = summer;
+color_art = cmap_1(200,:); %purple
+color_nat = cmap_2(100,:); %green
 
-%% Save the plot
-filename = 'mds_object_decoding_subjects';
+figure(abs(round(randn*10))); %Random figure number
+for c = 1:numConditions
+    point = squeeze(mds(c,:));
+    if c<31
+        colorr = color_art;
+    else
+        colorr = color_nat;
+    end
+    scatter(point(1),point(2),150,colorr,'filled');
+    hold on;
+end
+
+% %% Save the plot
+filename = 'images_mds_object_decoding_subjects';
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
 saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg    
 close(gcf);
+
+%% Plot with images
+figure(abs(round(randn*10))); %Random figure number
+for c = 1:numConditions
+    point = squeeze(mds(c,:));
+    image_name = fullfile('stim_cropped',sprintf('%d.jpg',c));
+    M = imread(image_name);
+    imagesc('XData',[point(1)-5 point(1)+5] ,'YData', [point(2)+5 point(2)-5 ],'CData', M);
+    daspect([1 1 1]); hold on
+    drawnow
+end
+
 
 end
