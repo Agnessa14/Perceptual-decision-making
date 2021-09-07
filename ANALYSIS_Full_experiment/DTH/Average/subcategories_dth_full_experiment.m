@@ -56,7 +56,7 @@ subcategory_names = {'apartment','bedroom','highway'; 'beach','canyon','forest'}
 category_names = {'artificial','natural'};
 timepoints = 1:numTimepoints;
 
-for c =  2%1:numCategories
+for c = 1:numCategories
     
     figure(abs(round(randn*10)));
     set(gcf, 'Position', get(0, 'Screensize')); %make fullscreen
@@ -80,12 +80,11 @@ for c =  2%1:numCategories
         legend_cell{s} = subcat_name;
         plot(correlation_dth_RT,'LineWidth',2);
         hold on;
-        save(fullfile(results_avg_dir,sprintf('%s_SVM_DTH_rt_correlation_%d_subjects.mat',...
-            subcat_name,numel(subjects))),'correlation_dth_RT');
+        save(fullfile(results_avg_dir,sprintf('%s_SVM_DTH_rt_correlation_subjects_%d_%d_%s.mat',...
+            subcat_name,subjects(1),subjects(end),task_name)),'correlation_dth_RT');
     end
  
     %% Plotting parameters
-
     if c == 1
         RT_all = medianRT_art(all_scenes);
     elseif c == 2
@@ -100,11 +99,12 @@ for c =  2%1:numCategories
     xlabel('Timepoints');
     ylabel('Spearman''s coefficient');
     xticks(0:10:200);
+    legend_cell = [legend_cell(:)',{'all'}];
     legend(legend_cell,'FontSize',12,'Location','Best');
 
     %% Save figures
-    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d',category_names{c},numel(subjects)))); 
-    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d.svg',category_names{c},numel(subjects))));
+    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d_%s',category_names{c},subjects(1),subjects(end),task_name))); 
+    saveas(gcf,fullfile(results_avg_dir,sprintf('subcategories_%s_SVM_DTH_subjects_%d_%d_%s.svg',category_names{c},subjects(1),subjects(end),task_name)));
     close(gcf);
 end
 
