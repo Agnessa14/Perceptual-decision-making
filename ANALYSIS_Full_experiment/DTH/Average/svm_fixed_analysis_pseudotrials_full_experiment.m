@@ -67,6 +67,7 @@ plot(correlation_dth_rt_avg,'LineWidth',2,'Color',color_avg);
 
 %% Plot stats if needed
 if with_stats
+    num_perms = 10000;
     for c = 1:4
         %Setup some plot variables
         if c == 1
@@ -93,13 +94,13 @@ if with_stats
         else
             filename = 'dth_permutation_stats_crosstask';
         end
-        filename_sign = fullfile(results_avg_dir,sprintf('%s_%s_%s_distance_subjects_%d_%d',...
+        filename_sign = fullfile(results_avg_dir,sprintf('%s_%s_%s_distance_subjects_%d_%d.mat',...
             filename,category,task_name_distance,subjects(1),subjects(end)));
         if exist(filename_sign,'file')
             load(filename_sign);
             significant_timepoints = permutation_stats.SignificantMaxClusterWeight;
         else
-            significant_timepoints = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,1,10000);
+            significant_timepoints = weighted_cluster_perm_stats(subjects,task_distance,task_RT,category,1,num_perms);
         end
         
         %Plot the stats
