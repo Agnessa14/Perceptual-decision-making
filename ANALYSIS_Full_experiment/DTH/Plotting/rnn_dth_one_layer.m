@@ -93,9 +93,9 @@ if with_stats
         end
 
         %Check if stats already exist, otherwise run them 
-        filename_sign = 'rnn_layer7_dth_fdr_stats';   
+        filename_sign = 'rnn_layer7_dth_stats';   
         filename = fullfile(results_avg_dir,sprintf('%s_%s.mat',filename_sign,category));
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'stats');
         else
             corr_all = NaN(stats.num_perms,num_timepoints_rnn);
