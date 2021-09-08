@@ -65,44 +65,65 @@ plot(correlation_both,'LineWidth',2,'Color',color_both);
 %% Plot stats if needed
 if with_stats   
     %define some variables for the stats and the plot
-    permutation_stats.num_perms = 1000;
-    permutation_stats.cluster_th = 0.05;
-    permutation_stats.significance_th = 0.05;
-    permutation_stats.tail = 'left';
+    stats.num_perms = 1000;
+    stats.tail = 'left';
+    stats.alpha = 0.1;
     for c = 1:3
         if c == 1
             category = 'artificial';            
-            plot_location = -0.7;
+            plot_location = -0.67;
             color = color_art;
+            corr_plot = correlation_art;
+            conds = artificial_conditions;
+            RT_plot = RT_art;
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.75;
+            plot_location = -0.7;
             color = color_nat;
+            corr_plot = correlation_nat;
+            conds = natural_conditions;
+            RT_plot = RT_nat;
         elseif c == 3
             category = 'both'; 
-            plot_location = -0.8;
+            plot_location = -0.73;
+            color = color_both;
+            corr_plot = correlation_both;
+            conds = all_conditions;
+            RT_plot = RT;
         end
 
-        %Check if stats already exist, otherwise run the stats script
-        filename_sign = 'rnn_layer7_dth_permutation_stats';   
+        %Check if stats already exist, otherwise run them 
+        filename_sign = 'rnn_layer7_dth_fdr_stats';   
         filename = fullfile(results_avg_dir,sprintf('%s_%s.mat',filename_sign,category));
-        if exist(filename,'file')
-            load(filename,'permutation_stats');
+        if exist('filename','file')
+            load(filename,'stats');
         else
-            [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
-                permutation_stats.SignificantMaxClusterSize,permutation_stats.pValSize] = ...
-                permutation_cluster_1sample_weight_alld(for_stats,permutation_stats.num_perms,...
-                permutation_stats.cluster_th,permutation_stats.significance_th,permutation_stats.tail); 
-        save(filename,'permutation_stats');
+            corr_all = NaN(stats.num_perms,num_timepoints_rnn);
+            corr_all(1,:) = corr_plot; %ground truth
+            for perm = 2:stats.num_perms
+                permuted_RT = RT_plot(randperm(numel(RT_plot)));
+                corr_all(perm,:) = arrayfun(@(x) corr(squeeze(distances(end,x,conds)),permuted_RT,'type','Spearman'),1:num_timepoints_rnn);
+            end
+            all_p_values = NaN(stats.num_perms,num_timepoints_rnn);
+            if strcmp(stats.tail,'left')
+                corr_all_stat = corr_all*-1;
+            else %two-tailed
+                corr_all_stat = abs(corr_all);
+            end
+            for t=1:num_timepoints_rnn
+                all_p_values(:,t) = (stats.num_perms+1 - tiedrank(corr_all_stat(:,t))) / stats.num_perms;
+            end
+            stats.pvalue = all_p_values(1,:); %ground truth
+            stats.SignificantVariables = stats.pvalue<stats.alpha;
+%             [fdr_stats.SignificantVariables,fdr_stats.crit_p,~,fdr_stats.adjusted_pvalues] = fdr_bh(fdr_stats.pvalue,fdr_stats.alpha,'pdep');
+            save(filename,'stats');
         end
         
         %Plot
-        if c < 3
-            st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
-            st(st==0) = NaN;
-            plot(st,'*','Color',color); 
-            hold on;
-        end
+        st = (stats.SignificantVariables*plot_location); %depending on the stats
+        st(st==0) = NaN;
+        plot(st,'*','Color',color); 
+        hold on;
     end
 end 
 
@@ -116,9 +137,9 @@ title_bool = 0;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s r'); 
 
 %% Save correlations and figures
-dth_results.corr_both_categories = avg_corr_both;
-dth_results.corr_artificial = avg_corr_art;
-dth_results.corr_natural = avg_corr_nat;
+dth_results.corr_both_categories = correlation_both;
+dth_results.corr_artificial = correlation_art;
+dth_results.corr_natural = correlation_nat;
 
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 save(fullfile(save_path,'rnn_dth_layer7.mat'),'dth_results');
