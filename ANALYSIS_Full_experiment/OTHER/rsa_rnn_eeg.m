@@ -14,36 +14,71 @@ results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 addpath(genpath(results_dir));
 
-%% Load and plot the RSA results
-layer_idxs = [1,5,7];
+%% Load the RDMs
+%Define some variables
+num_conditions = 60;
 num_timepoints_eeg = 200;
+layer_idxs = [1,5,7];
 num_timepoints_rnn = 8;
-rsa_results_dir = fullfile(results_avg_dir,'RSA_matrices_eltanin');
 legend_bool = 0;
+
+%Stats parameters
+num_permutations = 1000;
+tail = 'right';
+q_value = 0.05;
+
+%Load the EEG RDM
+load(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d',...
+    subjects(1),subjects(end))),'rdm_cat');
+rdm_eeg = rdm_cat;
+
+%Load the RNN RDM
+
+
+%% Load and plot the RSA results
+rsa_results_dir = fullfile(results_avg_dir,'RSA_matrices_eltanin');
+plot_location = -0.05:-0.01:-0.12;
 
 for c = 1:3 %natural,artificial,all
     if c == 1
         conditions = 'artificial';
+        conds = 1:30;
         colormap_plot = 'PuRd';
     elseif c == 2
         conditions = 'natural';
+        conds = 31:60;
         colormap_plot = 'YlGn';
     elseif c == 3
         conditions = 'all';
+        conds = 1:60;
         colormap_plot = 'OrRd';
     end
     filename = sprintf('Model_RDM_PCA_7_layers_8_timepoints_%s.mat',conditions);
     load(fullfile(rsa_results_dir,filename),'data');
     rsa_results = data;
+    
     cmap = getPyPlot_cMap(colormap_plot,num_timepoints_rnn);
     for l=layer_idxs
         figure;
         legend_plot = cell(num_timepoints_rnn,1);
 
         for t=1:num_timepoints_rnn
+            %Plot the results
             plot(squeeze(rsa_results(l,t,:)),'LineWidth',2,'Color',cmap(t,:));
             hold on;
             legend_plot{t} = sprintf('Timepoint %s',num2str(t));
+            
+%             for tp=1:num_timepoints_eeg
+            %Stats
+            [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_rsa_rnn_eeg(rdm_eeg(conds,conds,:),...
+                rdm_rnn(conds,conds),rsa_results,num_permutations,tail,q_value);
+%             end
+            
+%           %Plot the stats
+            st = (stats.SignificantVariables(l,:)*plot_location(l)); %depending on the stats
+            st(st==0) = NaN;
+            plot(st,'*','Color',cmap(t,:)); 
+            hold on;
         end
         if legend_bool==1
             legend(legend_plot,'Location','best');
@@ -60,24 +95,6 @@ end
     
 
 
-%% Load the EEG RDMs
-numConditions = 60;
-numTimepoints = 200;
-rdm_eeg_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepoints);
-
-% Loop: collect results from all subjects + avg
-for subject = subjects
-    subname = get_subject_name(subject);
-    subject_results_dir = fullfile(results_dir,subname);
-    load(fullfile(subject_results_dir,'rdm_pearson_categorization.mat'),'rdm_avg');
-    rdm_eeg_all_subjects(subject,:,:,:) = rdm_avg; 
-%     rdm_1 = squeeze(nanmean(rdm_avg(1,:,:,:),1));
-%     rdm_2 = squeeze(nanmean(rdm_avg(2,:,:,:),1));
-%     [rdm_rsa(subject,:,:),rdm_1_flattened,rdm_2_flattened] = representational_SA(rdm_1,rdm_2,numTimepoints);
-end 
-
-% Remove any NaN (for non-included subjects and conditions & average over subjects
-avg_rdm_eeg = squeeze(nanmean(rdm_eeg_all_subjects,1));
 
 
 %% Correlate each subject's distances with the median RT
