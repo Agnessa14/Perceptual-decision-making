@@ -18,8 +18,8 @@ addpath(genpath(results_dir));
 %Define some variables
 num_conditions = 60;
 num_timepoints_eeg = 200;
-layer_idxs = [1,5,7];
 num_timepoints_rnn = 8;
+layer_idxs = [1,5,7];
 legend_bool = 0;
 
 %Stats parameters
@@ -32,12 +32,29 @@ load(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d
     subjects(1),subjects(end))),'rdm_cat');
 rdm_eeg = rdm_cat;
 
-%Load the RNN RDM
-
+%Load the RNN RDMs
+rdm_rnn = NaN(numel(layer_idxs),num_timepoints_rnn,num_conditions,num_conditions);
+rdm_dir = fullfile(results_avg_dir,'Input_RDM_RNN');
+for l=layer_idxs
+    for t=1:num_timepoints_rnn
+        load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM_PCA.mat',...
+            l-1,t-1)),'data');
+        rdm_rnn(l,t,:,:) = data;
+        
+        %Make sure the diagonal is all 0
+        for c1 = 1:num_conditions
+            for c2 = 1:num_conditions
+                if c1==c2
+                    rdm_rnn(:,:,c1,c1) = 0;
+                end
+            end
+        end
+    end
+end
 
 %% Load and plot the RSA results
 rsa_results_dir = fullfile(results_avg_dir,'RSA_matrices_eltanin');
-plot_location = -0.05:-0.01:-0.12;
+plot_location = -0.1:-0.01:-0.17;
 
 for c = 1:3 %natural,artificial,all
     if c == 1
@@ -68,17 +85,27 @@ for c = 1:3 %natural,artificial,all
             hold on;
             legend_plot{t} = sprintf('Timepoint %s',num2str(t));
             
-%             for tp=1:num_timepoints_eeg
             %Stats
-            [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_rsa_rnn_eeg(rdm_eeg(conds,conds,:),...
-                rdm_rnn(conds,conds),rsa_results,num_permutations,tail,q_value);
-%             end
-            
-%           %Plot the stats
-            st = (stats.SignificantVariables(l,:)*plot_location(l)); %depending on the stats
-            st(st==0) = NaN;
-            plot(st,'*','Color',cmap(t,:)); 
-            hold on;
+            if with_stats
+                %Check if exist
+                filename_sign = 'rsa_rnn_eeg_stats';   
+                filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d.mat',...
+                    filename_sign,conditions,subjects(1),subjects(end),l,t));
+                if exist(filename,'file')
+                    load(filename,'rsa_rnn_eeg_stats');
+                else
+                    [rsa_rnn_eeg_stats.SignificantVariables, rsa_rnn_eeg_stats.pvalues, rsa_rnn_eeg_stats.crit_p,...
+                        rsa_rnn_eeg_stats.adjusted_pvalues] = fdr_rsa_rnn_eeg(rdm_eeg(conds,conds,:),...
+                        squeeze(rdm_rnn(l,t,conds,conds)),rsa_results(l,t,:),num_permutations,tail,q_value);
+                    save(filename,'rsa_rnn_eeg_stats');
+                end
+                
+                %Plot the stats
+                st = (rsa_rnn_eeg_stats.SignificantVariables*plot_location(t)); %depending on the stats
+                st(st==0) = NaN;
+                plot(st,'*','Color',cmap(t,:)); 
+                hold on;
+            end
         end
         if legend_bool==1
             legend(legend_plot,'Location','best');
@@ -90,196 +117,17 @@ for c = 1:3 %natural,artificial,all
         xticklabels(-200:100:800);        
         onset_time = 40;
         xline(onset_time,'--');
-    end
-end
-    
-
-
-
-
-%% Correlate each subject's distances with the median RT
-t = 1:numTimepoints;
-size_corr = [max(subjects),numTimepoints];
-correlation_art = NaN(size_corr);
-correlation_nat = NaN(size_corr);
-correlation_both = NaN(size_corr);
-
-if modality_distance==1
-    for subject = subjects
-        %Find any missing scenes and exclude them
-        distances_subject = squeeze(distances(subject,:,:));
-        if any(ismember(artificial_conditions,find(isnan(distances_subject))))
-            artificial_conditions_subject = artificial_conditions(~isnan(distances_subject(artificial_conditions,1)));
-            natural_conditions_subject = natural_conditions;
-        elseif any(ismember(natural_conditions,find(isnan(distances_subject))))
-            artificial_conditions_subject = artificial_conditions;
-            natural_conditions_subject = natural_conditions(~isnan(distances_subject(natural_conditions,1)));
-        else
-            artificial_conditions_subject = artificial_conditions;
-            natural_conditions_subject = natural_conditions;
-        end
-
-        %Correlate RT and distances    
-        all_conditions_subject = [artificial_conditions_subject natural_conditions_subject];
-        correlation_art(subject,:) = arrayfun(@(x) ...
-            corr(squeeze(distances_subject(artificial_conditions_subject,x)),...
-            RT_art(artificial_conditions_subject),'type','Spearman'), t);
-        correlation_nat(subject,:) = arrayfun(@(x) ...
-            corr(squeeze(distances_subject(natural_conditions_subject,x)),...
-            RT_nat(natural_conditions_subject-30),'type','Spearman'), t);
-        correlation_both(subject,:) = arrayfun(@(x) ...
-            corr(squeeze(distances_subject(all_conditions_subject,x)),...
-            RT(all_conditions_subject),'type','Spearman'), t);
-    end
-    
-    %% Average over participants
-    avg_corr_art = squeeze(nanmean(correlation_art,1));
-    avg_corr_nat = squeeze(nanmean(correlation_nat,1));
-    avg_corr_both = squeeze(nanmean(correlation_both,1));
-    
-elseif modality_distance==2
-    
-    num_layers=size(distances,1);
-    num_timepoints_rnn=size(distances,2);
-    size_corr = [num_layers,num_timepoints_rnn];
-    correlation_art = NaN(size_corr);
-    correlation_nat = NaN(size_corr);
-    correlation_both = NaN(size_corr);
-    all_conditions = [artificial_conditions natural_conditions];
-    
-    for l = 1:num_layers
-        for tp = 1:num_timepoints_rnn
-            correlation_art(l,:) = arrayfun(@(x) ...
-                corr(squeeze(distances(l,x,artificial_conditions)),...
-                RT_art','type','Spearman'), 1:num_timepoints_rnn);
-            correlation_nat(l,:) = arrayfun(@(x) ...
-                corr(squeeze(distances(l,x,natural_conditions)),...
-                RT_nat','type','Spearman'), 1:num_timepoints_rnn);
-            correlation_both(l,:) = arrayfun(@(x) ...
-                corr(squeeze(distances(l,x,all_conditions)),...
-                RT','type','Spearman'), 1:num_timepoints_rnn);
-        end
-    end
-end
-
-
-%% Plot
-cmap_1 = cool;
-cmap_2 = summer;
-cmap_3 = autumn;
-
-% color_both = 'k';
-if modality_distance==1  
-    color_art = cmap_1(200,:); %purple
-    color_nat = cmap_2(100,:); %green
-    color_both = cmap_3(100,:);
-    figure(abs(round(randn*10)));
-    plot(avg_corr_art,'LineWidth',2,'Color',color_art);
-    hold on;
-    plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
-    hold on;
-    plot(avg_corr_both,'LineWidth',2,'Color',color_both);
-elseif modality_distance==2
-    for c = 1:3
-        figure;
-        legend_plot = cell(num_layers,1);
-
-        if c==1
-            corrplot = correlation_art;
-            colorplot = cmap_1(1:30:num_layers*30,:);
-        elseif c==2
-            corrplot = correlation_nat;
-            colorplot = cmap_2(1:30:num_layers*30,:);
-        elseif c==3
-            corrplot = correlation_both;
-            colorplot = cmap_3(1:30:num_layers*30,:);
-        end
-        for l=1:num_layers
-            plot(corrplot(l,:),'LineWidth',2,'Color',colorplot(l,:,:));
-            hold on;
-            legend_plot{l} = sprintf('Layer %s',num2str(l));
-        end
-        legend(legend_plot,'Location','best');
-    end  
- 
-end
-
-%% Plot stats if needed
-if with_stats   
-    %define some variables for the stats and the plot
-    analysis = 'random_dth';
-    permutation_stats.num_perms = 1000;
-    permutation_stats.cluster_th = 0.05;
-    permutation_stats.significance_th = 0.05;
-    permutation_stats.tail = 'left';
-    for c = 1:3
-        if c == 1
-            category = 'artificial';            
-            plot_location = -0.15;
-            color = color_art;
-            for_stats = correlation_art(subjects,:);
-        elseif c == 2
-            category = 'natural';            
-            plot_location = -0.16;
-            color = color_nat;
-            for_stats = correlation_nat(subjects,:);
-        elseif c == 3
-            category = 'both'; 
-            plot_location = -0.17;
-            color = 'k';
-            for_stats = correlation_both(subjects,:);
-        end
-
-        %Check if stats already exist, otherwise run the stats script
-        if modality_distance == 1
-            filename_sign = 'rnn_dth_eeg_distances_permutation_stats';
-        else
-            filename_sign = 'rnn_dth_rnn_distances_permutation_stats_crosstask';
-        end     
-        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s.mat',filename_sign,...
-            subjects(1),subjects(end),modality_distance,analysis,category));
-        if exist('filename','file')
-            load(filename,'permutation_stats');
-        else
-            [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
-                permutation_stats.SignificantMaxClusterSize,permutation_stats.pValSize] = ...
-                permutation_cluster_1sample_weight_alld(for_stats,permutation_stats.num_perms,...
-                permutation_stats.cluster_th,permutation_stats.significance_th,permutation_stats.tail); 
-        save(filename,'permutation_stats');
-        end
         
-        %Plot
-%         if c < 3
-        st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
-        st(st==0) = NaN;
-        plot(st,'*','Color',color); 
-        hold on;
-%         end
+        %Save plot
+        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d',...
+            filename_sign,conditions,subjects(1),subjects(end),l));
+        saveas(gcf,sprintf('%s.svg',filename_plot)); 
+        saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
-end 
+end
+    
 
-%% Plotting parameters
-% if task_distance==task_RT
-%     if task_distance==1
-%         task_title = 'scene categorization';
-%     elseif task_distance==2
-%         task_title = 'distraction';
-%     end
-%     plot_title =  sprintf('Correlation between the distance to hyperplane and reaction time in a %s task (N=%d)',task_title,numel(subjects));
-% elseif task_distance==1 && task_RT==2
-%     plot_title =  sprintf('Correlation between the distance to hyperplane from a categorization task and reaction time from a distraction task (N=%d)',numel(subjects));
-% elseif task_distance==2 && task_RT==1
-%     plot_title =  sprintf('Correlation between the distance to hyperplane from a distraction task and reaction time from a categorization task (N=%d)',numel(subjects));
-% end
-font_size = 18;
-set(gca,'FontName','Arial','FontSize',font_size);
-% legend_plot = {'Artificial scenes','Natural scenes','Both'}; 
-% legend(legend_plot);
-ylim([-0.2 0.2]);
-% legend_bool = 0;
-% title_bool = 0;
-% plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
-
+    
 %% Save correlations and figures
 dth_results.corr_both_categories = avg_corr_both;
 dth_results.corr_artificial = avg_corr_art;
