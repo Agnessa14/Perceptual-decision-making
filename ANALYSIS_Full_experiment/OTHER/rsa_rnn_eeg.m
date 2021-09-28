@@ -109,7 +109,7 @@ for c = 1:3 %natural,artificial,all
         if legend_bool==1
             legend(legend_plot,'Location','best');
         end
-        ylim([-0.2 0.6]);
+        ylim([-0.2 0.7]);
         font_size = 18;
         set(gca,'FontName','Arial','FontSize',font_size);
         xticks(0:20:200);
