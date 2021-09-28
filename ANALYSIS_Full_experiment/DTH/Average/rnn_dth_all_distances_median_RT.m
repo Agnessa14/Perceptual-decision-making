@@ -246,7 +246,7 @@ font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
 % legend_plot = {'Artificial scenes','Natural scenes','Both'}; 
 % legend(legend_plot);
-ylim([-0.3 0.2]);
+ylim([-0.3 0.3]);
 xticks(0:20:200);
 xticklabels(-200:100:800);  
 xline(40,'--');
