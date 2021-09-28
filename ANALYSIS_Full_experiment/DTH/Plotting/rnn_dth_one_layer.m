@@ -33,7 +33,6 @@ load('/scratch/agnek95/PDM/DATA/RNN_ACTIVATIONS/rnn_distances_all_scenes_model_2
 distances = data;
      
 %% Correlate each subject's distances with the median RT
-% num_layers=size(distances,1);
 num_timepoints_rnn=size(distances,2);
 all_conditions = [artificial_conditions natural_conditions];
 
@@ -115,7 +114,6 @@ if with_stats
             end
             stats.pvalue = all_p_values(1,:); %ground truth
             stats.SignificantVariables = stats.pvalue<stats.alpha;
-%             [fdr_stats.SignificantVariables,fdr_stats.crit_p,~,fdr_stats.adjusted_pvalues] = fdr_bh(fdr_stats.pvalue,fdr_stats.alpha,'pdep');
             save(filename,'stats');
         end
         
@@ -128,13 +126,14 @@ if with_stats
 end 
 
 %% Plotting parameters
-font_size = 18;
-set(gca,'FontName','Arial','FontSize',font_size);
-legend_plot = {'Artificial scenes','Natural scenes','All scenes'}; 
-% ylim([-0.5 0.3]);
-legend_bool = 0;
-title_bool = 0;
-plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s r'); 
+% font_size = 18;
+set(gca,'FontName','Arial'); %,'FontSize',font_size);
+xlim([1,8]);
+xticks(1:8);
+ylim([-0.8,0.2]);
+yticks(-0.8:0.2:0.2);
+xlabel('Timepoint');
+ylabel('Spearman''s r');
 
 %% Save correlations and figures
 dth_results.corr_both_categories = correlation_both;
