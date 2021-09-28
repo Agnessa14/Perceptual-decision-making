@@ -53,7 +53,7 @@ end
 
 %% Load and plot the RSA results
 rsa_results_dir = fullfile(results_avg_dir,'RSA_matrices_eltanin');
-plot_location = -0.1:-0.01:-0.17;
+plot_location = -0.2:-0.01:-0.27;
 
 for c = 1:3 %natural,artificial,all
     if c == 1
@@ -109,7 +109,7 @@ for c = 1:3 %natural,artificial,all
         if legend_bool==1
             legend(legend_plot,'Location','best');
         end
-        ylim([-0.2 0.7]);
+        ylim([-0.3 0.7]);
         font_size = 18;
         set(gca,'FontName','Arial','FontSize',font_size);
         xticks(0:20:200);
@@ -122,6 +122,7 @@ for c = 1:3 %natural,artificial,all
             filename_sign,conditions,subjects(1),subjects(end),l));
         saveas(gcf,sprintf('%s.svg',filename_plot)); 
         saveas(gcf,sprintf('%s.fig',filename_plot)); 
+        keyboard;
     end
 end
 
