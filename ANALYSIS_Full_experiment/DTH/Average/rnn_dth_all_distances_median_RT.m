@@ -143,7 +143,7 @@ cmap_3 = autumn;
 if modality_distance==1  
     color_art = cmap_1(200,:); %purple
     color_nat = cmap_2(100,:); %green
-    color_both = cmap_3(100,:);
+    color_both = 'k';
     figure(abs(round(randn*10)));
     plot(avg_corr_art,'LineWidth',2,'Color',color_art);
     hold on;
@@ -209,7 +209,7 @@ if with_stats
         end     
         filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s.mat',filename_sign,...
             subjects(1),subjects(end),modality_distance,analysis,category));
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'permutation_stats');
         else
             [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
@@ -246,7 +246,10 @@ font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
 % legend_plot = {'Artificial scenes','Natural scenes','Both'}; 
 % legend(legend_plot);
-ylim([-0.2 0.2]);
+ylim([-0.3 0.2]);
+xticks(0:20:200);
+xticklabels(-200:100:800);  
+xline(40,'--');
 % legend_bool = 0;
 % title_bool = 0;
 % plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
