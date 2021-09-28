@@ -17,7 +17,6 @@ addpath(genpath(results_dir));
 %% Load the RDMs
 %Define some variables
 num_conditions = 60;
-num_timepoints_eeg = 200;
 num_timepoints_rnn = 8;
 layer_idxs = [1,5,7];
 legend_bool = 0;
@@ -125,33 +124,7 @@ for c = 1:3 %natural,artificial,all
         saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
 end
-    
 
-    
-%% Save correlations and figures
-dth_results.corr_both_categories = avg_corr_both;
-dth_results.corr_artificial = avg_corr_art;
-dth_results.corr_natural = avg_corr_nat;
-
-save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
-if modality_distance==1
-    file_name = 'distance_eeg_rt_rnn';
-elseif modality_distance==2
-    file_name = 'distance_rnn_rt_eeg';
-end
-model_name = 'model_22.08';
-
-if modality_distance==1
-    save(fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.mat',subjects(1),subjects(end),file_name,model_name,entropy_thresh)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.svg',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
-    saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.fig',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
-else %fix this - should be a loop over layers
-    for layer=1:num_layers
-        save(fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.mat',subjects(1),subjects(end),file_name,model_name,layer)),'dth_results');
-        saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.svg',subjects(1),subjects(end),file_name,model_name,layer))); 
-        saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.fig',subjects(1),subjects(end),file_name,model_name,layer))); 
-    end
-close(gcf);
 end
 
 
