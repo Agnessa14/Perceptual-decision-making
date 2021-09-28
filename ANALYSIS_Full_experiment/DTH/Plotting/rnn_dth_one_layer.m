@@ -126,8 +126,8 @@ if with_stats
 end 
 
 %% Plotting parameters
-% font_size = 18;
-set(gca,'FontName','Arial'); %,'FontSize',font_size);
+font_size = 18;
+set(gca,'FontName','Arial','FontSize',font_size);
 xlim([1,8]);
 xticks(1:8);
 ylim([-0.8,0.2]);
