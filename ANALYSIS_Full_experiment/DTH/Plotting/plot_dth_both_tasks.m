@@ -75,16 +75,16 @@ if with_stats
         end
         
         if task == 1
-            plot_location = -0.3;
+            plot_location = 0.15;
             color = color_cat;
         elseif task == 2
-            plot_location = -0.35;
+            plot_location = 0.18;
             color = color_dis;
         elseif task == 3
-            plot_location = -0.375;
+            plot_location = 0.19;
             color = color_cross_1;
         elseif task == 4
-            plot_location = -0.325;
+            plot_location = 0.17;
             color = color_cross_2;
         end
    
@@ -115,7 +115,8 @@ else
 end
 font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
-ylim([-0.5 0.3]);
+ylim([-0.3 0.3]);
+yticks(-0.3:0.1:0.3);
 legend_bool = 0;
 title_bool = 0;
 plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
