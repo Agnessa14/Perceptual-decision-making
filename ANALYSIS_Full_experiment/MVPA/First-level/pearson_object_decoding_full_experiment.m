@@ -6,6 +6,7 @@ function pearson_object_decoding_full_experiment(subject,task)
 %Output: NxNxP vector of correlations, where N is the number of conditions and
 %P is the number of timepoints. 
 %
+% Author: Agnessa Karapetian, 2021
 
 %% Set-up prereqs
 %add paths
@@ -30,8 +31,8 @@ end
 %% Prepare data
 %load eeg and behavioural data
 data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/%s/',subname);
-load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
-load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
+load(fullfile(data_dir,sprintf('timelock_%s',task_name)),'timelock'); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'behav');
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
@@ -41,11 +42,11 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=100; 
+numPermutations=1; 
 
 %Preallocate 
-numPseudotrials = 6;
-numTrialsPerBin = round(numTrials/numPseudotrials);
+numTrialsPerBin = 5;
+numPseudotrials = round(numTrials/numTrialsPerBin);
 rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numTimepoints);
     
 %% Decoding
