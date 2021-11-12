@@ -54,8 +54,8 @@ included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
-numPseudotrials = 6;
-numTrialsPerBin = round(numTrials/numPseudotrials);
+numTrialsPerBin = 5;
+numPseudotrials = round(numTrials/numTrialsPerBin);
 rdm=NaN(numPermutations,numPseudotrials,numConditionsIncluded,numConditionsIncluded,numTimepoints);
     
 %% Decoding
