@@ -1,13 +1,12 @@
 function noise_ceiling_rsa(subjects,conditions) 
-%NOISE_CEILING Calculate the noise ceiling for the representational similarity analysis
+%NOISE_CEILING_RSA Calculate the noise ceiling for the representational similarity analysis
 %of object decoding (categorization task). 
 %
 %Input: subject IDs (eg., 1:13), conditions ('all','artificial' or
 %'natural')
 %
 %Output: 
-% 1)Three 1xP noise ceiling vectors: all scenes, natural scenes and artificial scenes
-% (P = # timepoints)
+% 1)1xP noise ceiling vector (P = # timepoints)
 %
 %
 %Author: Agnessa Karapetian, 2021
@@ -38,7 +37,7 @@ for subject = subjects
     subname = get_subject_name(subject);
     subject_results_dir = fullfile(results_dir,subname);
     load(fullfile(subject_results_dir,'rdm_pearson_categorization.mat'),'rdm_avg');           
-    rdm_all_subjects(subject,:,:,:) = rdm_avg(conds,conds,:); %average over the RDMs of each half of trials      
+    rdm_all_subjects(subject,:,:,:) = rdm_avg(conds,conds,:);     
 end   
 
 %% Remove all subject nans 
