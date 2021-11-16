@@ -67,8 +67,8 @@ for s = 1:numSubjects
 
     %upper & lower bound ceilings
     for tp = 1:numTimepoints
-        lower_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),other_flattened(:,tp));
-        upper_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),all_flattened(:,tp));
+        lower_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),other_flattened(:,tp),'type','Spearman');
+        upper_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),all_flattened(:,tp),'type','Spearman');
     end
 end
 
