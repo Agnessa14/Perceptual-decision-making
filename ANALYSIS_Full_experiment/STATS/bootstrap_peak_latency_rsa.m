@@ -15,15 +15,6 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 rnn_dir = '02.11_2_rnn/Input_RDM';
 
                                     %%%%% SETUP %%%%%
-%% Pre-allocate + setup for loading
-% numTimepoints = 200;
-% decoding_accuracies_all = NaN(sorted_subjects(end),numTimepoints);
-% if strcmp(analysis,'object_decoding')
-%     filename = 'svm_decoding_accuracy';
-% elseif strcmp(analysis,'category_decoding')
-%     filename = 'svm_artificial_vs_natural_decoding_accuracy';
-% end
-% 
 %% Load the subject-level RDMs
 numConditions = 60;
 numTimepoints = 200;
@@ -56,9 +47,9 @@ rng(0,'twister');
 for layer = layers_idx
     
     %bootstrap samples collected for each timepoint (RNN) separately
-    for t = 1:numTimepointsRNN       
+    for t = 8%:numTimepointsRNN       
         %load RNN RDM
-        load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer,t)),'data');
+        load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer-1,t-1)),'data');
         rdm_rnn = data;
         %Make sure the diagonal is all 0
         for c1 = 1:numConditions
@@ -86,7 +77,7 @@ for layer = layers_idx
             while (find(rsa==corr_sorted(i)) - 40)*5 >= 500
                 i = i+1;
             end
-            peak_latency(layer,t,bs) = find(rsa==corr_sorted(i));    
+            peak_latency(layers_idx==layer,t,bs) = (find(rsa==corr_sorted(i))-40)*5;    
             disp(bs);
         end
         
@@ -98,54 +89,28 @@ end
 %% 2) Calculate difference between intervals for each timepoint and bootstrap sample
 layer1_layer4 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(2,:,:)));
 layer4_layer7 = abs(squeeze(peak_latency(2,:,:))-squeeze(peak_latency(3,:,:)));
+layer1_layer7 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(3,:,:)));
 
 %% 3) Get 95% confidence interval for difference at each timepoint (RNN)
 CI_diff_l1_l4 = NaN(numTimepointsRNN,2);
 CI_diff_l4_l7 = NaN(numTimepointsRNN,2);
+CI_diff_l1_l7 = NaN(numTimepointsRNN,2);
 
 for t = 1:numTimepointsRNN
-    CI_diff_l1_l4(t,1) = prctile(layer1_layer4,2.5);
-    CI_diff_l1_l4(t,2) = prctile(layer1_layer4,97.5);
-    CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
-    CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
+    CI_diff_l1_l4(t,1) = prctile(squeeze(layer1_layer4(t)),2.5);
+    CI_diff_l1_l4(t,2) = prctile(squeeze(layer1_layer4(t)),97.5);
+    CI_diff_l4_l7(t,1) = prctile(squeeze(layer4_layer7(t)),2.5);
+    CI_diff_l4_l7(t,2) = prctile(squeeze(layer4_layer7(t)),97.5);
+    CI_diff_l1_l7(t,1) = prctile(squeeze(layer1_layer7(t)),2.5);
+    CI_diff_l1_l7(t,2) = prctile(squeeze(layer1_layer7(t)),97.5);    
 end
 
 %% Save as structure
 bootstrap_peak_latencies_rsa.peak_latency = avg_peak_latency;
 bootstrap_peak_latencies_rsa.CI_diff_l1_l4 = CI_diff_l1_l4;
 bootstrap_peak_latencies_rsa.CI_diff_l4_l7 = CI_diff_l4_l7;
+bootstrap_peak_latencies_rsa.CI_diff_l1_l7 = CI_diff_l1_l7;
+
 save(fullfile(results_avg_dir,sprintf('bootstrap_peak_latencies_rsa_subjects_%d_%d',subjects(1),subjects(end))),'bootstrap_peak_latencies_rsa');
 
 end
-
-%             j = 2;
-%             while (find(rsa==corr_sorted(j)) - 40)*5 >= 500
-%                 j = j+1;
-%             end
-%             peak_latency_2(bs) = (find(rsa==corr_sorted(j)) - 40)*5;
-%             
-%             %Calculate peak difference
-%             peak_latency_diff(bs) = abs(peak_latency_1-peak_latency_2);
-%         peak_latency_2 = NaN(num_bootstrap_samples,1);
-%         peak_latency_diff = NaN(num_bootstrap_samples,1);
-  %peak latency 1
-%             if find(rsa==max(rsa)) < 500
-%                 peak_latency_1 = find(rsa==max(rsa));
-%             else
-%                 if find(rsa==corr_sorted(2)) < 500
-%                     peak_latency_1 = find(rsa==corr_sorted(2));
-%                 else
-%                     error('Something''s wrong');
-%                 end
-%             end
-%             
-%             %peak latency 2
-%             if find(rsa==corr_sorted(2)) < 500 && find(rsa==corr_sorted(2)) ~= peak_latency_1
-%                 peak_latency_2 = find(rsa==corr_sorted(2));
-%             else
-%                 if find(rsa==corr_sorted(3)) < 500
-%                     peak_latency_2 = corr_sorted(3);
-%                 else
-%                     error('Something''s wrong');
-%                 end
-%             end
