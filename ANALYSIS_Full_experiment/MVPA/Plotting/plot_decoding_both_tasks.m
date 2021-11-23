@@ -119,36 +119,23 @@ for task = 1:3
         end
     else
         %Stat parameters
-%         stats_decoding.tail = 'right';
-%         filename = fullfile(results_avg_dir,...
-%             sprintf('stats_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
-%         if exist(filename,'file')
-%             load(filename,'stats_decoding');
-%         else
-%             [stats_decoding.significant_timepoints,~,~,stats_decoding.pvalues]...
-%                 = permutation_cluster_1sample_alld(for_stats_data,stats_decoding.num_perms,...
-%                 stats_decoding.cluster_th,stats_decoding.significance_th,stats_decoding.tail);
-%             [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
-%             save(filename,'stats_decoding');
-%         end
-
-        stats_decoding.num_perms = 1000;
-        %     stats_decoding.cluster_th = 0.05;
-        %     stats_decoding.significance_th = 0.05;
-        stats_decoding.tail = 'right';
-        stats_decoding.qvalue = 0.01;
         filename = fullfile(results_avg_dir,...
             sprintf('stats_fdr_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
         if exist(filename,'file')
             load(filename,'stats_decoding');
         else
+            peak_latency_true = find(data==max(data));
+            stats_decoding.peak_latency_ground_ms = (peak_latency_true-40)*5;
+            stats_decoding.num_perms = 1000;
+            stats_decoding.tail = 'right';
+            stats_decoding.qvalue = 0.01;
             [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
                 stats_decoding.crit_p, stats_decoding.adjusted_pvalues]...
                 = fdr_permutation_cluster_1sample_alld(for_stats_data,...
                 stats_decoding.num_perms,stats_decoding.tail,stats_decoding.qvalue);
+            [stats_decoding.peak_latency_bs, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
             save(filename,'stats_decoding');
         end
-        [stats_decoding.peak_latency, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
 
         
         %1) significant timepoints
@@ -203,19 +190,18 @@ for task = 1:3
         
         %plot arrows and lines for peak latency and CI
         fontsize = 20;
-        peak_acc = data(stats_decoding.peak_latency);
-        peak_latency_ms = (stats_decoding.peak_latency-40)*5;
-        str_pl = num2str(peak_latency_ms);
+        peak_acc = max(data);
+        str_pl = num2str(stats_decoding.peak_latency_ground_ms);
         quiver(stats_decoding.CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(stats_decoding.CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
         if task_plot == 2
-            arrow_x = stats_decoding.peak_latency+8;
+            arrow_x = peak_latency_true+8;
             text(arrow_x,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data,'FontSize',fontsize);
         elseif task_plot == 1
-            arrow_x = stats_decoding.peak_latency-50;
+            arrow_x = peak_latency_true-50;
             text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);
         elseif task_plot == 3
-            arrow_x = stats_decoding.peak_latency-50;
+            arrow_x = peak_latency_true-50;
             text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);    
         end
         
