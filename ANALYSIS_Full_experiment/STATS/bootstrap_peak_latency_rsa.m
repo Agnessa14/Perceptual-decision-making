@@ -43,14 +43,32 @@ min_dataset = 1;
 %% 1) Create the bootstrap samples & calculate the peak difference
 rng(0,'twister');
 
-
+%Load Model RDM for calculating true peak latency
+rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
+filename = 'Model_RDM_7_layers_8_timepoints_all.mat';
+load(fullfile(rsa_results_dir,filename),'data');
+rsa_results = data(layers_idx,:,:);
+peak_latency_ground_truth = NaN(numel(layers_idx),numTimepointsRNN);
+    
 for layer = layers_idx
     
     %bootstrap samples collected for each timepoint (RNN) separately
-    for t = 8%:numTimepointsRNN       
+    for t = 1:numTimepointsRNN       
+        
+        %calculate ground truth peak latency (just to know)
+        index_layer = find(layers_idx==layer);
+        corr_sorted_ground = sort(squeeze(rsa_results(index_layer,t,:)),'descend');
+        i = 1;
+        while (find(squeeze(rsa_results(index_layer,t,:))==corr_sorted_ground(i)) - 40)*5 >= 500 %peak can't be at the end of trial
+            i = i+1;
+        end
+        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results(index_layer,t,:))==corr_sorted_ground(i))-40)*5;   
+        disp(peak_latency_ground_truth(index_layer,t));       
+        
         %load RNN RDM
         load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer-1,t-1)),'data');
         rdm_rnn = data;
+        
         %Make sure the diagonal is all 0
         for c1 = 1:numConditions
             for c2 = 1:numConditions
@@ -77,12 +95,12 @@ for layer = layers_idx
             while (find(rsa==corr_sorted(i)) - 40)*5 >= 500
                 i = i+1;
             end
-            peak_latency(layers_idx==layer,t,bs) = (find(rsa==corr_sorted(i))-40)*5;    
+            peak_latency(index_layer,t,bs) = (find(rsa==corr_sorted(i))-40)*5;    
             disp(bs);
         end
         
         %average over bootstrap samples - not for analysis, just to know
-        avg_peak_latency = squeeze(mean(peak_latency,3));      
+        avg_peak_latency_bs = squeeze(mean(peak_latency,3));      
     end
 end
 
@@ -106,7 +124,8 @@ for t = 1:numTimepointsRNN
 end
 
 %% Save as structure
-bootstrap_peak_latencies_rsa.peak_latency = avg_peak_latency;
+bootstrap_peak_latencies_rsa.peak_latency_bs = avg_peak_latency_bs;
+bootstrap_peak_latencies_rsa.peak_latency_true = peak_latency_ground_truth;
 bootstrap_peak_latencies_rsa.CI_diff_l1_l4 = CI_diff_l1_l4;
 bootstrap_peak_latencies_rsa.CI_diff_l4_l7 = CI_diff_l4_l7;
 bootstrap_peak_latencies_rsa.CI_diff_l1_l7 = CI_diff_l1_l7;
