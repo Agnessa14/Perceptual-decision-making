@@ -1,5 +1,5 @@
 function rsa_rnn_eeg(subjects,with_stats) 
-%RSA_RNN_EEG Plots the RSA (already computed) between RNN and EEG with stats, if desired.
+%RSA_RNN_EEG Compute and plots the RSA between RNN and EEG with stats, if desired.
 %
 %Input: subjects' ID (e.g., 1:13), add stats (1 with, 0 without)
 %
@@ -16,10 +16,10 @@ addpath(genpath(results_dir));
 
 %% Load the RDMs
 %Define some variables
-num_conditions = 60;
+% num_conditions = 60;
 numTimepointsRNN = 8;
-numTimepoints = 200;
-layer_idxs = [1,4,7];
+numTimepointsEEG = 200;
+layers_idx = [1,4,7];
 legend_bool = 0;
 
 %Stats parameters
@@ -32,29 +32,30 @@ load(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d
     subjects(1),subjects(end))),'rdm_cat');
 rdm_eeg = rdm_cat;
 
-%Load the RNN RDMs
-rdm_rnn = NaN(numel(layer_idxs),numTimepointsRNN,num_conditions,num_conditions);
+%Prepare for loading the RNN Input RDMs
+% rdm_rnn = NaN(numel(layer_idxs),numTimepointsRNN,num_conditions,num_conditions);
 rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 
-for l=layer_idxs %1:num_layers
-    for t=1:numTimepointsRNN
-        load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',...
-            l-1,t-1)),'data');
-        rdm_rnn(l,t,:,:) = data;
-        
-        %Make sure the diagonal is all 0
-        for c1 = 1:num_conditions
-            for c2 = 1:num_conditions
-                if c1==c2
-                    rdm_rnn(:,:,c1,c2) = 0;
-                end
-            end
-        end
-    end
-end
+% for l=layer_idxs %1:num_layers
+%     for t=1:numTimepointsRNN
+%         load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',...
+%             l-1,t-1)),'data');
+%         rdm_rnn(l,t,:,:) = data;
+%         
+%         %Make sure the diagonal is all 0
+%         for c1 = 1:num_conditions
+%             for c2 = 1:num_conditions
+%                 if c1==c2
+%                     rdm_rnn(:,:,c1,c2) = 0;
+%                 end
+%             end
+%         end
+%     end
+% end
 
-%% Load and plot the RSA results
-rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
+%% Calculate and plot the RSA results
+% rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
+rsa_results = NaN(3,numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
 plot_location = -0.1:-0.02:-0.24;
 model_name = '02_11_2';
 
@@ -73,28 +74,51 @@ for c = 1:3 %artificial,natural,all
         colormap_plot = 'OrRd';
     end
     
-    %load data
-    filename = sprintf('Model_RDM_7_layers_8_timepoints_%s.mat',conditions);
-    load(fullfile(rsa_results_dir,filename),'data');
-    rsa_results = data;
-    
+    %get colormap from Python
+    cmap = getPyPlot_cMap(colormap_plot,numTimepointsRNN);
+         
     %load noise ceilings (lower and upper bound)
     filename_ceiling_l = sprintf('lower_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
     load(fullfile(results_avg_dir,filename_ceiling_l),'noise_ceiling_lower_bound');    
     filename_ceiling_u = sprintf('upper_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
     load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');
+   
     
-    %get colormap from Python
-    cmap = getPyPlot_cMap(colormap_plot,numTimepointsRNN);
-    
-    %loop over layers
-    for l=layer_idxs
+    for l=layers_idx
+        %plot the noise ceilings as a shaded area
         figure;
+        dark_grey = [0.5 0.5 0.5];
+        light_grey = [0.8 0.8 0.8];
+        x_var = [1:numTimepointsEEG, fliplr(1:numTimepointsEEG)];
+        shaded_area = [noise_ceiling_upper_bound, fliplr(noise_ceiling_lower_bound)];
+        fill(x_var, shaded_area, light_grey,'FaceAlpha',0.3);
+        hold on;
+        plot(noise_ceiling_lower_bound,'LineWidth',2,'Color',dark_grey);
+        plot(noise_ceiling_upper_bound,'LineWidth',2,'Color',dark_grey);
+        hold on;
         legend_plot = cell(numTimepointsRNN,1);
 
         for t=1:numTimepointsRNN
+            
+            %load the RNN RDM
+            load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',...
+                l-1,t-1)),'data');
+            rdm_rnn = data(conds,conds);
+            
+            %Make sure the diagonal is all 0
+            for c1 = 1:numel(conds)
+                for c2 = 1:numel(conds)
+                    if c1==c2
+                        rdm_rnn(c1,c2) = 0;
+                    end
+                end
+            end
+            
+            %RSA: calculate correlation between RNN and EEG
+            rsa_results(c,l,t,:) = representational_SA_rnn(rdm_eeg(conds,conds,:),rdm_rnn); %modify the RSA function 
+            
             %plot the RSA
-            plot(squeeze(rsa_results(l,t,:)),'LineWidth',2,'Color',cmap(t,:));
+            plot(squeeze(rsa_results(c,l,t,:)),'LineWidth',2,'Color',cmap(t,:));
             hold on;
             
             %Stats: FDR-corrected
@@ -104,7 +128,7 @@ for c = 1:3 %artificial,natural,all
                 filename_sign = sprintf('%s_rsa_rnn_eeg_stats',model_name);   
                 filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d.mat',...
                     filename_sign,conditions,subjects(1),subjects(end),l,t));
-                if exist('filename','file')
+                if exist(filename,'file')
                     load(filename,'rsa_rnn_eeg_stats');
                 else %if not, run them
                     [rsa_rnn_eeg_stats.SignificantVariables, rsa_rnn_eeg_stats.pvalues, rsa_rnn_eeg_stats.crit_p,...
@@ -121,16 +145,6 @@ for c = 1:3 %artificial,natural,all
             end
         end
         
-        %plot the noise ceilings as a shaded area
-        dark_grey = [0.5 0.5 0.5];
-        light_grey = [0.8 0.8 0.8];
-        x_var = [1:numTimepoints, fliplr(1:numTimepoints)];
-        shaded_area = [noise_ceiling_upper_bound, fliplr(noise_ceiling_lower_bound)];
-        fill(x_var, shaded_area, light_grey,'FaceAlpha',0.3);
-        hold on;
-        plot(noise_ceiling_lower_bound,'LineWidth',2,'Color',dark_grey);
-        plot(noise_ceiling_upper_bound,'LineWidth',2,'Color',dark_grey);
-        
         %Plot parameters
         if legend_bool==1
             legend(legend_plot,'Location','best');
@@ -145,11 +159,11 @@ for c = 1:3 %artificial,natural,all
         xline(onset_time,'--');
         
         %Save plot
-        filename_part = 'rsa_plus_noise_ceilings';
-        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
-            model_name,filename_part,conditions,subjects(1),subjects(end),l));
-        saveas(gcf,sprintf('%s.svg',filename_plot)); 
-        saveas(gcf,sprintf('%s.fig',filename_plot)); 
+%         filename_part = 'rsa_plus_noise_ceilings';
+%         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
+%             model_name,filename_part,conditions,subjects(1),subjects(end),l));
+%         saveas(gcf,sprintf('%s.svg',filename_plot)); 
+%         saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
 end
 
