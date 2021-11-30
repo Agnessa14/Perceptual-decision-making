@@ -1,9 +1,9 @@
-function bootstrap_peak_latency_rsa(subjects,conditions)
+function bootstrap_peak_latency_rsa(subjects,conditions_int)
 %BOOTSTRAP_PEAK_LATENCY_RSA Apply bootstrapping to calculate the 95% confidence
 %interval of peak latency difference (for RSA between RNN and EEG-categorization task).
 %
-%Input: subject IDs (e.g., 1:13), conditions ('all','artificial' or
-%'natural')
+%Input: subject IDs (e.g., 1:13), conditions (1(all),2(artificial) or
+%3(natural)
 %
 %Output: saved boostrapped peak latencies (in ms), 95% confidence interval of the difference
 %
@@ -17,12 +17,15 @@ rnn_dir = '02.11_2_rnn/Input_RDM';
 
                                     %%%%% SETUP %%%%%
 %% Load the subject-level RDMs
-if strcmp(conditions,'all')
+if conditions_int==1
     conds = 1:60;
-elseif strcmp(conditions,'artificial')
+    conditions = 'all';
+elseif conditions_int==2
     conds = 1:30;
-elseif strcmp(conditions,'natural')
+    conditions = 'artificial';
+elseif conditions_int==3
     conds = 31:60;
+    conditions='natural';
 end
 
 numConditions = numel(conds);
@@ -122,10 +125,11 @@ layer1_layer7 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(3,:,:)));
 %peaks
 CI_peaks = NaN(numel(layers_idx),numTimepointsRNN,2);
 
-for layer = layer_idx
+for layer = layers_idx
     for t = 1:numTimepointsRNN
-        CI_peaks(layer,t,1) = prctile(squeeze(peak_latency(layer,t,:)),2.5);
-        CI_peaks(layer,t,2) = prctile(squeeze(peak_latency(layer,t,:)),97.5);
+        index_layer = find(layers_idx==layer);
+        CI_peaks(index_layer,t,1) = prctile(squeeze(peak_latency(index_layer,t,:)),2.5);
+        CI_peaks(index_layer,t,2) = prctile(squeeze(peak_latency(index_layer,t,:)),97.5);
     end
 end
 
