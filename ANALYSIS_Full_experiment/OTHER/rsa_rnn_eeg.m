@@ -36,22 +36,6 @@ rdm_eeg = rdm_cat;
 % rdm_rnn = NaN(numel(layer_idxs),numTimepointsRNN,num_conditions,num_conditions);
 rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 
-% for l=layer_idxs %1:num_layers
-%     for t=1:numTimepointsRNN
-%         load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',...
-%             l-1,t-1)),'data');
-%         rdm_rnn(l,t,:,:) = data;
-%         
-%         %Make sure the diagonal is all 0
-%         for c1 = 1:num_conditions
-%             for c2 = 1:num_conditions
-%                 if c1==c2
-%                     rdm_rnn(:,:,c1,c2) = 0;
-%                 end
-%             end
-%         end
-%     end
-% end
 
 %% Calculate and plot the RSA results
 % rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
@@ -159,11 +143,11 @@ for c = 1:3 %artificial,natural,all
         xline(onset_time,'--');
         
         %Save plot
-%         filename_part = 'rsa_plus_noise_ceilings';
-%         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
-%             model_name,filename_part,conditions,subjects(1),subjects(end),l));
-%         saveas(gcf,sprintf('%s.svg',filename_plot)); 
-%         saveas(gcf,sprintf('%s.fig',filename_plot)); 
+        filename_part = 'rsa_plus_noise_ceilings';
+        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
+            model_name,filename_part,conditions,subjects(1),subjects(end),l));
+        saveas(gcf,sprintf('%s.svg',filename_plot)); 
+        saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
 end
 
