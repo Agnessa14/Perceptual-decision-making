@@ -1,5 +1,7 @@
 function rsa_rnn_eeg_subject_by_subject(subjects,with_stats) 
-%RSA_RNN_EEG Compute and plots the RSA between RNN and EEG with stats, if desired.
+%RSA_RNN_EEG_SUBJECT_BY_SUBJECT Compute and plots the RSA between RNN and EEG with stats, if desired.
+%RSA is computed by correlating each of the subject-specific EEG RDMs with
+%the RNN RDM and averaging over.
 %
 %Input: subjects' ID (e.g., 1:13), add stats (1 with, 0 without)
 %
@@ -16,7 +18,6 @@ addpath(genpath(results_dir));
 
 %% Load the RDMs
 %Define some variables
-% num_conditions = 60;
 numTimepointsRNN = 8;
 numTimepointsEEG = 200;
 layers_idx = [1,4,7];
@@ -27,19 +28,24 @@ num_permutations = 1000;
 tail = 'right';
 q_value = 0.05;
 
-%Load the EEG RDM
-load(fullfile(results_avg_dir,sprintf('average_rdm_categorization_subjects_%d_%d',...
-    subjects(1),subjects(end))),'rdm_cat');
-rdm_eeg = rdm_cat;
+%Load subject-level RDMs 
+numConditions = 60;
+rdm_eeg_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepointsEEG); 
+
+for subject = subjects
+    subname = get_subject_name(subject);
+    subject_results_dir = fullfile(results_dir,subname);
+    load(fullfile(subject_results_dir,'rdm_pearson_categorization.mat'),'rdm_avg');           
+    rdm_eeg_all_subjects(subject,:,:,:) = rdm_avg;      
+end   
 
 %Prepare for loading the RNN Input RDMs
-% rdm_rnn = NaN(numel(layer_idxs),numTimepointsRNN,num_conditions,num_conditions);
 rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 
 
 %% Calculate and plot the RSA results
 % rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
-rsa_results = NaN(3,numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
+rsa_results = NaN(max(subjects),3,numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
 plot_location = -0.1:-0.02:-0.24;
 model_name = '02_11_2';
 
@@ -99,10 +105,14 @@ for c = 1:3 %artificial,natural,all
             end
             
             %RSA: calculate correlation between RNN and EEG
-            rsa_results(c,l,t,:) = representational_SA_rnn(rdm_eeg(conds,conds,:),rdm_rnn); %modify the RSA function 
+            for subject = subjects
+                rdm_eeg = squeeze(rdm_eeg_all_subjects(subject,conds,conds,:));
+                rsa_results(subject,c,l,t,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
+            end  
             
-            %plot the RSA
-            plot(squeeze(rsa_results(c,l,t,:)),'LineWidth',2,'Color',cmap(t,:));
+            %plot the RSA averaged over subjects
+            rsa_results = rsa_results(subjects,:,:,:,:);
+            plot(squeeze(mean(rsa_results(:,c,l,t,:),1)),'LineWidth',2,'Color',cmap(t,:));
             hold on;
             
             %Stats: FDR-corrected
@@ -143,7 +153,7 @@ for c = 1:3 %artificial,natural,all
         xline(onset_time,'--');
         
         %Save plot
-        filename_part = 'rsa_plus_noise_ceilings';
+        filename_part = 'rsa_plus_noise_ceilings_subject_level';
         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
             model_name,filename_part,conditions,subjects(1),subjects(end),l));
         saveas(gcf,sprintf('%s.svg',filename_plot)); 
