@@ -107,7 +107,7 @@ for layer = layers_idx
             while (find(rsa==corr_sorted(i)) - 40)*5 >= 500
                 i = i+1;
             end
-            peak_latency(index_layer,t,bs) = (find(rsa==corr_sorted(i))-40)*5;    
+            peak_latency(index_layer,t,bs) = (find(rsa==corr_sorted(i),1)-40)*5;    
             disp(bs);
         end
         
