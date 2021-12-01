@@ -1,12 +1,11 @@
-function [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_rsa_random_effects_stats(rdm_1,rdm_2,true_rsa_rdm,numPermutations,tail,q_value)
+function [SignificantVariables, crit_p, adjusted_pvalues] = fdr_rsa_random_effects_stats(true_rsa_results,numPermutations,tail,q_value)
 %FDR_RSA_RANDOM_EFFECTS_STATS Perform fdr correction stats to calculate the
 %significance of the timepoints in the RSA. Random effects: the
 %subject-level data are randomly multiplied by 1 or -1 (sign permutation test) to create the permutation samples.
 %
 %Input: 
-% - rdm 1 & rdm 2: the data that goes into RSA (num subjects x num pairwise
-% combinations x num timepoints)
-% - true_rsa_rdm: the true correlation between rdm1&rdm2
+% - true_rsa_results: the true correlation, for each subject, between rdm1&rdm2 (num subjects x
+% num timepoints)
 % - number of permutations for the stats (ex:10000)
 % - tail: 'both', 'right' or 'left' (default right)
 % - q-value: for fdr (default: 0.05)
@@ -21,33 +20,36 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
-%% 1) Randomly multiply by 1/-1 the subject-level RDMs and calculate the Spearman's correlation with the other RDM at each timepoint
-numTimepoints = size(true_rsa_rdm,1);
-all_rsa_rdm = NaN(max(subjects),numPermutations,numTimepoints);
-for perm = 2:numPermutations
+%% 1) Sign permutation test: randomly multiply by 1/-1 the subject-level RSA results and calculate the t-statistic
+numTimepoints = size(true_rsa_results,2);
+samples_plus_ground_tstatistic = NaN(numPermutations,numTimepoints);
+
+%first perm is ground test statistic
+samples_plus_ground_tstatistic(1,:) = mean(true_rsa_results,1) ./ std(true_rsa_results); 
+
+for perm = 2:numPermutations    
     if ~mod(perm,100)
-        fprintf('Calculating the correlation %d \n',perm);
-    end
+        fprintf('Permutation sample %d \n',perm);
+    end   
     
+    %create samples by randomly multiplying each subject's data by 1 or -1
     random_vector = single(sign(rand(30,1)-0.5));
-    random_data = random_vector*rdm_1;
-    for subject = subjects
-        all_rsa_rdm(subject,1,:,:) = true_rsa_rdm;
-        all_rsa_rdm(subject,perm,:,:) = representational_SA_rnn(random_data,rdm_2);   
-    end
-    all_rsa_rdm = all_rsa_rdm(subjects,:,:,:);
-    avg_rsa = squeeze(mean(all_rsa_rdm,1));
+    sample = repmat(random_vector,1,numTimepoints).*true_rsa_results;
+    
+    %get the  test statistic (mean ./ std) of each sample
+    samples_plus_ground_tstatistic(perm,:) = mean(sample,1) ./ std(sample);
+    
 end
 
 %% 2) Calculate the p-value of the ground truth and of the permuted samples
 if strcmp(tail,'right')
-    p_ground_and_samples = (numPermutations+1 - tiedrank(avg_rsa)) / numPermutations;
+    p_ground_and_samples = (numPermutations+1 - tiedrank(samples_plus_ground_tstatistic)) / numPermutations;
 else
     error('Wrong tail');
 end 
 
 %% 3) Perform FDR correction
-pvalues = squeeze(p_ground_and_samples(1,:,:));
+pvalues = squeeze(p_ground_and_samples(1,:));
 [SignificantVariables,crit_p,~,adjusted_pvalues] = fdr_bh(pvalues,q_value,'pdep');
 
 end  
