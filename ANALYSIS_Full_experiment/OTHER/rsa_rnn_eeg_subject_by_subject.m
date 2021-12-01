@@ -115,40 +115,32 @@ for c = 1:3 %artificial,natural,all
             
             %plot the RSA averaged over subjects
             rsa_results = rsa_results(subjects,:,:,:,:);
-            plot(squeeze(mean(rsa_results(:,c,l,t,:),1)),'LineWidth',2,'Color',cmap(t,:));
+            rsa_results_temp = squeeze(mean(rsa_results(:,c,l,t,:),1));
+            plot(rsa_results_temp,'LineWidth',2,'Color',cmap(t,:));
             hold on;
             
             %Stats: FDR-corrected
             if with_stats
                 
                 %Check if exist
-                filename_sign = sprintf('%s_rsa_rnn_eeg_stats',model_name);   
+                filename_sign = sprintf('%s_rsa_rnn_eeg_stats_subject_level',model_name);   
                 filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d.mat',...
                     filename_sign,conditions,subjects(1),subjects(end),l,t));
                 if exist(filename,'file')
                     load(filename,'fdr_stats');
                 else %if not, run them
-%                     [rsa_rnn_eeg_stats.SignificantVariables, rsa_rnn_eeg_stats.pvalues, rsa_rnn_eeg_stats.crit_p,...
-%                         rsa_rnn_eeg_stats.adjusted_pvalues] = fdr_rsa_rnn_eeg(rdm_eeg(conds,conds,:),...
-%                         squeeze(rdm_rnn(l,t,conds,conds)),rsa_results(l,t,:),num_permutations,tail,q_value);
-%                     save(filename,'rsa_rnn_eeg_stats');
+                    rsa_results_all_subjects = squeeze(rsa_results(:,c,l,t,:));
                     fdr_stats.num_perms = 1000;
                     fdr_stats.tail = 'right';
                     fdr_stats.qvalue = 0.05;
-%                     [fdr_stats.significant_timepoints,fdr_stats.pvalues,...
-%                         fdr_stats.crit_p, fdr_stats.adjusted_pvalues]...
-%                         = fdr_permutation_cluster_1sample_alld(for_stats_data,...
-%                         fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
-                     [fdr_stats.significant_timepoints,fdr_stats.pvalues,...
-                        fdr_stats.crit_p, fdr_stats.adjusted_pvalues]...
-                        = fdr_rsa_random_effects_stats(rdm_eeg_all_subjects,rdm_rnn,...
-                        fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
+                    [fdr_stats.significant_timepoints,fdr_stats.crit_p,fdr_stats.adjusted_pvalues] = ...
+                        fdr_rsa_random_effects_stats(rsa_results_all_subjects,fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
                     
                     save(filename,'fdr_stats');
                 end
                 
                 %Plot the stats
-                st = (fdr_stats.SignificantVariables*plot_location(t)); %depending on the stats
+                st = (fdr_stats.significant_timepoints*plot_location(t)); 
                 st(st==0) = NaN;
                 plot(st,'*','Color',cmap(t,:)); 
                 hold on;
@@ -169,11 +161,11 @@ for c = 1:3 %artificial,natural,all
         xline(onset_time,'--');
         
         %Save plot
-%         filename_part = 'rsa_plus_noise_ceilings_subject_level';
-%         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
-%             model_name,filename_part,conditions,subjects(1),subjects(end),l));
-%         saveas(gcf,sprintf('%s.svg',filename_plot)); 
-%         saveas(gcf,sprintf('%s.fig',filename_plot)); 
+        filename_part = 'rsa_plus_noise_ceilings_subject_level';
+        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
+            model_name,filename_part,conditions,subjects(1),subjects(end),l));
+        saveas(gcf,sprintf('%s.svg',filename_plot)); 
+        saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
 end
 
