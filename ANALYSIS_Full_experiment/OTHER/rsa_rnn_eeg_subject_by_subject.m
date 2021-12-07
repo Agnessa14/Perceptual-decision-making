@@ -51,6 +51,7 @@ rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 rsa_results = NaN(max(subjects),3,numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
 plot_location = -0.1:-0.02:-0.24;
 model_name = '02_11_2';
+plot_whole_epoch = 0;
 
 for c = 1:3 %artificial,natural,all
     if c == 1
@@ -160,8 +161,15 @@ for c = 1:3 %artificial,natural,all
         onset_time = 40;
         xline(onset_time,'--');
         
+        if ~plot_whole_epoch 
+            xlim([20 200]);
+        end
+        
         %Save plot
         filename_part = 'rsa_plus_noise_ceilings_subject_level';
+        if ~plot_whole_epoch 
+            filename_part = sprintf('%s_-100ms',filename_part);
+        end
         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
             model_name,filename_part,conditions,subjects(1),subjects(end),l));
         saveas(gcf,sprintf('%s.svg',filename_plot)); 
