@@ -37,7 +37,7 @@ load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'b
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
-timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,10:end); %actual data
+timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,21:end); %actual data
 
 %% Define the required variables
 numConditions = 60;
