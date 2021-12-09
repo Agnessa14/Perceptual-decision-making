@@ -26,7 +26,8 @@ numTimepoints = 200;
 numConditions = 60;
 artificial_conditions = 1:numConditions/2;
 natural_conditions = (numConditions/2)+1:numConditions;  
-entropy_thresh = '0.09';
+entropy_thresh = '0.02';
+model_name = 'model_02.11_2';
 
 %If the distances are from EEG, load subject-level distances and RNN Rt
 if modality_distance == 1 
@@ -41,7 +42,7 @@ if modality_distance == 1
     end
     
     %load RTs
-    load(sprintf('/scratch/agnek95/PDM/DATA/RNN_RTs/reaction_time_entropy_th_%s_model_22.08.mat',...
+    load(sprintf('/scratch/agnek95/PDM/DATA/RNN_RTs/RNN_RTs_entropy_threshold_%s.mat',...
         entropy_thresh),'data');
     RT = data';
     RT_art = RT(artificial_conditions);
@@ -49,7 +50,7 @@ if modality_distance == 1
     
 elseif modality_distance == 2 
     %load distances
-    load('/scratch/agnek95/PDM/DATA/RNN_ACTIVATIONS/rnn_distances_all_scenes_model_22.08.mat','data');
+    load(sprintf('/scratch/agnek95/PDM/DATA/RNN_ACTIVATIONS/rnn_distances_all_scenes_%.mat',model_name),'data');
     distances = data;
     
     %load RTs & get median
@@ -186,29 +187,32 @@ if with_stats
     for c = 1:3
         if c == 1
             category = 'artificial';            
-            plot_location = -0.15;
+            plot_location = -0.22;
             color = color_art;
             for_stats = correlation_art(subjects,:);
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.16;
+            plot_location = -0.24;
             color = color_nat;
             for_stats = correlation_nat(subjects,:);
         elseif c == 3
             category = 'both'; 
-            plot_location = -0.17;
+            plot_location = -0.26;
             color = 'k';
             for_stats = correlation_both(subjects,:);
         end
 
         %Check if stats already exist, otherwise run the stats script
         if modality_distance == 1
-            filename_sign = 'rnn_dth_eeg_distances_permutation_stats';
+            distances_str = 'eeg';
+            filename_sign = sprintf('separate_fitting_cv_%s_rnn_dth_eeg_distances_permutation_stats',model_name);
         else
-            filename_sign = 'rnn_dth_rnn_distances_permutation_stats_crosstask';
-        end     
-        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s.mat',filename_sign,...
-            subjects(1),subjects(end),modality_distance,analysis,category));
+            distances_str = 'rnn';
+            filename_sign = sprintf('cv_%s_rnn_dth_rnn_distances_permutation_stats_crosstask',model_name);
+        end
+        
+        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s.mat',filename_sign,...
+            subjects(1),subjects(end),distances_str,analysis,category));
         if exist(filename,'file')
             load(filename,'permutation_stats');
         else
@@ -266,22 +270,23 @@ if modality_distance==1
 elseif modality_distance==2
     file_name = 'distance_rnn_rt_eeg';
 end
-model_name = 'model_22.08';
+
 
 if modality_distance==1
-    save(fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.mat',subjects(1),subjects(end),file_name,model_name,entropy_thresh)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.svg',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
-    saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.fig',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
+    save(fullfile(save_path,sprintf('separate_fitting_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.mat',subjects(1),subjects(end),file_name,model_name,entropy_thresh)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.svg',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.fig',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
 else %fix this - should be a loop over layers
     for layer=1:num_layers
         save(fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.mat',subjects(1),subjects(end),file_name,model_name,layer)),'dth_results');
         saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.svg',subjects(1),subjects(end),file_name,model_name,layer))); 
         saveas(gcf,fullfile(save_path,sprintf('rnn_dth_subjects_%d_%d_%s_%s_layer_%d.fig',subjects(1),subjects(end),file_name,model_name,layer))); 
     end
-close(gcf);
 end
 
+close(gcf);
 
+end
 
 
 
