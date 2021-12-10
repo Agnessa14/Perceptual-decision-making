@@ -1,106 +1,80 @@
-function plot_RT_rnn_vs_human(subjects,with_stats)
+function plot_RT_rnn_vs_human
 %PLOT_RT_RNN_VS_HUMAN Create a scatterplot of reaction times.
 %
 %Returns a scatterplot of human reaction times in the categorization task vs
 %RNN reaction times. 
+%
+%Input: subject IDs (e.g., 1:13), conditions ('all', 'artificial' or
+%'natural'), with or without stats (1/0)
 %
 %Author: Agnessa Karapetian, 2021
 %
 
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
-results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
-%% Load RTs 
-numConditions = 60;
-entropy_thresh = '0.07';
-model_name = 'model_02.11_2';
-
-%RNN
-load(sprintf('/scratch/agnek95/PDM/DATA/RNN_RTs/reaction_time_entropy_th_%s_%s.mat',...
-    entropy_thresh,model_name),'data');
-RT_rnn_all = data';
-
-%Human
-% RT_human_all = NaN(max(subjects),numConditions);
-load(fullfile(results_avg_dir,'RTs_shuffled_across_subjects.mat'),'data');
-RTs_eeg = data;
-
-%Take second half of all subjects (shuffled) & get median
-num_subjects = numel(subjects);
-RT_human_all_med = nanmedian(RTs_eeg((num_subjects/2)+1:end,:),1)';
-
-
-                        %%% Scatterplot: correlation rnn/human %%%
-%% Correlation
-corr_rt = corr(RT_human_all_med,RT_rnn_all,'type','Spearman');
-
-%% Plot
+%% Load the correlations and the RTs for the noise ceiling calculation
+load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
+load(fullfile(results_avg_dir,'RT_all_subjects_5_35_categorization.mat'),'RTs');
+correlations_RT = data;
+num_subjects = size(correlations_RT,1);
+RT_noise_ceiling_lower = NaN(3,1);
+xticklabels = cell(3,1);
+h = NaN(3,3);
+location_x = NaN(3,1);
 figure;
-color_plot = [0.05 0.6 0.13];
-scatter(normalize(RT_human_all_med),normalize(RT_rnn_all),[],color_plot,'filled');
-hold on
-l = lsline;
-l.Color = 'k';
-l.LineWidth = 2;
-lsline;
-xlabel('Human RT (normalized)');
-ylabel('RNN RT (normalized)');
-title_bool = 0;
-if title_bool == 1
-    title(sprintf('Reaction times for each scene across subjects (N=%d)',num_subjects));
+
+for c = 1:3
+    if c == 1
+        xticklabels{c} = 'All scenes';
+        conds = 1:60;
+        location_x(c) = 0.5;
+    elseif c==2
+        xticklabels{c} = 'Natural scenes';
+        conds = 31:60;
+        location_x(c) = 1;
+    elseif c==3
+        xticklabels{c} = 'Man-made scenes';
+        conds = 1:30;
+        location_x(c) = 1.5;
+    end
+
+    corr_conditions = correlations_RT(:,c);
+    average_corr = mean(corr_conditions,1);
+    
+    %Calculate noise ceiling
+    noise_ceil_temp = NaN(1,num_subjects);
+    for subject = 1:num_subjects
+        conds_bool = ~isnan(RTs(subject,conds));
+        noise_ceil_temp(subject) = corr(nanmean(RTs(1:end~=subject,conds(conds_bool)),1)',RTs(subject,conds(conds_bool))','type','Pearson');
+    end
+    RT_noise_ceiling_lower(c) = mean(noise_ceil_temp);
+    
+    %Plot all subjects, average and noise ceiling
+    color_subjects = [0.75 0.75 0.75];   
+    color_avg = [0 0.5 0.5];
+    color_noise_ceiling = 'k';
+    x = repmat(location_x(c),1,num_subjects);
+    h(c,1) = scatter(x,corr_conditions,[],color_subjects,'filled','SizeData',100,'DisplayName','Single subject');
+    hold on;
+    h(c,2) = scatter(location_x(c),RT_noise_ceiling_lower(c),[],color_noise_ceiling,'filled','SizeData',100,'DisplayName','Noise ceiling');
+    h(c,3) = scatter(location_x(c),average_corr,[],color_avg,'filled','SizeData',200,'DisplayName','Average');   
 end
+
+%% Plot parameters
+% xlabel('Corr human-RNN RTs (Pearson''s r)');
+% ylabel('Conditions');
+% legend(h(1,:),'Location','best');
+% set(gca,'xtick',location_x,'xticklabel',xticklabels);
+set(gca,'xtick',location_x,'xticklabel','');
 font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
-xlim([-3 3]);
-
-%% Stats
-if with_stats
-    rng('shuffle');
-    stats_behav.num_perms = 1000;
-    stats_behav.alpha = 0.05;
-    stats_behav.tail = 'both';
-    filename = fullfile(results_avg_dir,...
-        sprintf('cv_%s_stats_fdr_rnn_human_rt_correlation_subjects_%d_%d.mat',model_name,subjects(1),subjects(end)));
-    if exist(filename,'file')
-        load(filename,'stats_behav');
-    else
-        corr_rt_all = NaN(stats_behav.num_perms,1);
-        corr_rt_all(1) = corr_rt; %ground truth
-        for perm = 2:stats_behav.num_perms
-            permuted_human_RT = RT_human_all_med(randperm(numel(RT_human_all_med)));
-            corr_rt_all(perm) = corr(permuted_human_RT,RT_rnn_all,'type','Pearson');
-        end
-        
-        all_p_values = (stats_behav.num_perms+1 - tiedrank(abs(corr_rt_all))) / stats_behav.num_perms;                 
-        stats_behav.pvalue = all_p_values(1);
-        save(filename,'stats_behav');
-    end
-
-    %check significance
-    if stats_behav.pvalue < stats_behav.alpha
-        text(-3,1,['R = ',num2str(corr_rt),', p = ',num2str(stats_behav.pvalue)],'FontSize',font_size); 
-    else
-        text(-3,1,['R = ',num2str(corr_rt)],'FontSize',font_size); 
-    end
-
-end
-
-if ~with_stats
-    text(5,3,['R = ',num2str(corr_rt)]); 
-end
 
 %% Save
-if strcmp(model_name,'model_02.11')
-    savename = '1';
-elseif strcmp(model_name,'model_02.11_2')
-    savename = '2';
-else
-    error('Unknown model name');
-end
-saveas(gcf,fullfile(results_avg_dir,sprintf('cv_%s_rt_rnn_human_scatterplot_subjects_%d_%d',savename,subjects(1),subjects(end))));
-saveas(gcf,fullfile(results_avg_dir,sprintf('cv_%s_rt_rnn_human_scatterplot_subjects_%d_%d.svg',savename,subjects(1),subjects(end))));
+%RT plots
+saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.fig'));
+saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.svg'));
 close(gcf);
 
 end
