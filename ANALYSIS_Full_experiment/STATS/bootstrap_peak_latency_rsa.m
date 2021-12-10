@@ -93,21 +93,22 @@ for layer = layers_idx
         %for each bootstrap sample, create a new dataset (N=30) and
         %calculate the peak latency
         for bs = 1:num_bootstrap_samples
-            datasets = NaN(size(rdm_subjects));
+            rsa = NaN(num_datasets,numTimepoints);
             for d = 1:num_datasets
                 idx = round((max_dataset-min_dataset).*rand(1,1) + min_dataset); %pick one random number between one and num_datasets
-                datasets(d,:,:,:) = rdm_subjects(idx,:,:,:);
+                dataset = squeeze(rdm_subjects(idx,:,:,:));
+                rsa(d,:) = representational_SA_rnn(dataset,rdm_rnn);
             end
-            avg_datasets_rdm_eeg = squeeze(nanmean(datasets,1));
-            rsa = representational_SA_rnn(avg_datasets_rdm_eeg,rdm_rnn);
-            
+            avg_rsa = mean(rsa,1);
+            plot(avg_rsa);
+            hold on;
             %Find peak latency -  should not be at the end of the trial
-            corr_sorted = sort(rsa,'descend');
+            corr_sorted = sort(avg_rsa,'descend');
             i = 1;
-            while (find(rsa==corr_sorted(i)) - 40)*5 >= 500
+            while (find(avg_rsa==corr_sorted(i)) - 40)*5 >= 500
                 i = i+1;
             end
-            peak_latency(index_layer,t,bs) = (find(rsa==corr_sorted(i),1)-40)*5;    
+            peak_latency(index_layer,t,bs) = (find(avg_rsa==corr_sorted(i),1)-40)*5;    
             disp(bs);
         end
         
