@@ -23,6 +23,7 @@ RT_noise_ceiling_lower = NaN(3,1);
 xticklabels = cell(3,1);
 h = NaN(3,3);
 location_x = NaN(3,1);
+label_x = NaN(3,1);
 figure;
 
 for c = 1:3
@@ -30,14 +31,17 @@ for c = 1:3
         xticklabels{c} = 'All scenes';
         conds = 1:60;
         location_x(c) = 0.5;
+        label_x(c) = 0.5;
     elseif c==2
-        xticklabels{c} = 'Natural scenes';
-        conds = 31:60;
-        location_x(c) = 1;
-    elseif c==3
         xticklabels{c} = 'Man-made scenes';
         conds = 1:30;
         location_x(c) = 1.5;
+        label_x(3) = 1.5;
+    elseif c==3
+        xticklabels{c} = 'Natural scenes';
+        conds = 31:60;
+        location_x(c) = 1;
+        label_x(2) = 1;
     end
 
     corr_conditions = correlations_RT(:,c);
@@ -65,9 +69,10 @@ end
 %% Plot parameters
 % xlabel('Corr human-RNN RTs (Pearson''s r)');
 % ylabel('Conditions');
-% legend(h(1,:),'Location','best');
+xlim([0.2 3]);
+legend(h(1,:),'Location','southeast');
 % set(gca,'xtick',location_x,'xticklabel',xticklabels);
-set(gca,'xtick',location_x,'xticklabel','');
+set(gca,'xtick',label_x,'xticklabel','');
 font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
 
