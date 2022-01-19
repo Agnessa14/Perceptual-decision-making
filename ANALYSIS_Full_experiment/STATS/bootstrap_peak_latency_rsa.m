@@ -54,28 +54,27 @@ min_dataset = 1;
 
 %% 1) Create the bootstrap samples & calculate the peak difference
 rng(0,'twister');
-
-%Load Model RDM for calculating true peak latency
-rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
-filename = sprintf('Model_RDM_7_layers_8_timepoints_%s.mat',conditions);
-load(fullfile(rsa_results_dir,filename),'data');
-rsa_results = data(layers_idx,:,:);
 peak_latency_ground_truth = NaN(numel(layers_idx),numTimepointsRNN);
-    
+%load the RSA results
+filename = sprintf('02_11_2_redone_rsa_plus_noise_ceilings_subject_level_-100ms_%s_subjects_5_35.mat',conditions);
+
 for layer = layers_idx
-    
+    index_layer = find(layers_idx==layer);
+    load(fullfile(results_avg_dir,filename),'rsa_results');
+
     %bootstrap samples collected for each timepoint (RNN) separately
-    for t = 1:numTimepointsRNN       
+    for t = 1:numTimepointsRNN         
+        rsa_results = squeeze(rsa_results(index_layer,t,:))';
         
         %calculate ground truth peak latency (just to know)
-        index_layer = find(layers_idx==layer);
-        corr_sorted_ground = sort(squeeze(rsa_results(index_layer,t,:)),'descend');
+        corr_sorted_ground = sort(rsa_results,'descend');
         i = 1;
-        while (find(squeeze(rsa_results(index_layer,t,:))==corr_sorted_ground(i)) - 40)*5 >= 500 %peak can't be at the end of trial
+        while ((find(squeeze(rsa_results)==corr_sorted_ground(i)) - 40)*5 < 0) %peak can't be in the baseline 
             i = i+1;
         end
-        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results(index_layer,t,:))==corr_sorted_ground(i))-40)*5;   
-        disp(peak_latency_ground_truth(index_layer,t));       
+        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results)==corr_sorted_ground(i))-40)*5;   
+        disp(t);
+        disp(peak_latency_ground_truth(index_layer,t));   
         
         %load RNN RDM
         load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer-1,t-1)),'data');
@@ -100,53 +99,48 @@ for layer = layers_idx
                 rsa(d,:) = representational_SA_rnn(dataset,rdm_rnn);
             end
             avg_rsa = mean(rsa,1);
-            plot(avg_rsa);
-            hold on;
             %Find peak latency -  should not be at the end of the trial
             corr_sorted = sort(avg_rsa,'descend');
             i = 1;
-            while (find(avg_rsa==corr_sorted(i)) - 40)*5 >= 500
+            while (find(avg_rsa==corr_sorted(i)) - 40)*5 < 0
                 i = i+1;
             end
             peak_latency(index_layer,t,bs) = (find(avg_rsa==corr_sorted(i),1)-40)*5;    
-            disp(bs);
         end
         
         %average over bootstrap samples - not for analysis, just to know
-        avg_peak_latency_bs = squeeze(mean(peak_latency,3));      
+        avg_peak_latency_bs = squeeze(mean(peak_latency,3));     
     end
 end
 
-%% 2) Calculate difference between intervals for each timepoint and bootstrap sample
-layer1_layer4 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(2,:,:)));
-layer4_layer7 = abs(squeeze(peak_latency(2,:,:))-squeeze(peak_latency(3,:,:)));
-layer1_layer7 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(3,:,:)));
+%% 2) Calculate difference between intervals for bootstrap samples averaged over RNN timepoints
+peak_latency_avg = mean(peak_latency,2);
+layer1_layer4 = abs(squeeze(peak_latency_avg(1,:))-squeeze(peak_latency_avg(2,:)));
+layer4_layer7 = abs(squeeze(peak_latency_avg(2,:))-squeeze(peak_latency_avg(3,:)));
+layer1_layer7 = abs(squeeze(peak_latency_avg(1,:))-squeeze(peak_latency_avg(3,:)));
 
-%% 3) Get 95% confidence interval for peaks and for peak difference at each timepoint (RNN)
+%% 3) Get 95% confidence interval for peaks and for peak difference
 %peaks
-CI_peaks = NaN(numel(layers_idx),numTimepointsRNN,2);
+CI_peaks = NaN(numel(layers_idx),2);
 
 for layer = layers_idx
-    for t = 1:numTimepointsRNN
-        index_layer = find(layers_idx==layer);
-        CI_peaks(index_layer,t,1) = prctile(squeeze(peak_latency(index_layer,t,:)),2.5);
-        CI_peaks(index_layer,t,2) = prctile(squeeze(peak_latency(index_layer,t,:)),97.5);
-    end
+    index_layer = find(layers_idx==layer);
+    CI_peaks(index_layer,1) = prctile(squeeze(peak_latency_avg(index_layer,:)),2.5);
+    CI_peaks(index_layer,2) = prctile(squeeze(peak_latency_avg(index_layer,:)),97.5);
 end
 
 %peak differences
-CI_diff_l1_l4 = NaN(numTimepointsRNN,2);
-CI_diff_l4_l7 = NaN(numTimepointsRNN,2);
-CI_diff_l1_l7 = NaN(numTimepointsRNN,2);
+CI_diff_l1_l4 = NaN(1,2);
+CI_diff_l4_l7 = NaN(1,2);
+CI_diff_l1_l7 = NaN(1,2);
 
-for t = 1:numTimepointsRNN
-    CI_diff_l1_l4(t,1) = prctile(squeeze(layer1_layer4(t,:)),2.5);
-    CI_diff_l1_l4(t,2) = prctile(squeeze(layer1_layer4(t,:)),97.5);
-    CI_diff_l4_l7(t,1) = prctile(squeeze(layer4_layer7(t,:)),2.5);
-    CI_diff_l4_l7(t,2) = prctile(squeeze(layer4_layer7(t,:)),97.5);
-    CI_diff_l1_l7(t,1) = prctile(squeeze(layer1_layer7(t,:)),2.5);
-    CI_diff_l1_l7(t,2) = prctile(squeeze(layer1_layer7(t,:)),97.5);        
-end
+CI_diff_l1_l4(t,1) = prctile(layer1_layer4,2.5);
+CI_diff_l1_l4(t,2) = prctile(layer1_layer4,97.5);
+CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
+CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
+CI_diff_l1_l7(t,1) = prctile(layer1_layer7,2.5);
+CI_diff_l1_l7(t,2) = prctile(layer1_layer7,97.5);        
+
 
 %% Save as structure
 bootstrap_peak_latencies_rsa.peak_latency_bs = avg_peak_latency_bs;
