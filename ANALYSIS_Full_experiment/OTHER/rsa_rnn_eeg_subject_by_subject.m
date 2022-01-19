@@ -45,13 +45,12 @@ end
 %Prepare for loading the RNN Input RDMs
 rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 
-
 %% Calculate and plot the RSA results
 % rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
-rsa_results = NaN(max(subjects),3,numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
 plot_location = -0.1:-0.02:-0.24;
 model_name = '02_11_2';
 plot_whole_epoch = 0;
+rsa_results = NaN(numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
 
 for c = 1:3 %artificial,natural,all
     if c == 1
@@ -79,6 +78,7 @@ for c = 1:3 %artificial,natural,all
    
     
     for l=layers_idx
+        index_layer = layers_idx==l;
         %plot the noise ceilings as a shaded area
         figure;
         dark_grey = [0.5 0.5 0.5];
@@ -109,17 +109,20 @@ for c = 1:3 %artificial,natural,all
             end
             
             %RSA: calculate correlation between RNN and EEG
+            rsa_results_allsubs = NaN(max(subjects),numTimepointsEEG);
             for subject = subjects
                 rdm_eeg = squeeze(rdm_eeg_all_subjects(subject,conds,conds,:));
-                rsa_results(subject,c,l,t,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
+                rsa_results_allsubs(subject,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
             end  
             
             %plot the RSA averaged over subjects
-            rsa_results = rsa_results(subjects,:,:,:,:);
-            rsa_results_temp = squeeze(mean(rsa_results(:,c,l,t,:),1));
-            plot(rsa_results_temp,'LineWidth',2,'Color',cmap(t,:));
+            rsa_results_tl_subs = rsa_results_allsubs(subjects,:);
+            rsa_results_avg = squeeze(mean(rsa_results_tl_subs,1));
+            plot(rsa_results_avg,'LineWidth',2,'Color',cmap(t,:));
             hold on;
-            
+            rsa_results(index_layer,t,:) = rsa_results_avg;
+
+          
             %Stats: FDR-corrected
             if with_stats
                 
@@ -130,13 +133,11 @@ for c = 1:3 %artificial,natural,all
                 if exist(filename,'file')
                     load(filename,'fdr_stats');
                 else %if not, run them
-                    rsa_results_all_subjects = squeeze(rsa_results(:,c,l,t,:));
                     fdr_stats.num_perms = 1000;
                     fdr_stats.tail = 'right';
                     fdr_stats.qvalue = 0.05;
                     [fdr_stats.significant_timepoints,fdr_stats.crit_p,fdr_stats.adjusted_pvalues] = ...
-                        fdr_rsa_random_effects_stats(rsa_results_all_subjects,fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
-                    
+                        fdr_rsa_random_effects_stats(rsa_results_allsubs,fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);                   
                     save(filename,'fdr_stats');
                 end
                 
@@ -166,15 +167,16 @@ for c = 1:3 %artificial,natural,all
         end
         
         %Save plot
-        filename_part = 'rsa_plus_noise_ceilings_subject_level';
+        filename_part = 'redone_rsa_plus_noise_ceilings_subject_level';
         if ~plot_whole_epoch 
             filename_part = sprintf('%s_-100ms',filename_part);
         end
-        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_layer_%d',...
-            model_name,filename_part,conditions,subjects(1),subjects(end),l));
+        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d',...
+            model_name,filename_part,conditions,subjects(1),subjects(end)));
         saveas(gcf,sprintf('%s.svg',filename_plot)); 
         saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
+    save(sprintf('%s',filename_plot),'rsa_results');
 end
 
 end
