@@ -64,17 +64,10 @@ for layer = layers_idx
 
     %bootstrap samples collected for each timepoint (RNN) separately
     for t = 1:numTimepointsRNN         
-        rsa_results = squeeze(rsa_results(index_layer,t,:))';
+        rsa_results_tl = squeeze(rsa_results(index_layer,t,:))';
         
-        %calculate ground truth peak latency (just to know)
-        corr_sorted_ground = sort(rsa_results,'descend');
-        i = 1;
-        while ((find(squeeze(rsa_results)==corr_sorted_ground(i)) - 40)*5 < 0) %peak can't be in the baseline 
-            i = i+1;
-        end
-        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results)==corr_sorted_ground(i))-40)*5;   
-        disp(t);
-        disp(peak_latency_ground_truth(index_layer,t));   
+        %calculate ground truth peak latency 
+        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results_tl)==max(rsa_results_tl))-40)*5;     
         
         %load RNN RDM
         load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer-1,t-1)),'data');
@@ -99,13 +92,8 @@ for layer = layers_idx
                 rsa(d,:) = representational_SA_rnn(dataset,rdm_rnn);
             end
             avg_rsa = mean(rsa,1);
-            %Find peak latency -  should not be at the end of the trial
-            corr_sorted = sort(avg_rsa,'descend');
-            i = 1;
-            while (find(avg_rsa==corr_sorted(i)) - 40)*5 < 0
-                i = i+1;
-            end
-            peak_latency(index_layer,t,bs) = (find(avg_rsa==corr_sorted(i),1)-40)*5;    
+            %Find peak latency
+            peak_latency(index_layer,t,bs) = (find(avg_rsa==max(avg_rsa),1)-40)*5;    
         end
         
         %average over bootstrap samples - not for analysis, just to know
@@ -140,7 +128,6 @@ CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
 CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
 CI_diff_l1_l7(t,1) = prctile(layer1_layer7,2.5);
 CI_diff_l1_l7(t,2) = prctile(layer1_layer7,97.5);        
-
 
 %% Save as structure
 bootstrap_peak_latencies_rsa.peak_latency_bs = avg_peak_latency_bs;
