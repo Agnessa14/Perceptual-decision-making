@@ -101,33 +101,36 @@ for layer = layers_idx
     end
 end
 
-%% 2) Calculate difference between intervals for bootstrap samples averaged over RNN timepoints
-peak_latency_avg = mean(peak_latency,2);
-layer1_layer4 = abs(squeeze(peak_latency_avg(1,:))-squeeze(peak_latency_avg(2,:)));
-layer4_layer7 = abs(squeeze(peak_latency_avg(2,:))-squeeze(peak_latency_avg(3,:)));
-layer1_layer7 = abs(squeeze(peak_latency_avg(1,:))-squeeze(peak_latency_avg(3,:)));
+%% 2) Calculate difference between intervals for bootstrap samples for each RNN timepoint
+layer1_layer4 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(2,:,:)));
+layer4_layer7 = abs(squeeze(peak_latency(2,:,:))-squeeze(peak_latency(3,:,:)));
+layer1_layer7 = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(3,:,:)));
 
 %% 3) Get 95% confidence interval for peaks and for peak difference
 %peaks
-CI_peaks = NaN(numel(layers_idx),2);
+CI_peaks = NaN(numel(layers_idx),numTimepointsRNN,2);
 
 for layer = layers_idx
     index_layer = find(layers_idx==layer);
-    CI_peaks(index_layer,1) = prctile(squeeze(peak_latency_avg(index_layer,:)),2.5);
-    CI_peaks(index_layer,2) = prctile(squeeze(peak_latency_avg(index_layer,:)),97.5);
+    for t = 1:numTimepointsRNN
+        CI_peaks(index_layer,t,1) = prctile(squeeze(peak_latency(index_layer,t,:)),2.5);
+        CI_peaks(index_layer,t,2) = prctile(squeeze(peak_latency(index_layer,t,:)),97.5);
+    end
 end
 
 %peak differences
-CI_diff_l1_l4 = NaN(1,2);
-CI_diff_l4_l7 = NaN(1,2);
-CI_diff_l1_l7 = NaN(1,2);
+CI_diff_l1_l4 = NaN(numTimepointsRNN,2);
+CI_diff_l4_l7 = NaN(numTimepointsRNN,2);
+CI_diff_l1_l7 = NaN(numTimepointsRNN,2);
 
-CI_diff_l1_l4(t,1) = prctile(layer1_layer4,2.5);
-CI_diff_l1_l4(t,2) = prctile(layer1_layer4,97.5);
-CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
-CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
-CI_diff_l1_l7(t,1) = prctile(layer1_layer7,2.5);
-CI_diff_l1_l7(t,2) = prctile(layer1_layer7,97.5);        
+for t = 1:numTimepointsRNN
+    CI_diff_l1_l4(t,1) = prctile(layer1_layer4,2.5);
+    CI_diff_l1_l4(t,2) = prctile(layer1_layer4,97.5);
+    CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
+    CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
+    CI_diff_l1_l7(t,1) = prctile(layer1_layer7,2.5);
+    CI_diff_l1_l7(t,2) = prctile(layer1_layer7,97.5);        
+end
 
 %% Save as structure
 bootstrap_peak_latencies_rsa.peak_latency_bs = avg_peak_latency_bs;
@@ -137,6 +140,6 @@ bootstrap_peak_latencies_rsa.CI_diff_l1_l4 = CI_diff_l1_l4;
 bootstrap_peak_latencies_rsa.CI_diff_l4_l7 = CI_diff_l4_l7;
 bootstrap_peak_latencies_rsa.CI_diff_l1_l7 = CI_diff_l1_l7;
 
-save(fullfile(results_avg_dir,sprintf('bootstrap_peak_latencies_rsa_%s_subjects_%d_%d',conditions,subjects(1),subjects(end))),'bootstrap_peak_latencies_rsa');
+save(fullfile(results_avg_dir,sprintf('bootstrap_redone_peak_latencies_rsa_%s_subjects_%d_%d',conditions,subjects(1),subjects(end))),'bootstrap_peak_latencies_rsa');
 
 end
