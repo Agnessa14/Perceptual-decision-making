@@ -124,12 +124,12 @@ CI_diff_l4_l7 = NaN(numTimepointsRNN,2);
 CI_diff_l1_l7 = NaN(numTimepointsRNN,2);
 
 for t = 1:numTimepointsRNN
-    CI_diff_l1_l4(t,1) = prctile(layer1_layer4,2.5);
-    CI_diff_l1_l4(t,2) = prctile(layer1_layer4,97.5);
-    CI_diff_l4_l7(t,1) = prctile(layer4_layer7,2.5);
-    CI_diff_l4_l7(t,2) = prctile(layer4_layer7,97.5);
-    CI_diff_l1_l7(t,1) = prctile(layer1_layer7,2.5);
-    CI_diff_l1_l7(t,2) = prctile(layer1_layer7,97.5);        
+    CI_diff_l1_l4(t,1) = prctile(squeeze(layer1_layer4(t,:)),2.5);
+    CI_diff_l1_l4(t,2) = prctile(squeeze(layer1_layer4(t,:)),97.5);
+    CI_diff_l4_l7(t,1) = prctile(squeeze(layer4_layer7(t,:)),2.5);
+    CI_diff_l4_l7(t,2) = prctile(squeeze(layer4_layer7(t,:)),97.5);
+    CI_diff_l1_l7(t,1) = prctile(squeeze(layer1_layer7(t,:)),2.5);
+    CI_diff_l1_l7(t,2) = prctile(squeeze(layer1_layer7(t,:)),97.5);        
 end
 
 %% Save as structure
