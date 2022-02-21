@@ -105,18 +105,18 @@ if with_stats
             plot_location = 0.15;
             color = color_art;
             for_stats = correlation_art(subjects,:);
+            data = avg_corr_art;
             if with_error_bars
                 for_stats = correlation_art(subjects,:);
-                data = avg_corr_art;
             end
         elseif c == 2
             category = 'natural';            
             plot_location = 0.17;
             color = color_nat;
             for_stats = correlation_nat(subjects,:);
+            data = avg_corr_nat;
             if with_error_bars
                 for_stats = correlation_nat(subjects,:);
-                data = avg_corr_nat;
             end
         elseif c == 3
             category = 'both';            
