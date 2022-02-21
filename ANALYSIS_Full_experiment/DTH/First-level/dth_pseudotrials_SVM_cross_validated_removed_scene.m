@@ -137,24 +137,38 @@ for perm = 1:numPermutations
         model=svmtrain_01(labels_train,training_data,train_param_str); 
         
         disp('Test the SVM');
-        [~, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);  
-        decodingAccuracy(perm,t) = accuracy(1);
-        
+        [predicted_label, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);  
+        decodingAccuracy(perm,t)=accuracy(1);        
+        correctly_classified = predicted_label==labels_test;
+
         disp('Putting the decision values into the big matrix');
-        decisionValues(perm,:,t) = abs(decision_values);
+        only_correct = 1;
+        if only_correct == 1 
+            for c = 1:numConditionsIncluded
+                if correctly_classified(c)==1
+                    decisionValues(perm,c,t) = abs(decision_values(c));
+                end
+            end
+        else
+            decisionValues(perm,:,t) = abs(decision_values);
+        end      
+        
     end
     toc
 end
 
 
 %% Add NaN to the removed scene
-decisionValues_Avg = squeeze(mean(decisionValues,1));
+decisionValues_Avg = squeeze(nanmean(decisionValues,1));
 DV_1 = [decisionValues_Avg(1:removed_condition-1,:);NaN(1,numTimepoints);decisionValues_Avg(removed_condition:end,:)];
 decisionValues_Avg = DV_1;
 
 %% Save the decision values and decoding accuracy
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); 
-filename = 'cross_validated_dth_pseudotrials_svm_decisionValues';
+filename = 'cross_validated_dth_pseudotrials_svm';
+if only_correct == 1
+    filename = sprintf('only_correct_class_%s',filename);
+end
 save(fullfile(results_dir,sprintf('%s_decisionValues_%s.mat',filename,task_name)),'decisionValues_Avg');
 save(fullfile(results_dir,sprintf('%s_decodingAccuracy_%s.mat',filename,task_name)),'decodingAccuracy_avg');
 
