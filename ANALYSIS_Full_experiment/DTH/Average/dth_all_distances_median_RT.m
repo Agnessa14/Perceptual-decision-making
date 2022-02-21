@@ -1,9 +1,9 @@
-function dth_all_distances_median_RT(subjects,task_distance,task_RT,with_stats) %distance art, distance nat, RT
+function dth_all_distances_median_RT(subjects,task_distance,task_RT,with_stats,with_error_bars) %distance art, distance nat, RT
 %DTH_ALL_DISTANCES_MEDIAN_RT Performs the distance-to-hyperplane analysis using
 %the distances-to-hyperplane for each subject and the median RT across subjects.
 %
 %Input: subjects' ID (e.g., 1:13), task for the distances (1=categorization, 2=distraction), task for RT,
-%add stats (1 with, 0 without)
+%add stats (1 with, 0 without), plot with/without error bars (1/0)
 %
 %Correlates the decision values of each subject with reaction times averaged over
 %participants of each condition (60 scenes), averaged, at each timepoint, resulting in a plot of Spearman's correlation vs time. 
@@ -106,14 +106,22 @@ if with_stats
     for c = 1:3
         if c == 1
             category = 'artificial';            
-            plot_location = -0.34;
+            plot_location = 0.15;
             color = color_art;
             for_stats = correlation_art(subjects,:);
+            if with_error_bars
+                for_stats = correlation_art(subjects,:);
+                data = avg_corr_art;
+            end
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.37;
+            plot_location = 0.17;
             color = color_nat;
             for_stats = correlation_nat(subjects,:);
+            if with_error_bars
+                for_stats = correlation_nat(subjects,:);
+                data = avg_corr_nat;
+            end
         elseif c == 3
             category = 'both';            
             for_stats = correlation_both(subjects,:);
@@ -144,6 +152,21 @@ if with_stats
             plot(st,'*','Color',color); 
             hold on;
         end
+        
+         %if needed:
+        if with_error_bars
+            %2) error bars
+            stdDM = std(for_stats); 
+            err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
+
+            %plot as a shaded area
+            top_curve = data + err;
+            bottom_curve = data - err;
+            x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
+            shaded_area = [top_curve, fliplr(bottom_curve)];
+            fill(x2, shaded_area, color,'FaceAlpha',0.5);
+            hold on;
+        end
     end
 end 
 
@@ -163,10 +186,11 @@ end
 font_size = 18;
 set(gca,'FontName','Arial','FontSize',font_size);
 legend_plot = {'Artificial scenes','Natural scenes'}; 
-ylim([-0.5 0.3]);
+ylim([-0.3 0.3]);
+yticks(-0.3:0.1:0.3);
 legend_bool = 0;
 title_bool = 0;
-plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s coefficient'); 
+plotting_parameters(plot_title,title_bool,legend_plot,legend_bool,font_size,'best','Spearman''s r'); 
 
 %% Save correlations and figures
 dth_results.corr_both_categories = avg_corr_both;
@@ -174,14 +198,18 @@ dth_results.corr_artificial = avg_corr_art;
 dth_results.corr_natural = avg_corr_nat;
 
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
+file_name = 'cv_all_dist_med_rt_dth';
+if with_error_bars
+    file_name = sprintf('error_bars_%s',file_name);
+end
 if isequal(task_distance,task_RT)
-    save(fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s',subjects(1),subjects(end),task_name_distance))); 
-    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_%s.svg',subjects(1),subjects(end),task_name_distance))); 
+    save(fullfile(save_path,sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_%s',file_name,subjects(1),subjects(end),task_name_distance))); 
+    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_%s.svg',file_name,subjects(1),subjects(end),task_name_distance))); 
 else
-    save(fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances.mat',subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances',subjects(1),subjects(end),task_name_distance)));
-    saveas(gcf,fullfile(save_path,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_cross_task_%s_distances.svg',subjects(1),subjects(end),task_name_distance)));
+    save(fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances',file_name,subjects(1),subjects(end),task_name_distance)));
+    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances.svg',file_name,subjects(1),subjects(end),task_name_distance)));
 end
 
 close(gcf);
