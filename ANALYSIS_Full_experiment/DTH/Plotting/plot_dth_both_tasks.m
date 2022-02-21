@@ -1,9 +1,9 @@
-function plot_dth_both_tasks(subjects,with_cross_task,with_stats) %distance art, distance nat, RT
+function plot_dth_both_tasks(subjects,with_cross_task,with_stats,with_error_bars) %distance art, distance nat, RT
 %PLOT_DTH_BOTH_TASKS Plot the fixed effects distance-to-hyperplane results for both
 %tasks. Assumes that the correlations & stats have already been computed.
 %
 %Input: subjects' ID (e.g., 1:13), add the cross task curves (1 yes, 0 no),
-%add stats (1 yes, 0 no)
+%add stats (1 yes, 0 no), plot with/without error bars (1/0)
 %
 %Correlates the decision values with reaction times (averaged over
 %participants) of each condition (60 scenes), at each timepoint, resulting in a plot of Spearman's correlation vs time. 
@@ -11,9 +11,12 @@ function plot_dth_both_tasks(subjects,with_cross_task,with_stats) %distance art,
 %Author: Agnessa Karapetian,2021
 %
 
-%% Add paths
+%% Load data
+%Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
+results_dir_sub = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
+
 addpath(genpath(results_dir));
 
 %Load the correlations
@@ -37,6 +40,70 @@ if with_cross_task
     clear dth_results;
 end
 
+%% If with error bars, calculate the correlation for each subject
+%Load subject-specific data
+if with_error_bars
+    numTimepoints = 200;
+    numConditions = 60;
+    distances_categorization = NaN(max(subjects),numConditions,numTimepoints);
+    RTs_categorization = NaN(max(subjects),numConditions);
+    distances_distraction = NaN(max(subjects),numConditions,numTimepoints);
+    RTs_distraction = NaN(max(subjects),numConditions);
+    
+    for subject = subjects
+        subname = get_subject_name(subject);
+        %categorization
+        load(fullfile(results_dir_sub,subname,...
+            'cross_validated_dth_pseudotrials_svm_decisionValues_categorization.mat'),'decisionValues_Avg');
+        load(fullfile(results_dir_sub,subname,'RTs_correct_trials_categorization.mat'),'RT_per_condition');       
+        distances_categorization(subject,:,:) = decisionValues_Avg;   
+        RTs_categorization(subject,:) = RT_per_condition; 
+        
+        %distraction
+        load(fullfile(results_dir_sub,subname,...
+            'cross_validated_dth_pseudotrials_svm_decisionValues_fixation.mat'),'decisionValues_Avg');
+        load(fullfile(results_dir_sub,subname,'RTs_correct_trials_fixation.mat'),'RT_per_condition');
+        distances_distraction(subject,:,:) = decisionValues_Avg;   
+        RTs_distraction(subject,:) = RT_per_condition; 
+    end
+
+    %Get the median RTs of all subjects for each scene
+    medianRT_categorization = nanmedian(RTs_categorization,1);
+    medianRT_distraction = nanmedian(RTs_distraction,1);
+    
+    %Correlate each subject's distances with the median RT
+    t = 1:numTimepoints;
+    size_corr = [max(subjects),numTimepoints];
+    corr_cat_all_subjects = NaN(size_corr);
+    corr_dis_all_subjects = NaN(size_corr);
+    corr_crosstask_dist_cat_all_subjects = NaN(size_corr);
+    corr_crosstask_dist_dis_all_subjects = NaN(size_corr);
+    for subject = subjects
+        distances_subject_cat = squeeze(distances_categorization(subject,:,:));
+        distances_subject_dis = squeeze(distances_distraction(subject,:,:));
+        
+        %Find any missing scenes (only in categorization) and exclude them
+        conds = 1:numConditions;
+        conditions_subject = ~isnan(distances_subject_cat(:,1));
+
+        %Correlate RT and distances    
+        corr_cat_all_subjects(subject,:) = arrayfun(@(x) ...
+            corr(squeeze(distances_subject_cat(conditions_subject,x)),...
+            medianRT_categorization(conditions_subject)','type','Spearman'), t);
+        corr_dis_all_subjects(subject,:) = arrayfun(@(x) ...
+            corr(squeeze(distances_subject_dis(conds,x)),...
+            medianRT_distraction(conds)','type','Spearman'), t);
+        if with_cross_task
+            corr_crosstask_dist_cat_all_subjects(subject,:) = arrayfun(@(x) ...
+                corr(squeeze(distances_subject_cat(conditions_subject,x)),...
+                medianRT_distraction(conditions_subject)','type','Spearman'), t);
+            corr_crosstask_dist_dis_all_subjects(subject,:) = arrayfun(@(x) ...
+                corr(squeeze(distances_subject_dis(conditions_subject,x)),...
+                medianRT_categorization(conditions_subject)','type','Spearman'), t);
+        end
+    end
+end
+
 %% Plot 
 cmap_1 = autumn;
 cmap_2 = winter;
@@ -48,15 +115,15 @@ if with_cross_task
     color_cross_2 = cmap_1(175,:);
 end
 figure(abs(round(randn*10)));
-categ = plot(corr_both_categorization,'LineWidth',2,'Color',color_cat);
-hold on;
-distr = plot(corr_both_distraction,'LineWidth',2,'Color',color_dis);
-
-if with_cross_task
-    categ_eeg = plot(corr_both_cross_task_categorization_dist,'LineWidth',2,'Color',color_cross_1);
-    hold on;
-    distr_eeg = plot(corr_both_cross_task_distraction_dist,'LineWidth',2,'Color',color_cross_2);
-end
+% categ = plot(corr_both_categorization,'LineWidth',2,'Color',color_cat);
+% hold on;
+% distr = plot(corr_both_distraction,'LineWidth',2,'Color',color_dis);
+% 
+% if with_cross_task
+%     categ_eeg = plot(corr_both_cross_task_categorization_dist,'LineWidth',2,'Color',color_cross_1);
+%     hold on;
+%     distr_eeg = plot(corr_both_cross_task_distraction_dist,'LineWidth',2,'Color',color_cross_2);
+% end
 
 %% Plot stats if needed
 if with_stats
@@ -77,15 +144,31 @@ if with_stats
         if task == 1
             plot_location = 0.15;
             color = color_cat;
+            data = corr_both_categorization;
+            if with_error_bars
+                for_stats = corr_cat_all_subjects(subjects,:);
+            end
         elseif task == 2
             plot_location = 0.18;
             color = color_dis;
+            data = corr_both_distraction;
+            if with_error_bars
+                for_stats = corr_dis_all_subjects(subjects,:);
+            end
         elseif task == 3
             plot_location = 0.19;
             color = color_cross_1;
+            data = corr_both_cross_task_categorization_dist;
+            if with_error_bars
+                for_stats = corr_crosstask_dist_cat_all_subjects(subjects,:);
+            end
         elseif task == 4
             plot_location = 0.17;
             color = color_cross_2;
+            data = corr_both_cross_task_distraction_dist;
+            if with_error_bars
+                for_stats = corr_crosstask_dist_dis_all_subjects(subjects,:);
+            end
         end
    
         %Load and plot the stats
@@ -101,7 +184,28 @@ if with_stats
         st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
-        hold on;              
+        hold on;     
+        
+        %if needed: plot error bars
+        if with_error_bars
+            %calculate error bars
+            stdDM = std(for_stats); 
+            err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
+
+            %plot as a shaded area
+            top_curve = data + err;
+            bottom_curve = data - err;
+            x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
+            shaded_area = [top_curve, fliplr(bottom_curve)];
+            fill(x2, shaded_area, color,'FaceAlpha',0.5);
+            hold on;
+        end
+
+        %Plot average curve
+        plot(data,'LineWidth',2,'Color',color);
+        hold on;
+        
+        
     end
 end 
 
@@ -125,12 +229,16 @@ if with_cross_task && legend_bool==1
 end
 
 %% Save
+file_name = 'cv_all_dist_med_rt_dth_both_tasks';
+if with_error_bars
+    file_name = sprintf('error_bars_%s',file_name);
+end
 if with_cross_task
-    saveas(gcf,fullfile(results_dir,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_both_tasks_with_crosstask',subjects(1),subjects(end)))); 
-    saveas(gcf,fullfile(results_dir,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_both_tasks_with_crosstask.svg',subjects(1),subjects(end))));
+    saveas(gcf,fullfile(results_dir,sprintf('%s_%d_%d_with_crosstask',file_name,subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_dir,sprintf('%s_subjects_%d_%d_with_crosstask.svg',file_name,subjects(1),subjects(end))));
 else
-    saveas(gcf,fullfile(results_dir,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_both_tasks',subjects(1),subjects(end)))); 
-    saveas(gcf,fullfile(results_dir,sprintf('cv_all_dist_med_rt_dth_subjects_%d_%d_both_tasks.svg',subjects(1),subjects(end))));
+    saveas(gcf,fullfile(results_dir,sprintf('%s_subjects_%d_%d',file_name,subjects(1),subjects(end)))); 
+    saveas(gcf,fullfile(results_dir,sprintf('%s_subjects_%d_%d.svg',file_name,subjects(1),subjects(end))));
 end
 close(gcf);
 end
