@@ -91,10 +91,6 @@ cmap_2 = summer;
 color_art = cmap_1(200,:); %purple
 color_nat = cmap_2(100,:); %green
 
-plot(avg_corr_art,'LineWidth',2,'Color',color_art);
-hold on;
-plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
-
 %% Plot stats if needed
 if with_stats   
     %define some variables for the stats and the plot
@@ -145,7 +141,7 @@ if with_stats
         save(filename,'permutation_stats');
         end
         
-        %Plot
+        %Plot statistics
         if c < 3
             st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
             st(st==0) = NaN;
@@ -153,20 +149,28 @@ if with_stats
             hold on;
         end
         
-         %if needed:
-        if with_error_bars
-            %2) error bars
-            stdDM = std(for_stats); 
-            err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
+        %if needed: plot error bars
+        if c < 3
+            if with_error_bars
+                %calculate error bars
+                stdDM = std(for_stats); 
+                err = stdDM/sqrt(size(for_stats,1)); %standard deviation/sqrt of num subjects  
 
-            %plot as a shaded area
-            top_curve = data + err;
-            bottom_curve = data - err;
-            x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
-            shaded_area = [top_curve, fliplr(bottom_curve)];
-            fill(x2, shaded_area, color,'FaceAlpha',0.5);
+                %plot as a shaded area
+                top_curve = data + err;
+                bottom_curve = data - err;
+                x2 = [1:numTimepoints, fliplr(1:numTimepoints)];
+                shaded_area = [top_curve, fliplr(bottom_curve)];
+                fill(x2, shaded_area, color,'FaceAlpha',0.5);
+                hold on;
+            end
+            
+            %Plot average curve
+            plot(data,'LineWidth',2,'Color',color);
             hold on;
         end
+        
+
     end
 end 
 
