@@ -15,11 +15,24 @@ function [rdm_rsa,rdm_flattened_eeg,rdm_flattened_rnn] = representational_SA_rnn
 
 %%  Reshape the matrices: take only the upper diagonal, in vector form
 %EEG 
+%check and remove any missing scenes
+for s = 1:size(rdm_eeg,1)
+    if all(isnan(rdm_eeg(s,:,1)))
+        if s < 30
+            rdm_eeg(s,:,:) = [];
+            rdm_eeg(:,s,:) = [];
+            rdm_rnn(s,:) = [];
+            rdm_rnn(:,s) = [];
+            break; %only one missing scene per subject in this dataset-adjust for future datasets
+        end
+    end
+end
+
 if find(isnan(rdm_eeg)) >0 %full matrix version
     numTimepoints_eeg = size(rdm_eeg,3);
     rdm_eeg(isnan(rdm_eeg)) = 0;
     rdm_flattened_cell_eeg = arrayfun(@(x) squareform(rdm_eeg(:,:,x)+(rdm_eeg(:,:,x))'),...
-                1:numTimepoints,'UniformOutput',false);
+                1:numTimepoints_eeg,'UniformOutput',false);
     rdm_flattened_eeg = reshape(cell2mat(rdm_flattened_cell_eeg),[],numTimepoints_eeg);
 else
     numTimepoints_eeg = size(rdm_eeg,2);
