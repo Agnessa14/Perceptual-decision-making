@@ -23,14 +23,6 @@ numTimepointsEEG = 200;
 layers_idx = [1,4,7];
 legend_bool = 0;
 
-%Stats parameters
-% num_permutations = 1000;
-% tail = 'right';
-% q_value = 0.05;
-% permutation_stats.num_perms = 1000;
-% permutation_stats.cluster_th = 0.05;
-% permutation_stats.significance_th = 0.05;
-
 %Load subject-level RDMs 
 numConditions = 60;
 rdm_eeg_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepointsEEG); 
@@ -47,10 +39,10 @@ rdm_dir = fullfile(results_avg_dir,'02.11_2_rnn/Input_RDM');
 
 %% Calculate and plot the RSA results
 % rsa_results_dir = fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone');
-plot_location = -0.1:-0.02:-0.24;
+plot_location = -0.1:-0.04:-0.2;
 model_name = '02_11_2';
 plot_whole_epoch = 0;
-rsa_results = NaN(numel(layers_idx),numTimepointsRNN,numTimepointsEEG); %artificial, natural, all
+rsa_results = NaN(numel(layers_idx),numTimepointsEEG); %artificial, natural, all
 
 for c = 1:3 %artificial,natural,all
     if c == 1
@@ -74,13 +66,13 @@ for c = 1:3 %artificial,natural,all
     filename_ceiling_l = sprintf('lower_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
     load(fullfile(results_avg_dir,filename_ceiling_l),'noise_ceiling_lower_bound');    
     filename_ceiling_u = sprintf('upper_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
-    load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');
-   
+    load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');  
+    figure;
     
     for l=layers_idx
         index_layer = layers_idx==l;
+        
         %plot the noise ceilings as a shaded area
-        figure;
         dark_grey = [0.5 0.5 0.5];
         light_grey = [0.8 0.8 0.8];
         x_var = [1:numTimepointsEEG, fliplr(1:numTimepointsEEG)];
@@ -116,6 +108,8 @@ for c = 1:3 %artificial,natural,all
             for subject = subjects
                 rdm_eeg = squeeze(rdm_eeg_all_subjects(subject,conds,conds,:));
                 rsa_results_allsubs(subject,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
+                plot(rsa_results_allsubs(subject,:));
+                hold on;
             end  
             rsa_all_tps(t,:,:) = rsa_results_allsubs;
         end
@@ -124,10 +118,9 @@ for c = 1:3 %artificial,natural,all
         rsa_results_tl_subs = rsa_all_tps(:,subjects,:);
         all_subs = squeeze(mean(rsa_results_tl_subs,1));
         rsa_results_avg = squeeze(mean(all_subs,1));
-        plot(rsa_results_avg,'LineWidth',2,'Color',cmap(find(index_layer==1)*2,:));
+        plot(rsa_results_avg,'LineWidth',2,'Color',cmap(find(index_layer==1)*3,:));
         hold on;
         rsa_results(index_layer,:) = rsa_results_avg;
-
 
         %Stats: FDR-corrected
         if with_stats
@@ -148,13 +141,12 @@ for c = 1:3 %artificial,natural,all
             end
 
             %Plot the stats
-            st = (fdr_stats.significant_timepoints*plot_location(t)); 
+            st = (fdr_stats.significant_timepoints*plot_location(index_layer)); 
             st(st==0) = NaN;
-            plot(st,'*','Color',cmap(t,:)); 
+            plot(st,'*','Color',cmap(find(index_layer==1)*3,:)); 
             hold on;
         end
-
-        
+       
         %Plot parameters
         if legend_bool==1
             legend(legend_plot,'Location','best');
