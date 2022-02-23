@@ -92,37 +92,48 @@ color_art = cmap_1(200,:); %purple
 color_nat = cmap_2(100,:); %green
 
 %% Plot stats if needed
-if with_stats   
-    %define some variables for the stats and the plot
-    analysis = 'random_dth';
-    permutation_stats.num_perms = 1000;
-    permutation_stats.cluster_th = 0.05;
-    permutation_stats.significance_th = 0.05;
-    permutation_stats.tail = 'left';
-    for c = 1:3
+for c = 1:3
+    if c == 1
+        data = avg_corr_art;
+        color = color_art;
+    elseif c == 2
+        data = avg_corr_nat;
+        color = color_nat;
+    elseif c == 3
+        data = avg_corr_both;
+        color = 'k';
+    end
+    if ~with_stats
+        %Plot average curve
+        plot(data,'LineWidth',2,'Color',color);
+        hold on;
+    else
+        %define some variables for the stats and the plot
+        analysis = 'random_dth';
+        permutation_stats.num_perms = 1000;
+        permutation_stats.cluster_th = 0.05;
+        permutation_stats.significance_th = 0.05;
+        permutation_stats.tail = 'left';
+
         if c == 1
             category = 'artificial';            
             plot_location = 0.15;
-            color = color_art;
             for_stats = correlation_art(subjects,:);
-            data = avg_corr_art;
             if with_error_bars
                 for_stats = correlation_art(subjects,:);
             end
         elseif c == 2
             category = 'natural';            
             plot_location = 0.17;
-            color = color_nat;
             for_stats = correlation_nat(subjects,:);
-            data = avg_corr_nat;
             if with_error_bars
                 for_stats = correlation_nat(subjects,:);
             end
         elseif c == 3
             category = 'both';            
-            for_stats = correlation_both(subjects,:);
+            for_stats = correlation_both(subjects,:);       
         end
-
+        
         %Check if stats already exist, otherwise run the stats script
         if task_distance==task_RT
             filename_sign = 'dth_permutation_stats';
@@ -164,16 +175,10 @@ if with_stats
                 fill(x2, shaded_area, color,'FaceAlpha',0.5);
                 hold on;
             end
-            
-            %Plot average curve
-            plot(data,'LineWidth',2,'Color',color);
-            hold on;
         end
-        
-
     end
 end 
-
+    
 %% Plotting parameters
 if task_distance==task_RT
     if task_distance==1
