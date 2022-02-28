@@ -1,4 +1,4 @@
-function bootstrap_peak_latency_rsa(subjects,conditions_int)
+function bootstrap_peak_latency_rsa(subjects,conditions_int) %OBSOLETE - use bootstrap_peak_latency_rsa_avg_tps.m instead
 %BOOTSTRAP_PEAK_LATENCY_RSA Apply bootstrapping to calculate the 95% confidence
 %interval of peak latency difference (for RSA between RNN and EEG-categorization task).
 %
