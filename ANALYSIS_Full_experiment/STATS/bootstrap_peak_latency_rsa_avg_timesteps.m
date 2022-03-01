@@ -1,6 +1,7 @@
 function bootstrap_peak_latency_rsa_avg_timesteps(subjects,conditions_int)
 %BOOTSTRAP_PEAK_LATENCY_RSA_AVG_TIMESTEPS Apply bootstrapping to calculate the 95% confidence
-%interval of peak latency difference (for RSA between RNN and EEG-categorization task).
+%interval of peak latency difference (for RSA between RNN and
+%EEG-categorization task). Results are for all RNN timepoints & for the median. 
 %
 %Input: subject IDs (e.g., 1:13), conditions (1(all),2(artificial) or
 %3(natural)
@@ -44,10 +45,8 @@ end
 rdm_subjects = rdm_all_subjects(subjects,:,:,:); %remove NaN subjects
 
 %% Load the RNN RDMs & RSA results
-model_name = '02_11_2';
-filename_part = 'avg_tps_rsa_plus_noise_ceilings_subject_level_-100ms';
-filename = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d',...
-    model_name,filename_part,conditions,subjects(1),subjects(end)));
+%results for 3 layers and all timepoints
+filename = sprintf('02_11_2_redone_rsa_plus_noise_ceilings_subject_level_-100ms_%s_subjects_5_35.mat',conditions);
 load(fullfile(results_avg_dir,filename),'rsa_results');
 
 %Preallocate
@@ -59,7 +58,7 @@ for layer = layers_idx
     %RDMs
     for t = 1:numTimepointsRNN
         load(fullfile(results_avg_dir,rnn_dir,sprintf('ReLU_Layer_%d_Time_%d_Input_RDM.mat',layer-1,t-1)),'data');
-            rdm_rnn = data(conds,conds);
+        rdm_rnn(index_layer,t,:,:) = data(conds,conds);
         for c1 = 1:numConditions
             for c2 = 1:numConditions
                 if c1==c2
@@ -67,10 +66,10 @@ for layer = layers_idx
                 end
             end
         end
+        %RSA results: get ground truth peak latency (for each timepoint)
+        rsa_results_temp = squeeze(rsa_results(index_layer,t,:))';
+        peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results_temp)==max(rsa_results_temp))-40)*5;    
     end
-    %RSA results: get ground truth peak latency
-    rsa_results_l = squeeze(rsa_results(index_layer,:))';
-    peak_latency_ground_truth(index_layer) = (find(squeeze(rsa_results_l)==max(rsa_results_l))-40)*5;    
 end
 
                                   %%%%% BOOTSTRAPPING %%%%%
@@ -90,6 +89,8 @@ rng(0,'twister');
 %calculate the peak latency
 for bs = 1:num_bootstrap_samples
     rsa = NaN(num_datasets,numel(layers_idx),numTimepointsRNN,numTimepoints);   
+    
+    %create sample and perform RSA on each dataset
     for d = 1:num_datasets
         idx = round((max_dataset-min_dataset).*rand(1,1) + min_dataset); %pick one random number between one and num_datasets
         dataset = squeeze(rdm_subjects(idx,:,:,:));        
@@ -101,9 +102,16 @@ for bs = 1:num_bootstrap_samples
         end
     end
     avg_rsa_datasets = squeeze(mean(rsa,1)); %avg over datasets
-    peak_latency(index_layer,t,bs) = (find(avg_rsa_datasets==max(avg_rsa_datasets),1)-40)*5;    
-    avg_rsa_tps = squeeze(median(avg_rsa_datasets,2));
-    peak_latency_median_tps(index_layer,bs) = (find(avg_rsa_tps==max(avg_rsa_tps),1)-40)*5;
+    avg_rsa_tps = squeeze(median(avg_rsa_datasets,2)); %avg over timepoints
+    
+    %calculate sample peak latency
+    for layer = layers_idx
+        index_layer = find(layers_idx==layer);            
+        peak_latency_median_tps(index_layer,bs) = (find(avg_rsa_tps(index_layer,:)==max(avg_rsa_tps(index_layer,:)),1)-40)*5;
+        for t = 1:numTimepointsRNN
+            peak_latency(index_layer,t,bs) = (find(avg_rsa_datasets(index_layer,t,:)==max(avg_rsa_datasets(index_layer,t,:)),1)-40)*5;
+        end
+    end
 end
 
 %% 2) Calculate difference between intervals for bootstrap samples 
@@ -115,7 +123,7 @@ layer1_layer7_all_tps = abs(squeeze(peak_latency(1,:,:))-squeeze(peak_latency(3,
 %for the median
 layer1_layer4_median_tps = abs(squeeze(peak_latency_median_tps(1,:))-squeeze(peak_latency_median_tps(2,:)));
 layer4_layer7_median_tps = abs(squeeze(peak_latency_median_tps(2,:))-squeeze(peak_latency_median_tps(3,:)));
-layer1_layer7_median_tps = abs(squeeze(peak_latency_median_tps(1,:))-squeeze(peak_latency(3,:)));
+layer1_layer7_median_tps = abs(squeeze(peak_latency_median_tps(1,:))-squeeze(peak_latency_median_tps(3,:)));
 
 %% 3) Get 95% confidence interval for peaks and for peak difference
 %all timepoints
