@@ -1,9 +1,10 @@
-function rsa_rnn_eeg_subject_by_subject_averaged_timesteps(subjects,with_stats) 
+function rsa_rnn_eeg_subject_by_subject_averaged_timesteps(subjects,with_stats,with_error_bars) 
 %RSA_RNN_EEG_SUBJECT_BY_SUBJECT_AVERAGED_TIMESTEPS Compute and plot the RSA between RNN and EEG with stats, if desired.
 %RSA is computed by correlating each of the subject-specific EEG RDMs with
 %the RNN RDM and averaging over. Average over 3 layers
 %
-%Input: subjects' ID (e.g., 1:13), add stats (1 with, 0 without)
+%Input: subjects' ID (e.g., 1:13), add stats (1 with, 0 without), plot
+%with/without error bars (1/0)
 %
 %Author: Agnessa Karapetian, 2021
 
@@ -48,7 +49,7 @@ for c = 1:3 %artificial,natural,all
     if c == 1
         conditions = 'artificial';
         conds = 1:30;
-        colormap_plot = 'PuRd';
+        colormap_plot = 'PuRd';       
     elseif c == 2
         conditions = 'natural';
         conds = 31:60;
@@ -56,7 +57,7 @@ for c = 1:3 %artificial,natural,all
     elseif c == 3
         conditions = 'all';
         conds = 1:60;
-        colormap_plot = 'OrRd';
+        colormap_plot = 'OrRd'; 
     end
     
     %get colormap from Python
@@ -71,7 +72,7 @@ for c = 1:3 %artificial,natural,all
     
     for l=layers_idx
         index_layer = layers_idx==l;
-        
+        color = cmap(find(index_layer==1)*3,:);
         %plot the noise ceilings as a shaded area
         dark_grey = [0.5 0.5 0.5];
         light_grey = [0.8 0.8 0.8];
@@ -108,23 +109,21 @@ for c = 1:3 %artificial,natural,all
             for subject = subjects
                 rdm_eeg = squeeze(rdm_eeg_all_subjects(subject,conds,conds,:));
                 rsa_results_allsubs(subject,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
-                plot(rsa_results_allsubs(subject,:));
-                hold on;
             end  
             rsa_all_tps(t,:,:) = rsa_results_allsubs;
         end
         
         %Average over RNN timesteps and subjects & plot
         rsa_results_tl_subs = rsa_all_tps(:,subjects,:);
-        all_subs = squeeze(mean(rsa_results_tl_subs,1));
+        all_subs = squeeze(median(rsa_results_tl_subs,1));
         rsa_results_avg = squeeze(mean(all_subs,1));
-        plot(rsa_results_avg,'LineWidth',2,'Color',cmap(find(index_layer==1)*3,:));
-        hold on;
         rsa_results(index_layer,:) = rsa_results_avg;
-
+        if ~with_stats
+            plot(rsa_results_avg,'LineWidth',2,'Color',color);
+            hold on;
+        
         %Stats: FDR-corrected
-        if with_stats
-
+        else 
             %Check if exist
             filename_sign = sprintf('avg_tps_%s_rsa_rnn_eeg_stats_subject_level',model_name);   
             filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d.mat',...
@@ -144,6 +143,25 @@ for c = 1:3 %artificial,natural,all
             st = (fdr_stats.significant_timepoints*plot_location(index_layer)); 
             st(st==0) = NaN;
             plot(st,'*','Color',cmap(find(index_layer==1)*3,:)); 
+            hold on;
+            
+            %if needed: error bars
+            if with_error_bars
+                %calculate error bars
+                stdDM = std(all_subs); 
+                err = stdDM/sqrt(size(all_subs,1)); %standard deviation/sqrt of num subjects  
+
+                %plot as a shaded area
+                top_curve = rsa_results_avg + err;
+                bottom_curve = rsa_results_avg - err;
+                x2 = [1:numTimepointsEEG, fliplr(1:numTimepointsEEG)];
+                shaded_area = [top_curve, fliplr(bottom_curve)];
+                fill(x2, shaded_area, color,'FaceAlpha',0.2);
+                hold on;
+            end
+            
+            %Plot the data
+            plot(rsa_results_avg,'LineWidth',2,'Color',color);
             hold on;
         end
        
@@ -168,6 +186,9 @@ for c = 1:3 %artificial,natural,all
         filename_part = 'avg_tps_rsa_plus_noise_ceilings_subject_level';
         if ~plot_whole_epoch 
             filename_part = sprintf('%s_-100ms',filename_part);
+        end
+        if with_error_bars
+            filename_part = sprintf('error_bars_%s',filename_part);
         end
         filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d',...
             model_name,filename_part,conditions,subjects(1),subjects(end)));
