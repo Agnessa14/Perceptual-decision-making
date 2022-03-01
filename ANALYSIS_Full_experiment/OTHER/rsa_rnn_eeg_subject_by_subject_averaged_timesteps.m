@@ -70,6 +70,9 @@ for c = 1:3 %artificial,natural,all
     load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');  
     figure;
     
+    %preallocate
+    rsa_all_layers_tps_subs = NaN(max(subjects),numel(layers_idx),numTimepointsRNN,numTimepointsEEG);
+
     for l=layers_idx
         index_layer = layers_idx==l;
         color = cmap(find(index_layer==1)*3,:);
@@ -108,7 +111,9 @@ for c = 1:3 %artificial,natural,all
             rsa_results_allsubs = NaN(max(subjects),numTimepointsEEG);
             for subject = subjects
                 rdm_eeg = squeeze(rdm_eeg_all_subjects(subject,conds,conds,:));
-                rsa_results_allsubs(subject,:) = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
+                results_rdm = representational_SA_rnn(rdm_eeg,rdm_rnn); %modify the RSA function 
+                rsa_results_allsubs(subject,:) = results_rdm;
+                rsa_all_layers_tps_subs(subject,index_layer,t,:) = results_rdm;
             end  
             rsa_all_tps(t,:,:) = rsa_results_allsubs;
         end
@@ -196,6 +201,8 @@ for c = 1:3 %artificial,natural,all
         saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
     save(sprintf('%s',filename_plot),'rsa_results');
+    rsa_all_subs = rsa_all_layers_tps_subs(subjects,:,:,:);
+    save(fullfile(results_avg_dir,sprintf('all_subjects_all_tps_rsa_rnn_%s',conditions)),'rsa_all_subs');
 end
 
 end
