@@ -175,6 +175,9 @@ for c = 1:3
                 fill(x2, shaded_area, color,'FaceAlpha',0.5);
                 hold on;
             end
+        %Plot average curve
+        plot(data,'LineWidth',2,'Color',color);
+        hold on;
         end
     end
 end 
