@@ -17,14 +17,10 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 
 %% Load the EEG data (distances to the hyperplane for all subjects), rCNN RTs and human RTs 
 load(fullfile(results_avg_dir,'distances_all_subjects.mat'),'distances_all_subjects');
-load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
+load('/scratch/agnek95/PDM/DATA/RNN_RTs/RNN_RTs_entropy_threshold_0.02.mat','data');
 rCNN_RTs = data;
 load(fullfile(results_avg_dir,'RT_all_subjects_5_35_categorization.mat'),'RTs');
-human_RTs = RTs;
-
-%Average over subjects
-mean_EEG_distances = squeeze(mean(distances_all_subjects,1));
-mean_human_RTs = squeeze(mean(human_RTs,1));
+human_RTs = nanmedian(RTs,1);
 
 %Select the appropriate scenes
 if strcmp(conditions,'artificial')
@@ -34,25 +30,77 @@ elseif strcmp(conditions,'natural')
 elseif strcmp(conditions,'both')
     conds = 1:60;
 end
-selected_EEG_distances = mean_EEG_distances(conds,:);
-selected_human_RTs = mean_human_RTs(conds);
+selected_EEG_distances = distances_all_subjects(:,conds,:);
+selected_human_RTs = human_RTs(conds)';
 selected_rCNN_RTs = rCNN_RTs(conds);
 
-%% 
-for roi = 1:3
-    
-    mean_distances_fmri = mean(distances_fmri(:,:,roi),2); 
-    
-    for sub = 1:30
-    for t = 1:size(distances_all_subjects,3)
-        
-        mean_distances_eeg = distances_all_subjects(sub,:,t); 
-        [~,~,~,~,r2_behav_eeg] = regress(mean_distances_eeg', [ones(size(mean_distances_fmri,1),1) mean_RTs']); 
-        [~,~,~,~,r2_fmri_eeg] = regress(mean_distances_eeg', [ones(size(mean_distances_fmri,1),1) mean_distances_fmri]); 
-        [~,~,~,~,r2_full] = regress(mean_distances_eeg', [ones(size(mean_distances_fmri,1),1), mean_distances_fmri, mean_RTs']);
-        
-        dth_shared(t,sub,roi) = r2_fmri_eeg(1)+r2_behav_eeg(1)-r2_full(1); 
-        dth_behav_eeg(t,sub,roi) = r2_behav_eeg(1); 
-    end 
+%Define some variables
+num_subjects = size(distances_all_subjects,1);
+num_timepoints = size(distances_all_subjects,3);
+num_scenes = numel(conds);
+
+%% Run the GLM
+dth_shared = NaN(num_subjects,num_timepoints);
+dth_eeg_human_rt = NaN(num_subjects,num_timepoints);
+dth_rcnn_rt_human_rt = NaN(num_subjects,num_timepoints);
+for sub = 1:num_subjects
+    num_scenes_sub = num_scenes;
+    RTs_median = selected_human_RTs;
+    selected_rCNN_RTs_sub = selected_rCNN_RTs;
+    distances_eeg_sub = squeeze(selected_EEG_distances(sub,:,:)); 
+
+    %remove excluded scene if needed
+%     if sub == 6
+%         keyboard;
+%     end
+    if any(isnan(distances_eeg_sub))
+        excluded_scene = find(isnan(distances_eeg_sub(:,1)));
+        distances_eeg_sub(excluded_scene,:) = [];
+        RTs_median(excluded_scene) = [];
+        selected_rCNN_RTs_sub(excluded_scene) = [];
+        num_scenes_sub = num_scenes-1;
     end
+        
+    for t = 1:num_timepoints
+        distances_eeg_sub_t = squeeze(distances_eeg_sub(:,t)); 
+        
+        [~,~,~,~,r2_eeg_human_rt] = regress(RTs_median, [ones(num_scenes_sub,1) distances_eeg_sub_t]); 
+        [~,~,~,~,r2_rcnn_rt_human_rt] = regress(RTs_median, [ones(num_scenes_sub,1) selected_rCNN_RTs_sub']); 
+        [~,~,~,~,r2_full] = regress(RTs_median, [ones(num_scenes_sub,1),distances_eeg_sub_t,selected_rCNN_RTs_sub']);
+
+        dth_shared(sub,t) = r2_eeg_human_rt(1)+r2_rcnn_rt_human_rt(1)-r2_full(1); 
+        dth_eeg_human_rt(sub,t) = r2_eeg_human_rt(1);
+        dth_rcnn_rt_human_rt(sub,t) = r2_rcnn_rt_human_rt(1);
+    end 
 end
+
+
+%% Plot
+%Average over subjects
+avg_dth_shared = squeeze(mean(dth_shared,1));
+avg_dth_eeg_human_rt = squeeze(mean(dth_eeg_human_rt,1));
+avg_dth_rcnn_rt_human_rt = squeeze(mean(dth_rcnn_rt_human_rt,1));
+
+%Plot
+p_sh = plot(avg_dth_shared,'LineWidth',2,'DisplayName','Shared variance');
+hold on;
+p_eeg = plot(avg_dth_eeg_human_rt,'LineWidth',2,'DisplayName','Unique variance EEG');
+p_rCNN = plot(avg_dth_rcnn_rt_human_rt,'LineWidth',2,'DisplayName','Unique variance rCNN RT');
+set(gca,'FontName','Arial','FontSize',12);
+xticks(0:20:200);
+xticklabels(-200:100:800);        
+onset_time = 40;
+xline(onset_time,'--');
+ylabel('r squared');
+xlabel('Time (ms)');
+legend([p_sh,p_eeg,p_rCNN],'Location','best');
+
+%Save glm results and plot
+save()
+saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.fig',conditions))); 
+saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.svg',conditions))); 
+close(gcf); 
+
+end
+
+
