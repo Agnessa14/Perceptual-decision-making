@@ -50,9 +50,6 @@ for sub = 1:num_subjects
     distances_eeg_sub = squeeze(selected_EEG_distances(sub,:,:)); 
 
     %remove excluded scene if needed
-%     if sub == 6
-%         keyboard;
-%     end
     if any(isnan(distances_eeg_sub))
         excluded_scene = find(isnan(distances_eeg_sub(:,1)));
         distances_eeg_sub(excluded_scene,:) = [];
@@ -77,15 +74,19 @@ end
 
 %% Plot
 %Average over subjects
-avg_dth_shared = squeeze(mean(dth_shared,1));
-avg_dth_eeg_human_rt = squeeze(mean(dth_eeg_human_rt,1));
-avg_dth_rcnn_rt_human_rt = squeeze(mean(dth_rcnn_rt_human_rt,1));
+glm.avg_dth_shared = squeeze(mean(dth_shared,1));
+glm.avg_dth_eeg_human_rt = squeeze(mean(dth_eeg_human_rt,1));
+glm.avg_dth_rcnn_rt_human_rt = squeeze(mean(dth_rcnn_rt_human_rt,1));
 
-%Plot
-p_sh = plot(avg_dth_shared,'LineWidth',2,'DisplayName','Shared variance');
+%Timecourse plot
+color_shared = [0.3 0 .5];
+color_rcnn = [0 0 .7];
+color_eeg = [.7 .1 0];
+figure;
+p_sh = plot(glm.avg_dth_shared,'LineWidth',2,'DisplayName','Shared variance','Color',color_shared);
 hold on;
-p_eeg = plot(avg_dth_eeg_human_rt,'LineWidth',2,'DisplayName','Unique variance EEG');
-p_rCNN = plot(avg_dth_rcnn_rt_human_rt,'LineWidth',2,'DisplayName','Unique variance rCNN RT');
+p_rCNN = plot(glm.avg_dth_rcnn_rt_human_rt,'LineWidth',2,'DisplayName','Unique variance rCNN RT','Color',color_rcnn);
+p_eeg = plot(glm.avg_dth_eeg_human_rt,'LineWidth',2,'DisplayName','Unique variance EEG','Color',color_eeg);
 set(gca,'FontName','Arial','FontSize',12);
 xticks(0:20:200);
 xticklabels(-200:100:800);        
@@ -93,13 +94,34 @@ onset_time = 40;
 xline(onset_time,'--');
 ylabel('r squared');
 xlabel('Time (ms)');
-legend([p_sh,p_eeg,p_rCNN],'Location','best');
-
-%Save glm results and plot
-save()
+% legend([p_sh,p_eeg,p_rCNN],'Location','best');
+%Save plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.fig',conditions))); 
 saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.svg',conditions))); 
 close(gcf); 
+
+%Bar plot: at peak
+peak_t = find(glm.avg_dth_shared==max(glm.avg_dth_shared));
+glm.peak_shared = glm.avg_dth_shared(peak_t);
+glm.peak_eeg_rt = glm.avg_dth_eeg_human_rt(peak_t);
+glm.peak_rcnn_rt = glm.avg_dth_rcnn_rt_human_rt(peak_t); %always the same
+peak_r2 = [glm.peak_shared glm.peak_eeg_rt glm.peak_rcnn_rt];
+figure;
+b = bar(peak_r2);
+%Assign colours
+b.FaceColor = 'flat';
+b.CData(1,:) = color_shared;
+b.CData(2,:) = color_rcnn;
+b.CData(3,:) = color_eeg;
+%labels
+xlabels = {'Shared variance'; 'rCNN RT unique variance'; 'EEG unique variance'};
+set(gca,'xticklabel',xlabels)
+ylabel('rsquared')
+
+%Save glm results and bar plot
+saveas(gcf,fullfile(results_avg_dir,sprintf('glm_peak_rt_eeg_rcnn_rt_%s_scenes.fig',conditions)));
+saveas(gcf,fullfile(results_avg_dir,sprintf('glm_peak_rt_eeg_rcnn_rt_%s_scenes.svg',conditions)));
+close(gcf);
 
 end
 
