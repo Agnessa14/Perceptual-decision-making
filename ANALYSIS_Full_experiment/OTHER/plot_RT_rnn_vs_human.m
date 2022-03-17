@@ -82,4 +82,7 @@ saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.fig'));
 saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.svg'));
 close(gcf);
 
+%Noise ceilings
+save(fullfile(results_avg_dir,'corr_RT_RNN_human_noise_ceiling_lower'),'RT_noise_ceiling_lower');
+
 end
