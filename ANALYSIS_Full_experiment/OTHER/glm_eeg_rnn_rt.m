@@ -13,6 +13,7 @@ function glm_eeg_rnn_rt(conditions)
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
 addpath(genpath('/scratch/agnek95/PDM/DATA/RNN_ACTIVATIONS'));
 addpath(genpath('/scratch/agnek95/PDM/DATA/RNN_RTs'));
+addpath(genpath('/home/agnek95/helper_functions')); %correlate from M. Hebart
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
 
 %% Load the EEG data (distances to the hyperplane for all subjects), rCNN RTs and human RTs 
@@ -43,9 +44,11 @@ num_scenes = numel(conds);
 dth_shared = NaN(num_subjects,num_timepoints);
 dth_eeg_human_rt = NaN(num_subjects,num_timepoints);
 dth_rcnn_rt_human_rt = NaN(num_subjects,num_timepoints);
+
+
 for sub = 1:num_subjects
     num_scenes_sub = num_scenes;
-    RTs_median = selected_human_RTs;
+    RTs_median_sub = selected_human_RTs;
     selected_rCNN_RTs_sub = selected_rCNN_RTs;
     distances_eeg_sub = squeeze(selected_EEG_distances(sub,:,:)); 
 
@@ -53,7 +56,7 @@ for sub = 1:num_subjects
     if any(isnan(distances_eeg_sub))
         excluded_scene = find(isnan(distances_eeg_sub(:,1)));
         distances_eeg_sub(excluded_scene,:) = [];
-        RTs_median(excluded_scene) = [];
+        RTs_median_sub(excluded_scene) = [];
         selected_rCNN_RTs_sub(excluded_scene) = [];
         num_scenes_sub = num_scenes-1;
     end
@@ -68,6 +71,7 @@ for sub = 1:num_subjects
         dth_shared(sub,t) = r2_eeg_human_rt(1)+r2_rcnn_rt_human_rt(1)-r2_full(1); 
         dth_eeg_human_rt(sub,t) = r2_eeg_human_rt(1);
         dth_rcnn_rt_human_rt(sub,t) = r2_rcnn_rt_human_rt(1);
+   
     end 
 end
 
@@ -83,18 +87,21 @@ color_shared = [0.3 0 .5];
 color_rcnn = [0 0 .7];
 color_eeg = [.7 .1 0];
 figure;
-p_sh = plot(glm.avg_dth_shared,'LineWidth',2,'DisplayName','Shared variance','Color',color_shared);
+p_eeg = plot(partial_corr.eeg,'LineWidth',2,'DisplayName','EEG','Color',color_eeg);
 hold on;
-p_rCNN = plot(glm.avg_dth_rcnn_rt_human_rt,'LineWidth',2,'DisplayName','Unique variance rCNN RT','Color',color_rcnn);
-p_eeg = plot(glm.avg_dth_eeg_human_rt,'LineWidth',2,'DisplayName','Unique variance EEG','Color',color_eeg);
+p_rcnn = plot(partial_corr.rcnn,'LineWidth',2,'DisplayName','rCNN RT','Color',color_rcnn);
+p_shared = plot(partial_corr.shared,'LineWidth',2,'DisplayName','Shared','Color',color_shared);
+
+hold on;
+
 set(gca,'FontName','Arial','FontSize',12);
 xticks(0:20:200);
 xticklabels(-200:100:800);        
 onset_time = 40;
 xline(onset_time,'--');
-ylabel('r squared');
+ylabel('rho');
 xlabel('Time (ms)');
-% legend([p_sh,p_eeg,p_rCNN],'Location','best');
+legend([p_eeg,p_rcnn,p_shared],'Location','best');
 %Save plot
 saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.fig',conditions))); 
 saveas(gcf,fullfile(results_avg_dir,sprintf('glm_rt_eeg_rcnn_rt_%s_scenes.svg',conditions))); 
