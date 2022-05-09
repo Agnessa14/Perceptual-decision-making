@@ -18,9 +18,6 @@ addpath('/home/agnek95/OR/ANALYSIS/DECODING'); %MVNN function
 addpath('/home/agnek95/OR/TOOLBOX/fieldtrip-20190224');
 ft_defaults;
 
-% load neighbourhood map
-load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/OTHER/EEG_neighbourhoods.mat')
-
 %subject and task name strings
 subname = get_subject_name(subject);
 task_name = get_task_name(task);
@@ -43,14 +40,17 @@ timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
 timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
+times = -195:100:705;
+time_2_idx = (times/5)+40;
+
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100;
-numChannels = size(timelock_data,2);
+numChannels = 63; %regardless of missing channels
 
 %Preallocate
-decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numTimepoints,numChannels);
+decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numel(times),numChannels);
 chanIdx = 1:numChannels; % select all channels
 
 %% Decoding
@@ -72,7 +72,7 @@ for perm = 1:numPermutations
     %only get the upper diagonal
     for condA=1:numConditions-1 %1:59
         for condB = condA+1:numConditions %2:60
-            for timePoint = 1:numTimepoints
+            for timePoint = time_2_idx
                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoint ->',num2str(timePoint)]);
                 for iChan = chanIdx
@@ -89,7 +89,7 @@ for perm = 1:numPermutations
                         labels_test= [1 2];
                         
                         train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
-                        model=svmtrain01(labels_train',training_data,train_param_str);
+                        model=svmtrain_01(labels_train',training_data,train_param_str);
                         [~, accuracy, ~,] = svmpredict(labels_test',testing_data,model);
                         decodingAccuracy(perm,condA,condB,timePoint,iChan)=accuracy(1);
                     end
