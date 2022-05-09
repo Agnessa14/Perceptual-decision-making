@@ -51,7 +51,7 @@ numConditionsAll = 60;
 removed_condition = find(trials_per_condition==min(trials_per_condition));
 low_minnumtrials = min(trials_per_condition);
 numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
-numPermutations=1; 
+numPermutations=100; 
 numChannels =  63;
 
 chanIdx = 1:numChannels;
