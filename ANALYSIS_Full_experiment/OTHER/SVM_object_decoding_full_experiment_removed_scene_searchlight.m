@@ -8,7 +8,7 @@ function SVM_object_decoding_full_experiment_removed_scene_searchlight(subject,t
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
 %
-%Author: Agnessa Karapetian, 2021
+%Author: Agnessa Karapetian (2021), modified by Muthukumar Pandaram (2022)
 %
 
 %% Set-up prereqs
@@ -44,23 +44,24 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 
 %% Define the required variables
+times = -195:100:705;
+time_2_idx = (times/5)+40;
 numConditionsAll = 60;
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 removed_condition = find(trials_per_condition==min(trials_per_condition));
 low_minnumtrials = min(trials_per_condition);
 numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
-numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=1; 
 numChannels =  63;
 
-chanIdx = 1: numChannels;
+chanIdx = 1:numChannels;
 
 %exclude trials from removed scene 
 included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate 
-decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numTimepoints,numChannels);
+decodingAccuracy=NaN(numPermutations,numConditionsIncluded,numConditionsIncluded,numel(times),numChannels);
     
 %% Decoding
 for perm = 1:numPermutations
@@ -82,7 +83,8 @@ for perm = 1:numPermutations
     %only get the upper diagonal
     for condA=1:numConditionsIncluded-1 %1:59
         for condB = condA+1:numConditionsIncluded %2:60
-            for timePoint = 1:numTimepoints
+            for timePoint = 1:numel(time_2_idx)
+                t = time_2_idx(timePoint);
                 for iChan = chanIdx
                     if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)                        
                         % L-1 pseudo trials go to training set, the Lth to testing set
@@ -90,11 +92,11 @@ for perm = 1:numPermutations
                         neighbours = neighbours(~isnan(neighbours));
                         
                         disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
-                            ', timepoint ->',num2str(timePoint)]);
+                            ', timepoint ->',num2str(t)]);
 
                         % L-1 pseudo trials go to training set, the Lth to testing set
-                        training_data=[squeeze(pseudoTrials(condA,1:end-1,neighbours,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,neighbours,timePoint))]; %(numbins-1)x63x1 each                
-                        testing_data=[squeeze(pseudoTrials(condA,end,neighbours,timePoint))' ; squeeze(pseudoTrials(condB,end,neighbours,timePoint))']; %1x63x1 each
+                        training_data=[squeeze(pseudoTrials(condA,1:end-1,neighbours,t)) ; squeeze(pseudoTrials(condB,1:end-1,neighbours,t))]; %(numbins-1)x63x1 each                
+                        testing_data=[squeeze(pseudoTrials(condA,end,neighbours,t))' ; squeeze(pseudoTrials(condB,end,neighbours,t))']; %1x63x1 each
 
                         % class labels
                         labels_train=[ones(1,numPTs-1) 2*ones(1,numPTs-1)]; %one label for each pseudotrial
@@ -114,13 +116,10 @@ end
 
 %% Add NaN to the removed scene
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
-DA_1 = [decodingAccuracy_avg(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,200,numChannels);decodingAccuracy_avg(removed_condition:end,:,:,:)];
-DA_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,200,numChannels),DA_1(:,removed_condition:end,:,:)];
+DA_1 = [decodingAccuracy_avg(1:removed_condition-1,:,:,:);NaN(1,numConditionsAll-1,numel(times),numChannels);decodingAccuracy_avg(removed_condition:end,:,:,:)];
+DA_2 = [DA_1(:,1:removed_condition-1,:,:),NaN(numConditionsAll,1,numel(times),numChannels),DA_1(:,removed_condition:end,:,:)];
 decodingAccuracy_avg = DA_2;
 
 %% Save the decoding accuracy
-save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
-
-%% Save the number of trials used 
-save(fullfile(results_dir,subname,sprintf('num_trials_included_%s.mat',task_name)),'numTrials');
+save(sprintf('/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/%s/svm_searchlight_object_decoding_accuracy_%s.mat',subname,task_name),'decodingAccuracy_avg');
 
