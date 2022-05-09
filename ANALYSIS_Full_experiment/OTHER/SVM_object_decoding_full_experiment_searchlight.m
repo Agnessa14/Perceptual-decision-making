@@ -45,7 +45,6 @@ time_2_idx = (times/5)+40;
 
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
-numTimepoints = size(timelock_data,3); %number of timepoints
 numPermutations=100;
 numChannels = 63; %regardless of missing channels
 
