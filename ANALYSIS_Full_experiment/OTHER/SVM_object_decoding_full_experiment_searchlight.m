@@ -71,7 +71,8 @@ for perm = 1:numPermutations
     %only get the upper diagonal
     for condA=1:numConditions-1 %1:59
         for condB = condA+1:numConditions %2:60
-            for timePoint = time_2_idx
+            for timePoint = 1:numel(time_2_idx)
+                t = time_2_idx(timePoint);
                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
                     ', timepoint ->',num2str(timePoint)]);
                 for iChan = chanIdx
@@ -80,8 +81,8 @@ for perm = 1:numPermutations
                         neighbours = neighbours(~isnan(neighbours));
                         
                         % L-1 pseudo trials go to training set, the Lth to testing set
-                        training_data=[squeeze(pseudoTrials(condA,1:end-1,neighbours,timePoint)) ; squeeze(pseudoTrials(condB,1:end-1,neighbours,timePoint))]; %(numbins-1)xnum_channelsx1 each
-                        testing_data=[squeeze(pseudoTrials(condA,end,neighbours,timePoint))' ; squeeze(pseudoTrials(condB,end,neighbours,timePoint))']; %1x63x1 each
+                        training_data=[squeeze(pseudoTrials(condA,1:end-1,neighbours,t)) ; squeeze(pseudoTrials(condB,1:end-1,neighbours,t))]; %(numbins-1)xnum_channelsx1 each
+                        testing_data=[squeeze(pseudoTrials(condA,end,neighbours,t))' ; squeeze(pseudoTrials(condB,end,neighbours,t))']; %1x63x1 each
                         
                         % class labels
                         labels_train=[ones(1,numPTs-1) 2*ones(1,numPTs-1)]; %one label for each pseudotrial
