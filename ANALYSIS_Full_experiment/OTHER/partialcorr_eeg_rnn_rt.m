@@ -66,9 +66,9 @@ for sub = 1:num_subjects
     for t = 1:num_timepoints
         distances_eeg_sub_t = squeeze(distances_eeg_sub(:,t)); 
 
-        r_eeg = correlate([RTs_median_sub distances_eeg_sub_t*-1],'type','spearman','method','partialcorr');
-        r_rcnn = correlate([RTs_median_sub selected_rCNN_RTs_sub'],'type','spearman','method','partialcorr');
-        r_full = correlate([RTs_median_sub distances_eeg_sub_t*-1 selected_rCNN_RTs_sub'],'type','spearman','method','partialcorr');
+        r_eeg = correlate([RTs_median_sub distances_eeg_sub_t*-1],'type','spearman','method','semipartialcorr');
+        r_rcnn = correlate([RTs_median_sub selected_rCNN_RTs_sub'],'type','spearman','method','semipartialcorr');
+        r_full = correlate([RTs_median_sub distances_eeg_sub_t*-1 selected_rCNN_RTs_sub'],'type','spearman','method','semipartialcorr');
         
         r2_eeg_human_rt(sub,t) = r_eeg(2,1).^2;
         r2_rcnn_rt_human_rt(sub,t) = r_rcnn(2,1).^2;
@@ -80,33 +80,75 @@ for sub = 1:num_subjects
 end
 
 
-%% Plot
+%Plot colors
+color_shared = [.5 0.3 .7];
+color_rcnn = [0 .2 .4];
+color_eeg = [.5 .1 0];
+color_full = [0.8 0.8 0.8];
+
 %Average over subjects
 partial_corr.eeg = squeeze(mean(r2_eeg_human_rt,1));
 partial_corr.rcnn = squeeze(mean(r2_rcnn_rt_human_rt,1));
 partial_corr.full = squeeze(mean(r2_rcnn_eeg_full,1));
 partial_corr.shared = squeeze(mean(common_all,1));
 
-%Color parameters
-color_shared = [.7 0 .7];
-color_rcnn = [0 .3 .2];
-color_eeg = [.5 .1 0];
-color_full = [0.8 0.8 0.8];
-
 %plot the full r^2 first as a shaded area
 figure;
 p_full = area(1:num_timepoints,sqrt(partial_corr.full)); 
 hold on;
-        
+p_full.FaceColor = color_full;
+p_full.EdgeColor = color_full;
+
+%% Stats if needed
+
+if with_stats
+    for c = 1:3 %EEG, rCNN and shared 
+        switch c
+            case 1
+                for_stats_data = r2_eeg_human_rt;
+                plot_location = 0.07;
+                color_data = color_eeg;
+            case 2
+                for_stats_data = r2_rcnn_rt_human_rt;
+                plot_location = 0.0725;
+                color_data = color_rcnn;
+            case 3
+                for_stats_data = common_all;
+                plot_location = 0.075;
+                color_data = color_shared;
+        end
+    
+        filename = fullfile(results_avg_dir,'partialcorr_stats_fdr_subjects.mat');
+        if exist(filename,'file')
+            load(filename,'stats_partialcorr');
+        else
+            stats_partialcorr.num_perms = 1000;
+            stats_partialcorr.tail = 'right';
+            stats_partialcorr.qvalue = 0.05;
+            [stats_partialcorr.significant_timepoints,stats_partialcorr.pvalues,...
+                stats_partialcorr.crit_p, stats_partialcorr.adjusted_pvalues]...
+                = fdr_permutation_cluster_1sample_alld(for_stats_data,...
+                stats_partialcorr.num_perms,stats_partialcorr.tail,stats_partialcorr.qvalue);
+%             save(filename,'stats_partialcorr');
+        end
+
+        %1) significant timepoints
+        st = (stats_partialcorr.significant_timepoints*plot_location); %depending on the stats
+        st(st==0) = NaN;
+        plot(st,'*','Color',color_data); 
+        hold on;
+    end
+end
+%% Plot        
+%plot the other curves
+
 p_eeg = plot(sqrt(partial_corr.eeg),'LineWidth',2,'DisplayName','Partial correlation EEG','Color',color_eeg);
 hold on;
 p_rcnn = plot(sqrt(partial_corr.rcnn),'LineWidth',2,'DisplayName','Partial correlation rCNN RT','Color',color_rcnn);
-p_shared = plot(sqrt(partial_corr.shared),'LineWidth',2,'DisplayName','Shared rCNN and EEG','Color',color_shared);
-%Plot full as a shaded area
+s = sign (partial_corr.shared);
+p_shared = plot(s.*sqrt(abs(partial_corr.shared)),'LineWidth',2,'DisplayName','Shared rCNN and EEG','Color',color_shared);
 
 %Plot parameters
-p_full.FaceColor = color_full;
-p_full.EdgeColor = color_full;
 p_full.DisplayName = 'Full';
 set(gca,'FontName','Arial','FontSize',12);
 xticks(0:20:200);
