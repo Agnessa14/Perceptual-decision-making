@@ -6,7 +6,7 @@ function pearson_object_decoding_full_experiment_sl(subject,task)
 %Output: NxNxP vector of correlations, where N is the number of conditions and
 %P is the number of timepoints.
 %
-% Author: Agnessa Karapetian, 2021
+% Author: Agnessa Karapetian, 2021, modified by Muthukumar Pandaram (2022)
 
 %% Set-up prereqs
 %add paths
@@ -31,8 +31,7 @@ end
 
 %% Prepare data
 %load eeg and behavioural data
-% data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/%s/',subname);
-
+data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/%s/',subname);
 load(fullfile(data_dir,sprintf('timelock_%s',task_name)),'timelock'); %eeg
 load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'behav');
 
@@ -41,17 +40,18 @@ timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
 timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
+times = -195:100:705;
+time_2_idx = (times/5)+40;
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
-numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1;
+numPermutations=100;
 numChannels = 63;
 chanIdx = 1:numChannels;
 
 %Preallocate
 numTrialsPerBin = 5;
 numPseudotrials = round(numTrials/numTrialsPerBin);
-rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numTimepoints,numChannels);
+rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numel(times),numChannels);
 
 %% Decoding
 for perm = 1:numPermutations
@@ -71,13 +71,14 @@ for perm = 1:numPermutations
     %only get the upper diagonal
     for condA=1:numConditions-1 %1:59
         for condB = condA+1:numConditions %2:60
-            for tp = 1:numTimepoints
+            for tp = 1:numel(time_2_idx)
+                t = time_2_idx(tp);
                 for pt = 1:numPseudotrials
                     for iChan = chanIdx
                         if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)
                             neighbours = neighbourhoods(iChan , :);
                             neighbours = neighbours(~isnan(neighbours));
-                            rdm(perm,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,tp)),squeeze(pseudoTrials(condB,pt,neighbours,tp)),'type','Pearson');
+                            rdm(perm,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,t)),squeeze(pseudoTrials(condB,pt,neighbours,t)),'type','Pearson');
                         end                        
                     end
                 end
@@ -89,5 +90,5 @@ end
 
 %% Save the representational dissimilarity matrix
 rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
-save(fullfile(results_dir,subname,sprintf('rdm_pearson_%s.mat',task_name)),'rdm_avg');
+save(fullfile(results_dir,subname,sprintf('rdm_pearson_searchlight_%s.mat',task_name)),'rdm_avg');
 
