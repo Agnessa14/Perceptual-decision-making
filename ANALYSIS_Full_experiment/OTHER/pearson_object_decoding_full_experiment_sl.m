@@ -99,8 +99,8 @@ end
 %% Save the representational dissimilarity matrix
 % rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
 rdm_avg_both = NaN(2,numConditions,numConditions,numel(times),numChannels);
-rdm_avg_both(1,:,:,:,:) = squeeze(mean(rdm_1,1));
-rdm_avg_both(2,:,:,:,:) = squeeze(mean(rdm_2,1));
+rdm_avg_both(1,:,:,:,:) = squeeze(mean(rdm_1,1:2));%average over permutations and pseudotrials
+rdm_avg_both(2,:,:,:,:) = squeeze(mean(rdm_2,1:2));
 rdm_avg = squeeze(mean(rdm_avg_both,1));
 save(fullfile(results_dir,subname,sprintf('rdm_pearson_searchlight_%s.mat',task_name)),'rdm_avg');
 
