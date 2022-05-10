@@ -44,14 +44,16 @@ times = -195:100:705;
 time_2_idx = (times/5)+40;
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
-numPermutations=100;
+numPermutations=1%00;
 numChannels = 63;
 chanIdx = 1:numChannels;
 
 %Preallocate
 numTrialsPerBin = 5;
 numPseudotrials = round(numTrials/numTrialsPerBin);
-rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numel(times),numChannels);
+% rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numel(times),numChannels);
+rdm_1=NaN(round(numPermutations/2),numPseudotrials,numConditions,numConditions,numel(times),numChannels);
+rdm_2=NaN(round(numPermutations/2),numPseudotrials,numConditions,numConditions,numel(times),numChannels);
 
 %% Decoding
 for perm = 1:numPermutations
@@ -78,8 +80,14 @@ for perm = 1:numPermutations
                         if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)
                             neighbours = neighbourhoods(iChan , :);
                             neighbours = neighbours(~isnan(neighbours));
-                            rdm(perm,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,t)),squeeze(pseudoTrials(condB,pt,neighbours,t)),'type','Pearson');
-                        end                        
+%                             rdm(perm,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,t)),squeeze(pseudoTrials(condB,pt,neighbours,t)),'type','Pearson');
+                            if perm <= 50
+                                rdm_1(perm,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,t)),squeeze(pseudoTrials(condB,pt,neighbours,t)),'type','Pearson');
+                            else
+                                rdm_2(perm-50,pt,condA,condB,tp,iChan) = 1-corr(squeeze(pseudoTrials(condA,pt,neighbours,t)),squeeze(pseudoTrials(condB,pt,neighbours,t)),'type','Pearson');
+                        
+                            end
+                        end    
                     end
                 end
             end
@@ -89,6 +97,10 @@ for perm = 1:numPermutations
 end
 
 %% Save the representational dissimilarity matrix
-rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
+% rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
+rdm_avg_both = NaN(2,numConditions,numConditions,numel(times),numChannels);
+rdm_avg_both(1,:,:,:,:) = squeeze(mean(rdm_1,1));
+rdm_avg_both(2,:,:,:,:) = squeeze(mean(rdm_2,1));
+rdm_avg = squeeze(mean(rdm_avg_both,1));
 save(fullfile(results_dir,subname,sprintf('rdm_pearson_searchlight_%s.mat',task_name)),'rdm_avg');
 
