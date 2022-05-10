@@ -18,12 +18,8 @@ function [neighbourhood_map, all_missing_channel_ids, data_mod] = correct_neighb
 %                added as NaN at the missing channel ids.
 % Author: Muthukumar Pandaram
 
-
-addpath('D:\MATLAB_packages\fieldtrip-release');
-ft_defaults;
-
 % Load channel locations
-load('D:\Lab rotation\Neural dynamics of Visual Cognition\Project_files\Searchlight\adult_63channels.mat')
+load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/OTHER/adult_63channels.mat')
 all_channel_labels = extractfield(channelloc,'labels')';
 
 % Check for missing channels
@@ -31,7 +27,7 @@ channels_missing = setdiff(all_channel_labels, channels_labels_in_data);
 % disp('The missing channels are: ', channels_missing);
 
 % load Monika's neighbourhood (neighbourhoods, double)
-load('D:\Lab rotation\Neural dynamics of Visual Cognition\Project_files\Searchlight\EEG_neighbourhoods.mat')
+load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/OTHER/EEG_neighbourhoods.mat')
 neighbourhood_map = neighbourhoods;
 
 %Find the number id for the missing channel labels and remove them from the
@@ -41,7 +37,7 @@ all_missing_channel_ids = double.empty;
 data_mod = data;
 
 for i = 1:length(channels_missing)
-    all_missing_channel_ids(i,1) = find(contains(all_channel_labels,channels_missing(i)));
+    all_missing_channel_ids(i,1) = find(strcmp(all_channel_labels,channels_missing(i)));
 end
  
 all_missing_channel_ids = sort(all_missing_channel_ids);
