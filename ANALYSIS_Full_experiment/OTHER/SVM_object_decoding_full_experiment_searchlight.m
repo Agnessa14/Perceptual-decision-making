@@ -47,10 +47,14 @@ numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numPermutations=100;
 numChannels = 63; %regardless of missing channels
+chanIdx = 1:numChannels; % select all channels
 
 %Preallocate
-decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numel(times),numChannels);
-chanIdx = 1:numChannels; % select all channels
+% decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numel(times),numChannels);
+
+%Preallocate: for memory purposes, two matrices for 50 permutations each
+decodingAccuracy_1 = NaN(round(numPermutations/2),numConditions,numConditions,numel(times),numChannels);
+decodingAccuracy_2 = NaN(round(numPermutations/2),numConditions,numConditions,numel(times),numChannels);
 
 %% Decoding
 for perm = 1:numPermutations
@@ -91,7 +95,13 @@ for perm = 1:numPermutations
                         train_param_str= '-s 0 -t 0 -b 0 -c 1 -q'; %look up the parameters online if needed
                         model=svmtrain_01(labels_train',training_data,train_param_str);
                         [~, accuracy, ~,] = svmpredict(labels_test',testing_data,model);
-                        decodingAccuracy(perm,condA,condB,timePoint,iChan)=accuracy(1);
+%                         decodingAccuracy(perm,condA,condB,timePoint,iChan)=accuracy(1);
+                        if perm <= 50
+                            decodingAccuracy_1(perm,condA,condB,timePoint,iChan)=accuracy(1);
+                        else
+                            decodingAccuracy_2(perm-50,condA,condB,timePoint,iChan)=accuracy(1);
+                        end
+
                     end
                 end
             end
@@ -101,7 +111,12 @@ for perm = 1:numPermutations
 end
 
 %% Save the decoding accuracies
-decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
+% decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
+
+decodingAccuracy_avg_both = NaN(2,numConditions,numConditions,numel(times),numChannels);
+decodingAccuracy_avg_both(1,:,:,:,:) = squeeze(mean(decodingAccuracy_1,1));
+decodingAccuracy_avg_both(2,:,:,:,:) = squeeze(mean(decodingAccuracy_2,1));
+decodingAccuracy_avg = squeeze(mean(decodingAccuracy_avg_both,1));
 save(fullfile(results_dir,subname,sprintf('svm_searchlight_object_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');    
 
 end
