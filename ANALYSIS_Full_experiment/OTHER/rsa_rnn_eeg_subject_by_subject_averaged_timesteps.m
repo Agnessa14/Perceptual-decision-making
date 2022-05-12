@@ -131,12 +131,12 @@ for c = 1:3 %artificial,natural,all
         else 
             %Check if exist
             filename_sign = sprintf('avg_tps_%s_rsa_rnn_eeg_stats_subject_level',model_name);   
-            filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d.mat',...
+            filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d_10k_perms.mat',...
                 filename_sign,conditions,subjects(1),subjects(end),l,t));
             if exist(filename,'file')
                 load(filename,'fdr_stats');
             else %if not, run them
-                fdr_stats.num_perms = 1000;
+                fdr_stats.num_perms = 10000;
                 fdr_stats.tail = 'right';
                 fdr_stats.qvalue = 0.05;
                 [fdr_stats.significant_timepoints,fdr_stats.crit_p,fdr_stats.adjusted_pvalues] = ...
@@ -202,7 +202,7 @@ for c = 1:3 %artificial,natural,all
     end
     save(sprintf('%s',filename_plot),'rsa_results');
     rsa_all_subs = rsa_all_layers_tps_subs(subjects,:,:,:);
-    save(fullfile(results_avg_dir,sprintf('all_subjects_all_tps_rsa_rnn_%s',conditions)),'rsa_all_subs');
+    save(fullfile(results_avg_dir,sprintf('all_subjects_all_tps_rsa_rnn_%s_10k_perms',conditions)),'rsa_all_subs');
 end
 
 end
