@@ -1,9 +1,9 @@
-function rnn_dth_all_distances_median_RT(subjects,with_stats,with_error_bars) %distance art, distance nat, RT
+function rnn_dth_all_distances_median_RT(subjects,with_stats,with_error_bars,varargin) %distance art, distance nat, RT
 %RNN_DTH_ALL_DISTANCES_MEDIAN_RT Performs the cross-modal distance-to-hyperplane analysis using
 %the distances-to-hyperplane from each subject and the RTs from the RNN.
 %
 %Input: subjects' ID (e.g., 1:13), add stats (1 with, 0 without),
-%with/without error bars (1/0)
+%with/without error bars (1/0), varargin: stats_type ('cluster' or 'fdr')
 %
 %Correlates the decision values of each subject with reaction times of each condition (60 scenes), at each timepoint,
 %resulting in a plot of Spearman's correlation vs time. 
@@ -82,7 +82,7 @@ avg_corr_art = squeeze(nanmean(correlation_art,1));
 avg_corr_nat = squeeze(nanmean(correlation_nat,1));
 avg_corr_both = squeeze(nanmean(correlation_both,1));
 
-%% Plot
+%% Plot colours
 cmap_1 = cool;
 cmap_2 = summer;
 
@@ -90,14 +90,29 @@ color_art = cmap_1(200,:); %purple
 color_nat = cmap_2(100,:); %green
 color_both = 'k';
 
+figure(abs(round(randn*10)));
+
 %% Plot stats if needed
 if with_stats   
-    %define some variables for the stats and the plot
     analysis = 'random_dth';
-    permutation_stats.num_perms = 1000;
-    permutation_stats.cluster_th = 0.05;
-    permutation_stats.significance_th = 0.05;
-    permutation_stats.tail = 'left';
+    %define some variables for the stats and the plot
+    if isempty(varargin)
+        error('Specify the type of stats');
+    else
+        stats_type = varargin{1};
+        if strcmp(stats_type,'cluster')
+            %define some variables for the stats and the plot
+            permutation_stats.num_perms = 10000;
+            permutation_stats.cluster_th = 0.05;
+            permutation_stats.significance_th = 0.05;
+            permutation_stats.tail = 'left';
+        elseif strcmp(stats_type,'fdr')
+            fdr_stats.num_perms = 10000;
+            fdr_stats.tail = 'left';
+            fdr_stats.qvalue = 0.05;
+        end
+    end     
+
     for c = 1:3
         if c == 1
             category = 'artificial';            
@@ -131,18 +146,34 @@ if with_stats
         filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s.mat',filename_sign,...
             subjects(1),subjects(end),distances_str,analysis,category));
         if exist(filename,'file')
-            load(filename,'permutation_stats');
+            if strcmp(stats_type,'cluster')
+                load(filename,'permutation_stats');
+            elseif strcmp(stats_type,'fdr')
+                load(filename,'fdr_stats');
+            end
         else
-            [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
-                permutation_stats.SignificantMaxClusterSize,permutation_stats.pValSize] = ...
-                permutation_cluster_1sample_weight_alld(for_stats,permutation_stats.num_perms,...
-                permutation_stats.cluster_th,permutation_stats.significance_th,permutation_stats.tail); 
-        save(filename,'permutation_stats');
+            if strcmp(stats_type,'cluster')
+                [permutation_stats.SignificantMaxClusterWeight,permutation_stats.pValWeight,...
+                    permutation_stats.SignificantMaxClusterSize,permutation_stats.pValSize] = ...
+                    permutation_cluster_1sample_weight_alld(for_stats,permutation_stats.num_perms,...
+                    permutation_stats.cluster_th,permutation_stats.significance_th,permutation_stats.tail); 
+                save(filename,'permutation_stats');
+            elseif strcmp(stats_type,'fdr')
+                [fdr_stats.significant_timepoints,fdr_stats.pvalues,...
+                    fdr_stats.crit_p, fdr_stats.adjusted_pvalues]...
+                    = fdr_permutation_cluster_1sample_alld(for_stats,...
+                    fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
+                save(filename,'fdr_stats');
+            end
         end
-        
+       
         %Plot
         %1) significance
-        st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
+        if strcmp(stats_type,'cluster')
+            st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
+        elseif strcmp(stats_type,'fdr')
+            st = (fdr_stats.significant_timepoints*plot_location); %depending on the stats
+        end
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
         hold on;
@@ -166,7 +197,6 @@ end
 
 
 %% Plot the data
-figure(abs(round(randn*10)));
 plot(avg_corr_art,'LineWidth',2,'Color',color_art);
 hold on;
 plot(avg_corr_nat,'LineWidth',2,'Color',color_nat);
@@ -197,7 +227,13 @@ file_name = 'distance_eeg_rt_rnn';
 if with_error_bars
     file_name = sprintf('error_bars_%s',file_name);
 end
-
+if ~isempty(varargin)
+    if strcmp(stats_type,'cluster')
+        file_name = sprintf('%s_cluster',file_name);
+    elseif strcmp(stats_type,'fdr')
+        file_name = sprintf('%s_fdr',file_name);
+    end
+end
 save(fullfile(save_path,sprintf('separate_fitting_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.mat',subjects(1),subjects(end),file_name,model_name,entropy_thresh)),'dth_results');
 saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.svg',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
 saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.fig',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
