@@ -4,7 +4,7 @@ function dth_all_distances_median_RT(subjects,task_distance,task_RT,with_stats,w
 %
 %Input: subjects' ID (e.g., 1:13), task for the distances (1=categorization, 2=distraction), task for RT,
 %add stats (1 with, 0 without), plot with/without error bars (1/0),
-%stats_type ('cluster' or 'fdr')
+%varargin: stats_type ('cluster' or 'fdr')
 %
 %Correlates the decision values of each subject with reaction times averaged over
 %participants of each condition (60 scenes), averaged, at each timepoint, resulting in a plot of Spearman's correlation vs time. 
