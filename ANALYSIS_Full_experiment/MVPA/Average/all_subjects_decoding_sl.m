@@ -57,6 +57,6 @@ end
 decoding_accuracies = decoding_accuracies_all_subjects(subjects,all_dimensions{:});
 
 %% Save the matrix
-save(fullfile(results_avg_dir,sprintf('%s_all_subjects_%s.mat',analysis,task_name)),'decoding_accuracies'); 
+save(fullfile(results_avg_dir,sprintf('%s_all_subjects_searchlight_%s.mat',analysis,task_name)),'decoding_accuracies'); 
 
 end
