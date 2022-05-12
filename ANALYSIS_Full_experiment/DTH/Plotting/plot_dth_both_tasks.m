@@ -1,9 +1,10 @@
-function plot_dth_both_tasks(subjects,with_cross_task,with_stats,with_error_bars) %distance art, distance nat, RT
+function plot_dth_both_tasks(subjects,with_cross_task,with_stats,with_error_bars,varargin) %distance art, distance nat, RT
 %PLOT_DTH_BOTH_TASKS Plot the fixed effects distance-to-hyperplane results for both
 %tasks. Assumes that the correlations & stats have already been computed.
 %
 %Input: subjects' ID (e.g., 1:13), add the cross task curves (1 yes, 0 no),
-%add stats (1 yes, 0 no), plot with/without error bars (1/0)
+%add stats (1 yes, 0 no), plot with/without error bars (1/0), varargin:
+%stats_type ('cluster' or 'fdr')
 %
 %Correlates the decision values with reaction times (averaged over
 %participants) of each condition (60 scenes), at each timepoint, resulting in a plot of Spearman's correlation vs time. 
@@ -177,11 +178,22 @@ if with_stats
         elseif (task<=4)&&(task>2)
             filename_sign = 'dth_permutation_stats_crosstask';
         end               
-     
+        if isempty(varargin)
+            error('Specify the type of stats')
+        else
+            stats_type = varargin{1};
+        end
         filename = fullfile(results_dir,sprintf('%s_%d_%d_%s_task_%s_both.mat',filename_sign,...
-            subjects(1),subjects(end),task_name,analysis));        
-        load(filename,'permutation_stats'); 
-        st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
+            subjects(1),subjects(end),task_name,analysis));   
+        
+        if strcmp(stats_type,'cluster')
+            load(filename,'permutation_stats'); 
+            st = (permutation_stats.SignificantMaxClusterWeight*plot_location); %depending on the stats
+        elseif strcmp(stats_type,'fdr')
+            load(filename,'fdr_stats'); 
+            st = (fdr_stats.significant_timepoints*plot_location); %depending on the stats            
+        end
+            
         st(st==0) = NaN;
         plot(st,'*','Color',color); 
         hold on;     
@@ -233,6 +245,15 @@ file_name = 'cv_all_dist_med_rt_dth_both_tasks';
 if with_error_bars
     file_name = sprintf('error_bars_%s',file_name);
 end
+
+if ~isempty(varargin)
+    if strcmp(stats_type,'cluster')
+        file_name = sprintf('%s_cluster',file_name);
+    elseif strcmp(stats_type,'fdr')
+        file_name = sprintf('%s_fdr',file_name);
+    end
+end
+
 if with_cross_task
     saveas(gcf,fullfile(results_dir,sprintf('%s_%d_%d_with_crosstask',file_name,subjects(1),subjects(end)))); 
     saveas(gcf,fullfile(results_dir,sprintf('%s_subjects_%d_%d_with_crosstask.svg',file_name,subjects(1),subjects(end))));
