@@ -120,15 +120,15 @@ for task = 1:3
     else
         %Stat parameters
         filename = fullfile(results_avg_dir,...
-            sprintf('stats_fdr_%s_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
+            sprintf('stats_fdr_%s_%s_subjects_%d_%d_10k_perms.mat',analysis,task_name,subjects(1),subjects(end)));
         if exist(filename,'file')
             load(filename,'stats_decoding');
         else
             peak_latency_true = find(data==max(data));
             stats_decoding.peak_latency_ground_ms = (peak_latency_true-40)*5;
-            stats_decoding.num_perms = 1000;
+            stats_decoding.num_perms = 10000;
             stats_decoding.tail = 'right';
-            stats_decoding.qvalue = 0.01;
+            stats_decoding.qvalue = 0.05;
             [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
                 stats_decoding.crit_p, stats_decoding.adjusted_pvalues]...
                 = fdr_permutation_cluster_1sample_alld(for_stats_data,...
@@ -220,10 +220,10 @@ set(gca,'FontName','Arial','FontSize',18);
 ylim([-10,40]);
 
 %% Save the plot and matrices
-save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_both_tasks.mat',analysis,subjects(1),subjects(end))),'for_stats_cat'); 
-save(fullfile(results_avg_dir,sprintf('for_stats_dis_svm_%s_subjects_%d_%d_both_tasks.mat',analysis,subjects(1),subjects(end))),'for_stats_dis'); 
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks',analysis,subjects(1),subjects(end)))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks.svg',analysis,subjects(1),subjects(end)))); %save as svg
+save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_both_tasks_10k_perms.mat',analysis,subjects(1),subjects(end))),'for_stats_cat'); 
+save(fullfile(results_avg_dir,sprintf('for_stats_dis_svm_%s_subjects_%d_%d_both_tasks_10k_perms.mat',analysis,subjects(1),subjects(end))),'for_stats_dis'); 
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks_10k_perms',analysis,subjects(1),subjects(end)))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_both_tasks10k_perms.svg',analysis,subjects(1),subjects(end)))); %save as svg
 close(gcf);    
 
 end
