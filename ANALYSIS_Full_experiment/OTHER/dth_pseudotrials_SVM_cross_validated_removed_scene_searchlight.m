@@ -58,6 +58,7 @@ time_2_idx = (times/5)+40;
 numConditionsAll = 60;
 num_categories = 2; %categories to decode
 numPermutations=100;
+numTimepoints = size(timelock.trial,3);
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 removed_condition = find(trials_per_condition==min(trials_per_condition));
 low_minnumtrials = min(trials_per_condition);
@@ -71,7 +72,7 @@ included_conditions = find(trials_per_condition>=numTrials);
 numConditionsIncluded = numel(included_conditions);
 
 %Preallocate
-decisionValues = NaN(numPermutations,numConditionsIncluded,numel(times),numChannels);
+decisionValues = NaN(numPermutations,numConditionsIncluded,numTimepoints,numChannels);
 decodingAccuracy = NaN(numPermutations,numel(times),numChannels);
 if removed_condition<=30
     num_conditions_artificial = 29;
@@ -138,8 +139,8 @@ for perm = 1:numPermutations
     data_artificial_avg = squeeze(mean(data_artificial_testing,2));
     data_natural_avg = squeeze(mean(data_natural_testing,2));
     
-    for tp = 1:numel(times)
-        t = time_2_idx(tp);
+    for t = 1:numTimepoints%numel(times)
+%         t = time_2_idx(tp);
         for iChan = chanIdx
             if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)
                 % L-1 pseudo trials go to training set, the Lth to testing set
@@ -160,7 +161,7 @@ for perm = 1:numPermutations
                 
                 disp('Test the SVM');
                 [predicted_label, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);
-                decodingAccuracy(perm,tp,iChan)=accuracy(1);
+                decodingAccuracy(perm,t,iChan)=accuracy(1);
                 correctly_classified = predicted_label==labels_test;
                 
                 disp('Putting the decision values into the big matrix');
@@ -168,11 +169,11 @@ for perm = 1:numPermutations
                 if only_correct == 1
                     for c = 1:numConditionsIncluded
                         if correctly_classified(c)==1
-                            decisionValues(perm,c,tp,iChan) = abs(decision_values(c));
+                            decisionValues(perm,c,t,iChan) = abs(decision_values(c));
                         end
                     end
                 else
-                    decisionValues(perm,:,tp,iChan) = abs(decision_values);
+                    decisionValues(perm,:,t,iChan) = abs(decision_values);
                 end
             end
         end
@@ -184,7 +185,7 @@ end
 
 %% Add NaN to the removed scene
 decisionValues_Avg = squeeze(nanmean(decisionValues,1));
-DV_1 = [decisionValues_Avg(1:removed_condition-1,:,:);NaN(1,numel(times),numChannels);decisionValues_Avg(removed_condition:end,:,:)];
+DV_1 = [decisionValues_Avg(1:removed_condition-1,:,:);NaN(1,numTimepoints,numChannels);decisionValues_Avg(removed_condition:end,:,:)];
 decisionValues_Avg = DV_1;
 
 %% Save the decision values and decoding accuracy
@@ -193,8 +194,8 @@ filename = 'cross_validated_dth_pseudotrials_svm';
 if only_correct == 1
     filename = sprintf('only_correct_class_%s',filename);
 end
-save(fullfile(results_dir,sprintf('%s_decisionValues_searchlight_%s.mat',filename,task_name)),'decisionValues_Avg');
-save(fullfile(results_dir,sprintf('%s_decodingAccuracy_searchlight_%s.mat',filename,task_name)),'decodingAccuracy_avg');
+save(fullfile(results_dir,sprintf('%s_decisionValues_searchlight_all_timepoints_%s.mat',filename,task_name)),'decisionValues_Avg');
+save(fullfile(results_dir,sprintf('%s_decodingAccuracy_searchlight_all_timepoints_%s.mat',filename,task_name)),'decodingAccuracy_avg');
 
 end
 
