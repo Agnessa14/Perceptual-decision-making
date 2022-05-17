@@ -18,11 +18,13 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %% Preallocate
 numConditions = 60;
 numTimepoints = 10;
+numTimepointsDTH = 200;
 numChannels = 63;
 if strcmp(analysis,'object_decoding')
     decoding_accuracies_all_subjects = NaN(max(subjects),numConditions,numConditions,numTimepoints,numChannels);
 elseif strcmp(analysis,'category_decoding')
     decoding_accuracies_all_subjects = NaN(max(subjects),numTimepoints,numChannels);
+    distances_all_subjects = NaN(max(subjects),numTimepointsDTH,numChannels);
 end
 task_name = get_task_name(task);
 
@@ -50,6 +52,9 @@ for subject = subjects
         elseif strcmp(analysis,'pearson_object_decoding')
             load(filename_full,'rdm_avg');
             decoding_accuracies_all_subjects(subject,all_dimensions{:}) = rdm_avg;
+            filename_dist = sprintf('cross_validated_dth_pseudotrials_svm_decisionValues_searchlight_all_timepoints_%s.mat',task_name);
+            load(fullfile(subject_results_dir,filename_dist),'decisionValues_Avg');
+            distances_all_subjects(subject,all_dimensions{:}) = decisionValues_Avg;
         end
     end
 end
@@ -58,5 +63,8 @@ decoding_accuracies = decoding_accuracies_all_subjects(subjects,all_dimensions{:
 
 %% Save the matrix
 save(fullfile(results_avg_dir,sprintf('%s_all_subjects_searchlight_%s.mat',analysis,task_name)),'decoding_accuracies'); 
-
+if strcmp(analysis,'category_decoding')
+    distances = distances_all_subjects(subjects,all_dimensions{:});
+    save(fullfile(results_avg_dir,sprintf('%distances_all_subjects_all_timepoints_searchlight_%s.mat',task_name)),'distances'); 
+end
 end
