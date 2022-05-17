@@ -59,7 +59,7 @@ time_2_idx = (times/5)+40;
 numConditions = 60;
 num_categories = 2; %categories to decode
 num_conditions_per_category = numConditions/num_categories;
-
+numTimepoints = size(timelock.trial,3); 
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions);
 numPermutations=100;
 numChannels = 63;
@@ -67,8 +67,8 @@ numChannels = 63;
 chanIdx = 1:numChannels;
 
 %Preallocate
-decisionValues = NaN(numPermutations,numConditions,numel(times),numChannels);
-decodingAccuracy=NaN(numPermutations,numel(times), numChannels);
+decisionValues = NaN(numPermutations,numConditions,numTimepoints,numChannels);
+decodingAccuracy=NaN(numPermutations,numTimepoints,numChannels);
 
 %% Running the MVPA
 rng('shuffle');
@@ -123,8 +123,8 @@ for perm = 1:numPermutations
     [~, ~, data_both_categories_testing] = correct_neighbourhood_map(timelock.label,data_both_categories_testing);
     
     
-    for tp = 1:numel(time_2_idx)
-        t = time_2_idx(tp);
+    for t = 1:numTimepoints%numel(time_2_idx)
+%         t = time_2_idx(tp);
         for iChan = chanIdx
             if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)
                 % L-1 pseudo trials go to training set, the Lth to testing set
@@ -143,7 +143,7 @@ for perm = 1:numPermutations
                
                 disp('Test the SVM');
                 [predicted_label, accuracy, decision_values] = svmpredict(labels_test,testing_data,model);
-                decodingAccuracy(perm,tp,iChan)=accuracy(1);
+                decodingAccuracy(perm,t,iChan)=accuracy(1);
                 correctly_classified = predicted_label==labels_test;
                 
                 disp('Putting the decision values into the big matrix');
@@ -151,11 +151,11 @@ for perm = 1:numPermutations
                 if only_correct == 1
                     for c = 1:numConditions
                         if correctly_classified(c)==1
-                            decisionValues(perm,c,tp,iChan) = abs(decision_values(c));
+                            decisionValues(perm,c,t,iChan) = abs(decision_values(c));
                         end
                     end
                 else
-                    decisionValues(perm,:,tp,iChan) = abs(decision_values);
+                    decisionValues(perm,:,t,iChan) = abs(decision_values);
                 end
             end
         end        
@@ -170,8 +170,8 @@ filename = 'cross_validated_dth_pseudotrials_svm';
 if only_correct == 1
     filename = sprintf('only_correct_class_%s',filename);
 end
-save(fullfile(results_dir,sprintf('%s_decisionValues_searchlight_%s.mat',filename,task_name)),'decisionValues_Avg');
-save(fullfile(results_dir,sprintf('%s_decodingAccuracy_searchlight_%s.mat',filename,task_name)),'decodingAccuracy_avg');
+save(fullfile(results_dir,sprintf('%s_decisionValues_searchlight_all_timepoints_%s.mat',filename,task_name)),'decisionValues_Avg');
+save(fullfile(results_dir,sprintf('%s_decodingAccuracy_searchlight_all_timepoints_%s.mat',filename,task_name)),'decodingAccuracy_avg');
 
 end
 
