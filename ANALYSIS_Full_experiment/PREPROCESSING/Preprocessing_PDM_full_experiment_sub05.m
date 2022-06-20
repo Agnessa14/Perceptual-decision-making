@@ -310,6 +310,18 @@ if isequal(round(data_1_17.trialinfo),round(behav_1_17.triggers))
 else
     warning('problem with the triggers: check manually');
     keyboard;
+    %likely the problem is there is an additional trigger at the end of the
+    %behavioural triggers
+    if ~isequal(data_1_17.trialinfo(end),behav_1_17.triggers(end))
+        behav_1_17.triggers(end) = [];
+        behav_1_17.RT(end) = [];
+        behav_1_17.points(end) = [];
+    end
+    if isequal(round(data_1_17.trialinfo),round(behav_1_17.triggers)) 
+        disp('all good!');
+    else
+        warning('problem with the triggers: check manually');
+    end
 end
 % 
 % %in the categorization case, this wasnt covered by the loop above &
