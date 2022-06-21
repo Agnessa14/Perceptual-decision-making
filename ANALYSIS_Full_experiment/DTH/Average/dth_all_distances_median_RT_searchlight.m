@@ -118,14 +118,17 @@ for subject = subjects
 end
 
 %% Average over participants
-avg_corr_art = squeeze(nanmean(correlation_art,1)); % numTimepoints x numChannels
+avg_corr_art = squeeze(nanmean(correlation_art,1));
 avg_corr_nat = squeeze(nanmean(correlation_nat,1));
 avg_corr_both = squeeze(nanmean(correlation_both,1));
 
-%% Save correlations and figures
+%% Save correlations (avg over subjects and all)
 dth_results.corr_both_categories = avg_corr_both;
 dth_results.corr_artificial = avg_corr_art;
 dth_results.corr_natural = avg_corr_nat;
+dth_results.for_stats_corr_both_categories = correlation_both;
+dth_results.for_stats_corr_artificial= correlation_art;
+dth_results.for_stats_corr_natural = correlation_nat;
 
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 file_name = 'dth_searchlight_peak';
