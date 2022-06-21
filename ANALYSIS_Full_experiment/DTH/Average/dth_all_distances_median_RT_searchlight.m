@@ -13,7 +13,7 @@ function dth_all_distances_median_RT_searchlight(subjects,task_distance,task_RT)
 
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
-results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
+results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
 addpath(genpath(results_dir));
 task_name_distance = get_task_name(task_distance);
 task_name_RT = get_task_name(task_RT);
@@ -38,7 +38,6 @@ RTs_nat = NaN(size(RTs_art));
 artificial_conditions = 1:numConditions/2;
 natural_conditions = (numConditions/2)+1:numConditions;
 
-
 %Loop over subjects
 for subject = subjects
     subname = get_subject_name(subject);
@@ -59,36 +58,29 @@ medianRT_art = nanmedian(RTs_art,1);
 medianRT_nat = nanmedian(RTs_nat,1);
 
 %% Correlate each subject's distances with the median RT
-t = 1:numTimepoints;
-size_corr = [subjects,numel(times),numChannels]; 
+size_corr = [numel(subjects),numChannels]; 
 correlation_art = NaN(size_corr);
 correlation_nat = NaN(size_corr);
 correlation_both = NaN(size_corr);
 
-% distances = permute(distances,[1 2 4 3]); %changing the dimension order of the distances to subjects x numConditions x numChannels x numTimepoints
-% [neighbourhoods, missing_channel_ids, distances] = correct_neighbourhood_map(timelock.label,distances);
-% load Monika's neighbourhood (neighbourhoods, double)
-% load('D:\Lab rotation\Neural dynamics of Visual Cognition\Project_files\Searchlight\EEG_neighbourhoods.mat')
-load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/OTHER/EEG_neighbourhoods.mat')
-
-standard_neighbourhood_map = neighbourhoods;
-% Deal with the NaN values in Distances based on subject, skip those
-% channels for that particular subject?? Need to know what channels are
-% missing for the corresponding subject index in Distances
-
-
 for subject = subjects
     %Find any missing channels and exclude them
     distances_subject = squeeze(distances(subject,:,:,:));
-    neighbourhoods = standard_neighbourhood_map;
-    [missing_channel_ids, neighbourhoods] = find_missing_channels(distances_subject,neighbourhoods);
-    
+    missing_channel_ids = find(isnan(distances_subject(1,1,:)));
     for iChan = chanIdx
         if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)
-            % L-1 pseudo trials go to training set, the Lth to testing set
-            neighbours = neighbourhoods(iChan , :);
-            neighbours = neighbours(~isnan(neighbours));
-            disp(neighbours);
+            
+            %Remove any missing conditions
+            if any(ismember(artificial_conditions,find(isnan(distances_subject(:,:,:)))))
+                artificial_conditions_subject = artificial_conditions(~isnan(distances_subject(artificial_conditions,1,2)));%2nd channel is never missing
+                natural_conditions_subject = natural_conditions;
+            elseif any(ismember(natural_conditions,find(isnan(distances_subject))))
+                artificial_conditions_subject = artificial_conditions;
+                natural_conditions_subject = natural_conditions(~isnan(distances_subject(natural_conditions,1,1)));
+            else
+                artificial_conditions_subject = artificial_conditions;
+                natural_conditions_subject = natural_conditions;
+            end
             
             %define the peak time
             %within-categorization
@@ -113,28 +105,13 @@ for subject = subjects
                 idx_peak_time_both = 5; 
             end
             
-            %Take only the neighbours in the distances of that channel
-            distances_subject = squeeze(distances(subject,:,:,neighbours)); 
-            
-            %Remove any missing conditions
-            if any(ismember(artificial_conditions,find(isnan(distances_subject(:,:,:)))))
-                artificial_conditions_subject = artificial_conditions(~isnan(distances_subject(artificial_conditions,1,1)));
-                natural_conditions_subject = natural_conditions;
-            elseif any(ismember(natural_conditions,find(isnan(distances_subject))))
-                artificial_conditions_subject = artificial_conditions;
-                natural_conditions_subject = natural_conditions(~isnan(distances_subject(natural_conditions,1,1)));
-            else
-                artificial_conditions_subject = artificial_conditions;
-                natural_conditions_subject = natural_conditions;
-            end
-            
             %Correlate RT and distances
             all_conditions_subject = [artificial_conditions_subject natural_conditions_subject];
-            correlation_art(subject,:,iChan) = corr(squeeze(distances_subject(artificial_conditions_subject,idx_peak_time_artificial,:)),...
+            correlation_art(subject,iChan) = corr(squeeze(distances_subject(artificial_conditions_subject,idx_peak_time_artificial,iChan)),...
                 medianRT_art(artificial_conditions_subject)','type','Spearman');
-            correlation_nat(subject,:,iChan) = corr(squeeze(distances_subject(natural_conditions_subject,idx_peak_time_natural,:)),...
+            correlation_nat(subject,iChan) = corr(squeeze(distances_subject(natural_conditions_subject,idx_peak_time_natural,iChan)),...
                 medianRT_nat(natural_conditions_subject-30)','type','Spearman');
-            correlation_both(subject,:,iChan) = corr(squeeze(distances_subject(all_conditions_subject,idx_peak_time_both,:)),...
+            correlation_both(subject,iChan) = corr(squeeze(distances_subject(all_conditions_subject,idx_peak_time_both,iChan)),...
                 medianRT(all_conditions_subject)','type','Spearman');           
         end
     end
@@ -152,17 +129,12 @@ dth_results.corr_natural = avg_corr_nat;
 
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 file_name = 'dth_searchlight_peak';
-if isequal(task_distance,task_RT)
-    save(fullfile(save_path,sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_peak_%s',file_name,subjects(1),subjects(end),task_name_distance)));
-    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_peak_%s.svg',file_name,subjects(1),subjects(end),task_name_distance)));
-else
-    save(fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances_peak.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');
-    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances_peak',file_name,task_name_distance)));
-    saveas(gcf,fullfile(save_path,sprintf('%s_subjects_%d_%d_cross_task_%s_distances_peak.svg',file_name,task_name_distance)));
-end
 
-close(gcf);
+if isequal(task_distance,task_RT)
+    file_name = sprintf('%s_cross_task',file_name);
+end
+save(fullfile(save_path,sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');
+
 end
 
 
