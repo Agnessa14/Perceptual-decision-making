@@ -10,7 +10,7 @@ function plot_topography_searchlight_decoding(subjects,analysis,with_stats)
 
 %% default
 obj = 'ctg';
-chan = 'whol23c';
+% chan = 'whol23c';
 
 %% Paths etc.
 main_path = '/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/';
@@ -52,10 +52,18 @@ for subject = subjects
         dis_filename = 'cross_validated_dth_pseudotrials_svm_decodingAccuracy_searchlight_peak_fixation.mat';
         all_dimensions = {':'}; % channels
     end
-    load(fullfile(subject_results_dir,cat_filename),'decodingAccuracy_avg');
-    decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
-    load(fullfile(subject_results_dir,dis_filename),'decodingAccuracy_avg');
-    decoding_accuracies_all_subjects_dis(subject,all_dimensions{:}) = decodingAccuracy_avg;
+    if strcmp(analysis,'object_decoding')
+        load(fullfile(subject_results_dir,cat_filename),'decodingAccuracy_avg');
+        decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg;
+        load(fullfile(subject_results_dir,dis_filename),'decodingAccuracy_avg');
+        decoding_accuracies_all_subjects_dis(subject,all_dimensions{:}) = decodingAccuracy_avg;
+    elseif strcmp(analysis,'category_decoding')
+        load(fullfile(subject_results_dir,cat_filename),'decodingAccuracy_avg');
+        decoding_accuracies_all_subjects_cat(subject,all_dimensions{:}) = decodingAccuracy_avg(3,:);%at peak decoding
+        load(fullfile(subject_results_dir,dis_filename),'decodingAccuracy_avg');
+        decoding_accuracies_all_subjects_dis(subject,all_dimensions{:}) = decodingAccuracy_avg(4,:);
+    end
+
 end
 
 %% For stats matrix: num subjects x num timepoints (average over conditions)
@@ -66,12 +74,6 @@ elseif strcmp(analysis,'category_decoding')
     for_stats_cat = decoding_accuracies_all_subjects_cat(subjects,:);
     for_stats_dis = decoding_accuracies_all_subjects_dis(subjects,:);
 end
-
-% %% Difference between tasks
-% for_stats_cat = for_stats_cat(subjects,:);
-% for_stats_dis = for_stats_dis(subjects,:);
-% for_stats_diff = for_stats_cat-for_stats_dis;
-% diff_curve = squeeze(nanmean(for_stats_diff,1));
 
 %% Average over subjects 
 avg_over_conditions_all_subjects_cat = squeeze(nanmean(for_stats_cat,1));
@@ -93,7 +95,7 @@ if with_stats
         %Stat parameters
         filename = fullfile(results_avg_dir,...
             sprintf('stats_%s_searchlight_%s_subjects_%d_%d.mat',analysis,task_name,subjects(1),subjects(end)));
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'stats_decoding_sl');
         else
             stats_decoding_sl.num_perms = 10000;
@@ -112,12 +114,14 @@ if with_stats
         mid = 0;
         MID = round(abs(max(max(searchlight_patterns))),2);
         MID_portion = 1;
-        %     mid_portion = 0.5;
         clim=[mid, MID];
         warning('off');
-        color_upper = cbrewer('seq', 'BuGn', 100*MID_portion); 
-        % color_lower = flipud(cbrewer('seq', 'Blues', 100*mid_portion));
-        % colors = cat(1, color_lower, color_upper);
+        if task == 1
+            color_scheme = 'Blues';
+        elseif task == 2
+            color_scheme = 'PuRd';
+        end
+        color_upper = cbrewer('seq',color_scheme, 100*MID_portion); 
         colors =  color_upper;
         colors(colors<0) = 0; % added due to negagive values because of change in interpolation method in the newer MATLAB version
 
