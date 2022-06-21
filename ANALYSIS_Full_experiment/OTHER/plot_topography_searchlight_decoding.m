@@ -10,7 +10,6 @@ function plot_topography_searchlight_decoding(subjects,analysis,with_stats)
 
 %% default
 obj = 'ctg';
-% chan = 'whol23c';
 
 %% Paths etc.
 main_path = '/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/';
@@ -111,17 +110,14 @@ if with_stats
         %% Plot searchlight results at peak decoding
         searchlight_patterns = topo.(obj)-50;
         %Color map
-        mid = 0;
-        MID = round(abs(max(max(searchlight_patterns))),2);
-        MID_portion = 1;
-        clim=[mid, MID];
+        clim = [0,30];
         warning('off');
         if task == 1
             color_scheme = 'Blues';
         elseif task == 2
             color_scheme = 'PuRd';
         end
-        color_upper = cbrewer('seq',color_scheme, 100*MID_portion); 
+        color_upper = cbrewer('seq',color_scheme, 100); 
         colors =  color_upper;
         colors(colors<0) = 0; % added due to negagive values because of change in interpolation method in the newer MATLAB version
 
