@@ -1,4 +1,4 @@
-function plot_topography_searchlight_dth_ak(subjects,task_distance,task_rt,with_stats)
+function plot_topography_searchlight_dth_ak(subjects,task_distance,task_RT,with_stats)
 %PLOT_TOPOGRAPHY_SEARCHLIGHT_DTH_AK Plot the distance-to-hyperplane searchlight results
 %at peak. 
 %
@@ -15,7 +15,6 @@ obj = 'ctg';
 %% Paths etc.
 main_path = '/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/';
 addpath(genpath(main_path));
-results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS/';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %EEGLAB toolbox
@@ -28,43 +27,78 @@ load(fullfile(main_path,'OTHER/adult_63channels.mat'),'channelloc');
 %% Load Results
 % numConditions = 60;
 % numChannels = 63; 
-task_name_distance = get_task_name(task_distance);
+task_distance_name = get_task_name(task_distance);
 file_name = 'dth_searchlight_peak';
 if isequal(task_distance,task_RT)
     file_name = sprintf('%s_cross_task',file_name);
 end
-file_name_full = sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_name_distance);
+file_name_full = sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_distance_name);
 load(fullfile(results_avg_dir,file_name_full),'dth_results');
 
 %% Stats
-if with_stats
-    for conditions = 1:3
-        if conditions == 1
-            conds_name = 'artificial';    
-            for_stats_data = dth_results.for_stats_corr_artificial;
-            topo.(obj) = dth_results.corr_artificial;
-        elseif conditions == 2
-            conds_name = 'natural';    
-            for_stats_data = dth_results.for_stats_corr_natural;
-            topo.(obj) = dth_results.corr_natural;
-        elseif conditions == 3
-            conds_name = 'both';    
-            for_stats_data = dth_results.for_stats_corr_both_categories;
-            topo.(obj) = dth_results.corr_both_categories;
+for conditions = 1:3
+    if conditions == 1
+        conds_name = 'artificial';    
+        for_stats_data = dth_results.for_stats_corr_artificial(subjects,:);
+        topo.(obj) = dth_results.corr_artificial;
+        color_scheme = 'PuOr';
+        func_color = 'flipud';
+        if task_distance==1 && task_RT==1
+            peak_time = 165;
+        elseif task_distance==1 && task_RT==2
+            peak_time = 110;
+        elseif task_distance==2 && task_RT==2
+            peak_time = 85;
+        elseif task_distance==2 && task_RT==1
+            peak_time = 105;
         end
-
+    elseif conditions == 2
+        conds_name = 'natural';    
+        for_stats_data = dth_results.for_stats_corr_natural(subjects,:);
+        topo.(obj) = dth_results.corr_natural;
+        color_scheme = 'RdYlGn';
+        func_color = '';
+        if task_distance==1 && task_RT==1
+            peak_time = 160;
+        elseif task_distance==1 && task_RT==2
+            peak_time = 130;
+        elseif task_distance==2 && task_RT==2
+            peak_time = 110;
+        elseif task_distance==2 && task_RT==1
+            peak_time = 165;
+        end
+    elseif conditions == 3
+        conds_name = 'both';    
+        for_stats_data = dth_results.for_stats_corr_both_categories(subjects,:);
+        topo.(obj) = dth_results.corr_both_categories;
+        if task_distance==1 && task_RT==1
+            color_scheme = 'PuOr';
+            func_color = '';
+        elseif task_distance==1 && task_RT==2
+            color_scheme = 'PRGn'; %or BuGn
+            func_color = '';
+        elseif task_distance==2 && task_RT==2
+            color_scheme = 'RdYlBu';
+            func_color = '';
+        elseif task_distance==2 && task_RT==1
+            color_scheme = 'PiYG'; %or YlOrBr, YlGnBu, YlOrRd       
+            func_color = '';
+        end
+    end
+    
+    if with_stats
         %Stat parameters
         filename = fullfile(results_avg_dir,...
             sprintf('stats_dth_searchlight_subjects_%d_%d_%s_%s.mat',subjects(1),subjects(end),conds_name,task_distance_name));
-        if ~isequal(task_distance,task_name)
+        if ~isequal(task_distance,task_RT)
             filename = sprintf('%s_cross_task',filename);
         end
-        if exist(filename,'file')
+        if exist('filename','file')
             load(filename,'stats_dth_sl');
         else
             stats_dth_sl.num_perms = 10000;
-            stats_dth_sl.tail = 'right';
-            stats_dth_sl.qvalue = 0.01;
+            stats_dth_sl.tail = 'left';
+            stats_dth_sl.qvalue = 0.05;
             [stats_dth_sl.significant_channels,stats_dth_sl.pvalues,...
                 stats_dth_sl.crit_p, stats_dth_sl.adjusted_pvalues]...
                 = fdr_permutation_cluster_1sample_alld(for_stats_data,...
@@ -72,22 +106,16 @@ if with_stats
             save(filename,'stats_dth_sl');
         end   
     end
-end
-
-for conditions = 1:3
-%% Plot searchlight results at peak 
+    
+    %% Plot searchlight results at peak 
     searchlight_patterns = topo.(obj);
+    
     %Color map
-    clim = [0,30];
+    clim = [-0.2,0.2];
+    caxis(clim);
     warning('off');
-    if task == 1
-        color_scheme = 'Blues';
-    elseif task == 2
-        color_scheme = 'PuRd';
-    end
-    color_upper = cbrewer('seq',color_scheme, 100); 
+    color_upper = cbrewer('div',color_scheme, 100); 
     colors =  color_upper;
-    colors(colors<0) = 0; % added due to negagive values because of change in interpolation method in the newer MATLAB version
 
     %Set non-significant channels to off
     c=channelloc;
@@ -104,19 +132,7 @@ for conditions = 1:3
 
     %Plot
     figure;
-    topoplot(searchlight_patterns, c, 'colormap', colors, 'style','both','electrodes','labels','whitebk','on');
-    caxis(clim);
-    if task == 1 && strcmp(analysis,'object_decoding')
-        peak_time = 120;
-    elseif task == 1 && strcmp(analysis,'category_decoding')
-        peak_time = 160;
-    elseif task == 2 && strcmp(analysis,'object_decoding')
-        peak_time = 110;
-    elseif task == 2 && strcmp(analysis,'category_decoding')
-        peak_time = 155;
-    end
-    title([num2str(peak_time),' ms']);
-
+    topoplot(searchlight_patterns, c, 'colormap', eval([func_color '(colors)']), 'style','both','electrodes','labels','whitebk','on');
 
     %Color bar
     CBar_Handle = colorbar('West');
@@ -126,6 +142,7 @@ for conditions = 1:3
     set(CBar_Handle,'Location','eastoutside');
 
     %Plotting parameters
+    title([num2str(peak_time),' ms']);
     set(gca,'visible', 'off');
     set(gcf, 'color','white');
     fig_width = 600;
@@ -133,10 +150,16 @@ for conditions = 1:3
     set(gcf,'position',[100 100 fig_width fig_height]);
     set(gcf,'Renderer','painters');
 
+    file_name = 'dth_searchlight';
+    if ~isequal(task_distance,task_RT)
+        file_name = sprintf('%s_cross_task',file_name);
+    end
+    
     %Save
-    save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_searchlight_peak_%s.mat',analysis,subjects(1),subjects(end),task_name)),'for_stats_cat'); 
-    saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s',analysis,subjects(1),subjects(end),task_name))); %save as matlab figure
-    saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s.svg',analysis,subjects(1),subjects(end),task_name))); %save as svg
+    saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as matlab figure
+    saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak.svg',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as svg
     close(gcf);    
+    
 end
+
 end 
