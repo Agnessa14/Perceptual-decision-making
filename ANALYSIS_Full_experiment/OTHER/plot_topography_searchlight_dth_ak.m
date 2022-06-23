@@ -56,8 +56,8 @@ for conditions = 1:3
         conds_name = 'natural';    
         for_stats_data = dth_results.for_stats_corr_natural(subjects,:);
         topo.(obj) = dth_results.corr_natural;
-        color_scheme = 'RdYlGn';
-        func_color = '';
+        color_scheme = 'PRGn'; %green
+        func_color = 'flipud';
         if task_distance==1 && task_RT==1
             peak_time = 160;
         elseif task_distance==1 && task_RT==2
@@ -72,17 +72,21 @@ for conditions = 1:3
         for_stats_data = dth_results.for_stats_corr_both_categories(subjects,:);
         topo.(obj) = dth_results.corr_both_categories;
         if task_distance==1 && task_RT==1
-            color_scheme = 'PuOr';
+            color_scheme = 'PuOr'; %orange
             func_color = '';
+            peak_time = 160;
         elseif task_distance==1 && task_RT==2
-            color_scheme = 'PRGn'; %or BuGn
+            color_scheme = 'PRGn'; %turquoise - or BuGn
             func_color = '';
+            peak_time = 110;
         elseif task_distance==2 && task_RT==2
-            color_scheme = 'RdYlBu';
+            color_scheme = 'RdYlBu';%blue
             func_color = '';
+            peak_time = 110;
         elseif task_distance==2 && task_RT==1
-            color_scheme = 'PiYG'; %or YlOrBr, YlGnBu, YlOrRd       
+            color_scheme = 'PiYG'; %yellow - or YlOrBr, YlGnBu, YlOrRd       
             func_color = '';
+            peak_time = 165;
         end
     end
     
