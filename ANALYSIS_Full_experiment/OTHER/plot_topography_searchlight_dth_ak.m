@@ -36,7 +36,7 @@ file_name_full = sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjec
 load(fullfile(results_avg_dir,file_name_full),'dth_results');
 
 %% Stats
-for conditions = 3
+for conditions = 1:3
     if conditions == 1
         conds_name = 'artificial';    
         for_stats_data = dth_results.for_stats_corr_artificial(subjects,:);
@@ -84,7 +84,7 @@ for conditions = 3
             func_color = 'flipud';
             peak_time = 110;
         elseif task_distance==2 && task_RT==1
-            color_scheme = 'YlOrRd'; %yellow - or YlOrBr, YlGnBu, YlOrRd       
+            color_scheme = 'YlOrRd'; %yellow        
             func_color = '';
             peak_time = 165;
         end
@@ -97,7 +97,8 @@ for conditions = 3
         if ~isequal(task_distance,task_RT)
             filename = sprintf('%s_cross_task',filename);
         end
-        if exist(sprintf('%s.mat',filename),'file')
+        filename = sprintf('%s.mat',filename);
+        if exist(filename,'file')
             load(filename,'stats_dth_sl');
         else
             stats_dth_sl.num_perms = 10000;
