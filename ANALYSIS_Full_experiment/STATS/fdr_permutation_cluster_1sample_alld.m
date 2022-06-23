@@ -28,6 +28,8 @@
 %decide one-sided (right) or two-sided (both) test
 if ~exist('tail') || strcmp(tail,'right') %if two tail t-test
     func = '';
+elseif strcmp(tail,'left')
+    func = '-';
 else %if two-sided t-test
     func = 'abs';
 end
@@ -47,7 +49,18 @@ if ~exist('StatMapPermPV') %if pvalues have not been precomputed
     StatMapPerm = single(zeros([nperm nvariable]));
     
     %first permutation sample is original data
-    StatMapPerm(1,cln{:}) = mean(data,1) ./ std(data);    
+    standard_d = NaN(1,size(data,2));
+    mean_d = NaN(1,size(data,2));
+    for var = 1:size(data,2)
+        data_var = data(:,var);
+        if any(isnan(data_var))
+            data_var((isnan(data_var)))=[];
+        end
+        standard_d(var) = std(data_var);
+        mean_d(var) = mean(data_var);
+    end
+%     StatMapPerm(1,cln{:}) = mean(data,1) ./ std(data);    
+    StatMapPerm(1,cln{:}) = mean_d ./ standard_d;    
 
     %perform permutations
     for i = 2:nperm %par
@@ -55,8 +68,19 @@ if ~exist('StatMapPermPV') %if pvalues have not been precomputed
             disp(['Create permutation samples: ' num2str(i) ' out of ' num2str(nperm)]);
         end
         perm = single(sign(rand(nobservations,1)-0.5));
-        data_perm = repmat(perm,1,nvariable(1)) .* data; %        
-        StatMapPerm(i,cln{:}) = mean(data_perm,1) ./ std(data_perm);         
+        data_perm = repmat(perm,1,nvariable(1)) .* data; 
+        mean_d_perm = NaN(1,size(data_perm,2));
+        standard_d_perm = NaN(1,size(data_perm,2));
+        for var_perm = 1:size(data_perm,2)
+            data_var_perm = data_perm(:,var_perm);
+            if any(isnan(data_var_perm))
+                data_var_perm((isnan(data_var_perm)))=[];
+            end
+            standard_d_perm(var_perm) = std(data_var_perm);
+            mean_d_perm(var_perm) = mean(data_var_perm);
+        end
+        
+        StatMapPerm(i,cln{:}) = mean_d_perm ./ standard_d_perm;         
     end    
 
     %convert to pvalues
