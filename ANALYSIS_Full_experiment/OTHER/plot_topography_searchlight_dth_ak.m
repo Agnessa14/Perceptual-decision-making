@@ -97,7 +97,7 @@ for conditions = 1:3
         if ~isequal(task_distance,task_RT)
             filename = sprintf('%s_cross_task',filename);
         end
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'stats_dth_sl');
         else
             stats_dth_sl.num_perms = 10000;
