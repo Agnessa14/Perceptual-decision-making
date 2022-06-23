@@ -100,7 +100,7 @@ for subject = subjects
                 idx_peak_time_both = 1;
             %cross-task, distraction EEG
             elseif ~isequal(task_distance,task_RT) && task_distance==2                
-                idx_peak_time_artificial = 5; 
+                idx_peak_time_artificial = 2; 
                 idx_peak_time_natural = 5;
                 idx_peak_time_both = 5; 
             end
