@@ -133,10 +133,10 @@ if with_stats
                 end
             end
         end
-
+        
         %Plot
         figure;
-        topoplot(searchlight_patterns, c, 'colormap', colors, 'style','both','electrodes','labels','whitebk','on');
+        topoplot(searchlight_patterns, c, 'colormap', colors, 'style','map','electrodes','labels','whitebk','on');
         caxis(clim);
         if task == 1 && strcmp(analysis,'object_decoding')
             peak_time = 120;
@@ -149,7 +149,6 @@ if with_stats
         end
         title([num2str(peak_time),' ms']);
 
-
         %Color bar
         CBar_Handle = colorbar('West');
         caxis(clim);
@@ -160,12 +159,10 @@ if with_stats
         %Plotting parameters
         set(gca,'visible', 'off');
         set(gcf, 'color','white');
-        fig_width = 600;
-        fig_height = 300;
-        set(gcf,'position',[100 100 fig_width fig_height]);
         set(gcf,'Renderer','painters');
 
         %Save
+        keyboard; %increase figure %sometimes issue with the saveas function - simply F10 from here for the save lines, then F5
         save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_searchlight_peak_%s.mat',analysis,subjects(1),subjects(end),task_name)),'for_stats_cat'); 
         saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s',analysis,subjects(1),subjects(end),task_name))); %save as matlab figure
         saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s.svg',analysis,subjects(1),subjects(end),task_name))); %save as svg
