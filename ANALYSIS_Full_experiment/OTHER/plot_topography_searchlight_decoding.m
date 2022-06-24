@@ -136,7 +136,29 @@ if with_stats
         
         %Plot
         figure;
-        topoplot(searchlight_patterns, c, 'colormap', colors, 'style','map','electrodes','labels','whitebk','on');
+        topo_init = gca;
+        [~,cdata]=topoplot(searchlight_patterns, c, 'colormap', colors, 'style','map','electrodes','labels','whitebk','on');
+        topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
+        uistack(topo_image,'bottom')
+        
+        %Color bar
+        CBar_Handle = colorbar('West');
+        caxis(clim);
+        set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy (%)-50',...
+            'FontSize', 10, 'FontName', 'Arial');
+        set(CBar_Handle,'Location','eastoutside');
+        
+        %Save image for the colorbar 
+        keyboard; %make fullscreen
+        saveas(gcf,fullfile(results_avg_dir,sprintf('colorbar_svm_%s_subjects_%d_%d_searchlight_peak_%s.svg',analysis,subjects(1),subjects(end),task_name))); %save as svg
+
+        %continue without colorbar because it screws everything up 
+        delete(findobj(topo_init,'Type','surface'));
+        h = imagesc(topo_image,cdata);
+        set(topo_image,'YDir','normal');
+        axis(topo_image,'square','off');
+        set(h,'alphadata',~isnan(cdata));
+        
         caxis(clim);
         if task == 1 && strcmp(analysis,'object_decoding')
             peak_time = 120;
@@ -148,13 +170,6 @@ if with_stats
             peak_time = 155;
         end
         title([num2str(peak_time),' ms']);
-
-        %Color bar
-        CBar_Handle = colorbar('West');
-        caxis(clim);
-        set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy (%)-50',...
-            'FontSize', 10, 'FontName', 'Arial');
-        set(CBar_Handle,'Location','eastoutside');
 
         %Plotting parameters
         set(gca,'visible', 'off');
