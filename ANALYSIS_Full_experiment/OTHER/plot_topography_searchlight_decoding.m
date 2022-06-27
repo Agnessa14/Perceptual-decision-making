@@ -123,28 +123,32 @@ if with_stats
             end
         end
         
-        %Plot
+        colors = 'cool';
+        clim = [0 30];
+        
+        %Color bar - plot separately
         figure;
-        topo_init = gca;
-        [~,cdata]=topoplot(searchlight_patterns, c, 'style','map','electrodes','labels','whitebk','on');
-        colormap cool;
-        topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
-        uistack(topo_image,'bottom')
-        
-        %Color bar
-        CBar_Handle = colorbar('West');
-        clim = [0,30];
+        CBar_Handle = colorbar('eastoutside');
+        colormap(colors);
         caxis(clim);
-        set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy (%)-50',...
+        set(get(CBar_Handle, 'YLabel'), 'String', 'Spearman''s p',...
             'FontSize', 10, 'FontName', 'Arial');
-        set(CBar_Handle,'Location','eastoutside');
-        
+
         %Save image for the colorbar 
         keyboard; %make fullscreen
         filename_colorbar = fullfile(results_avg_dir,'colorbar_decoding_searchlight_peak.svg');
         if ~exist(filename_colorbar,'file')
             saveas(gcf,filename_colorbar); %save as svg
         end
+        close(gcf);
+        
+        %Plot using Monika Graumann/Ben Ehniger's script for a good figure
+        figure;
+        topo_init = gca;
+        [~,cdata]=topoplot(searchlight_patterns, c, 'style','map','electrodes','labels','whitebk','on');
+        colormap(colors);
+        topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
+        uistack(topo_image,'bottom')
 
         %continue without colorbar because it screws everything up 
         delete(findobj(topo_init,'Type','surface'));
@@ -172,7 +176,7 @@ if with_stats
         set(gcf,'Renderer','painters');
 
         %Save
-        keyboard; %increase figure %sometimes issue with the saveas function - simply F10 from here for the save lines, then F5
+        keyboard; %increase figure to fullscreen %sometimes issue with the saveas function - simply F10 from here for the save lines, then F5
         save(fullfile(results_avg_dir,sprintf('for_stats_cat_svm_%s_subjects_%d_%d_searchlight_peak_%s.mat',analysis,subjects(1),subjects(end),task_name)),'for_stats_cat'); 
         saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s',analysis,subjects(1),subjects(end),task_name))); %save as matlab figure
         saveas(gcf,fullfile(results_avg_dir,sprintf('svm_%s_subjects_%d_%d_searchlight_peak_%s.svg',analysis,subjects(1),subjects(end),task_name))); %save as svg
