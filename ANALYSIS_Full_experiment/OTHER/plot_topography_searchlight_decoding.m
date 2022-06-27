@@ -157,9 +157,10 @@ if with_stats
         h = imagesc(topo_image,cdata);
         set(topo_image,'YDir','normal');
         axis(topo_image,'square','off');
-        set(h,'alphadata',~isnan(cdata));
-        
+        set(h,'alphadata',~isnan(cdata));        
         caxis(clim);
+        
+        %peak times
         if task == 1 && strcmp(analysis,'object_decoding')
             peak_time = 120;
         elseif task == 1 && strcmp(analysis,'category_decoding')
