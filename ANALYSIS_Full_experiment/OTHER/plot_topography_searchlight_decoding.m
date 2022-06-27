@@ -131,7 +131,7 @@ if with_stats
         CBar_Handle = colorbar('eastoutside');
         colormap(colors);
         caxis(clim);
-        set(get(CBar_Handle, 'YLabel'), 'String', 'Spearman''s p',...
+        set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy(%)-50',...
             'FontSize', 10, 'FontName', 'Arial');
 
         %Save image for the colorbar 
