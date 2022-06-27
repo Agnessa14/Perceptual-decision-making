@@ -135,33 +135,45 @@ for conditions = 1:3
         end
     end
 
-    %Plot
+    %Plot - Monika/Ben Ehniger's code for good figures
     figure;
-    topoplot(searchlight_patterns, c, 'colormap', eval([func_color '(colors)']), 'style','both','electrodes','labels','whitebk','on');
+    topo_init = gca;
+    [~,cdata]=topoplot(searchlight_patterns, c, 'colormap', eval([func_color '(colors)']), 'style','map','electrodes','labels','whitebk','on');
+    topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
+    uistack(topo_image,'bottom')
 
     %Color bar
     CBar_Handle = colorbar('West');
     caxis(clim);
-    set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy (%)-50',...
+    set(get(CBar_Handle, 'YLabel'), 'String', 'Spearman''s p',...
         'FontSize', 10, 'FontName', 'Arial');
     set(CBar_Handle,'Location','eastoutside');
+
+    %Save image for the colorbar 
+    keyboard; %make fullscreen
+    saveas(gcf,fullfile(results_avg_dir,sprintf('colorbar_%s_%s_%s_subjects_%d_%d_searchlight_peak.svg',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as svg
+
+    %continue without colorbar because it screws everything up 
+    delete(findobj(topo_init,'Type','surface'));
+    h = imagesc(topo_image,cdata);
+    set(topo_image,'YDir','normal');
+    axis(topo_image,'square','off');
+    set(h,'alphadata',~isnan(cdata));
+    caxis(clim);
 
     %Plotting parameters
     title([num2str(peak_time),' ms']);
     set(gca,'visible', 'off');
     set(gcf, 'color','white');
-    fig_width = 600;
-    fig_height = 300;
-    set(gcf,'position',[100 100 fig_width fig_height]);
     set(gcf,'Renderer','painters');
 
+    %Save
     file_name = 'dth_searchlight';
     if ~isequal(task_distance,task_RT)
         file_name = sprintf('%s_cross_task',file_name);
     end
     
-    %Save
-    keyboard;
+%     keyboard;
     saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as matlab figure
     saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak.svg',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as svg
     close(gcf);    
