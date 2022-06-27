@@ -20,7 +20,7 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %EEGLAB toolbox
 eeglab_script = fullfile(main_path,'OTHER/eeglab2022.0','eeglab.m');
 run(eeglab_script);
-
+close; %close EEGLAB popup
 % load channel location
 load(fullfile(main_path,'OTHER/adult_63channels.mat'),'channelloc'); 
 
@@ -109,17 +109,6 @@ if with_stats
 
         %% Plot searchlight results at peak decoding
         searchlight_patterns = topo.(obj)-50;
-        %Color map
-        clim = [0,30];
-        warning('off');
-        if task == 1
-            color_scheme = 'Blues';
-        elseif task == 2
-            color_scheme = 'PuRd';
-        end
-        color_upper = cbrewer('seq',color_scheme, 100); 
-        colors =  color_upper;
-        colors(colors<0) = 0; % added due to negagive values because of change in interpolation method in the newer MATLAB version
 
         %Set non-significant channels to off
         c=channelloc;
@@ -137,12 +126,14 @@ if with_stats
         %Plot
         figure;
         topo_init = gca;
-        [~,cdata]=topoplot(searchlight_patterns, c, 'colormap', colors, 'style','map','electrodes','labels','whitebk','on');
+        [~,cdata]=topoplot(searchlight_patterns, c, 'style','map','electrodes','labels','whitebk','on');
+        colormap cool;
         topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
         uistack(topo_image,'bottom')
         
         %Color bar
         CBar_Handle = colorbar('West');
+        clim = [0,30];
         caxis(clim);
         set(get(CBar_Handle, 'YLabel'), 'String', 'Decoding accuracy (%)-50',...
             'FontSize', 10, 'FontName', 'Arial');
@@ -150,7 +141,10 @@ if with_stats
         
         %Save image for the colorbar 
         keyboard; %make fullscreen
-        saveas(gcf,fullfile(results_avg_dir,sprintf('colorbar_svm_%s_subjects_%d_%d_searchlight_peak_%s.svg',analysis,subjects(1),subjects(end),task_name))); %save as svg
+        filename_colorbar = fullfile(results_avg_dir,'colorbar_decoding_searchlight_peak.svg');
+        if ~exist(filename_colorbar,'file')
+            saveas(gcf,filename_colorbar); %save as svg
+        end
 
         %continue without colorbar because it screws everything up 
         delete(findobj(topo_init,'Type','surface'));
@@ -185,4 +179,5 @@ if with_stats
         close(gcf);    
     end
 end 
+close all;
 end

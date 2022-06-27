@@ -20,6 +20,7 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 %EEGLAB toolbox
 eeglab_script = fullfile(main_path,'OTHER/eeglab2022.0','eeglab.m');
 run(eeglab_script);
+close; %close EEGLAB popup
 
 % load channel location
 load(fullfile(main_path,'OTHER/adult_63channels.mat'),'channelloc'); 
@@ -41,8 +42,7 @@ for conditions = 1:3
         conds_name = 'artificial';    
         for_stats_data = dth_results.for_stats_corr_artificial(subjects,:);
         topo.(obj) = dth_results.corr_artificial;
-        color_scheme = 'PuOr';
-        func_color = 'flipud';
+
         if task_distance==1 && task_RT==1
             peak_time = 165;
         elseif task_distance==1 && task_RT==2
@@ -56,8 +56,6 @@ for conditions = 1:3
         conds_name = 'natural';    
         for_stats_data = dth_results.for_stats_corr_natural(subjects,:);
         topo.(obj) = dth_results.corr_natural;
-        color_scheme = 'PRGn'; %green
-        func_color = 'flipud';
         if task_distance==1 && task_RT==1
             peak_time = 160;
         elseif task_distance==1 && task_RT==2
@@ -72,20 +70,12 @@ for conditions = 1:3
         for_stats_data = dth_results.for_stats_corr_both_categories(subjects,:);
         topo.(obj) = dth_results.corr_both_categories;
         if task_distance==1 && task_RT==1
-            color_scheme = 'PuOr'; %orange
-            func_color = '';
             peak_time = 160;
         elseif task_distance==1 && task_RT==2
-            color_scheme = 'YlGnBu'; %turquoise
-            func_color = '';
             peak_time = 110;
         elseif task_distance==2 && task_RT==2
-            color_scheme = 'RdBu';%blue
-            func_color = 'flipud';
             peak_time = 110;
         elseif task_distance==2 && task_RT==1
-            color_scheme = 'YlOrRd'; %yellow        
-            func_color = '';
             peak_time = 165;
         end
     end
@@ -119,8 +109,8 @@ for conditions = 1:3
     clim = [-0.2,0.2];
     caxis(clim);
     warning('off');
-    color_upper = cbrewer2('div',color_scheme, 50); 
-    colors =  color_upper;
+    colors = cbrewer2('div','PiYG', 50); 
+
 
     %Set non-significant channels to off
     c=channelloc;
@@ -138,7 +128,7 @@ for conditions = 1:3
     %Plot - Monika/Ben Ehniger's code for good figures
     figure;
     topo_init = gca;
-    [~,cdata]=topoplot(searchlight_patterns, c, 'colormap', eval([func_color '(colors)']), 'style','map','electrodes','labels','whitebk','on');
+    [~,cdata]=topoplot(searchlight_patterns,c,'colormap',colors,'style','map','electrodes','labels','whitebk','on');
     topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
     uistack(topo_image,'bottom')
 
@@ -151,7 +141,10 @@ for conditions = 1:3
 
     %Save image for the colorbar 
     keyboard; %make fullscreen
-    saveas(gcf,fullfile(results_avg_dir,sprintf('colorbar_%s_%s_%s_subjects_%d_%d_searchlight_peak.svg',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as svg
+    filename_colorbar = fullfile(results_avg_dir,'colorbar_dth_searchlight_peak.svg');
+    if ~exist(filename_colorbar,'file')
+        saveas(gcf,filename_colorbar); %save as svg
+    end
 
     %continue without colorbar because it screws everything up 
     delete(findobj(topo_init,'Type','surface'));
@@ -160,7 +153,7 @@ for conditions = 1:3
     axis(topo_image,'square','off');
     set(h,'alphadata',~isnan(cdata));
     caxis(clim);
-
+    
     %Plotting parameters
     title([num2str(peak_time),' ms']);
     set(gca,'visible', 'off');
@@ -173,11 +166,12 @@ for conditions = 1:3
         file_name = sprintf('%s_cross_task',file_name);
     end
     
-%     keyboard;
+    keyboard;
     saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as matlab figure
     saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d_searchlight_peak.svg',file_name,task_distance_name,conds_name,subjects(1),subjects(end)))); %save as svg
     close(gcf);    
     
 end
+close;
 
 end 
