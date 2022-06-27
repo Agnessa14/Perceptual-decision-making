@@ -125,19 +125,13 @@ for conditions = 1:3
         end
     end
 
-    %Plot - Monika/Ben Ehniger's code for good figures
+    %Color bar - plot separately
     figure;
-    topo_init = gca;
-    [~,cdata]=topoplot(searchlight_patterns,c,'colormap',colors,'style','map','electrodes','labels','whitebk','on');
-    topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
-    uistack(topo_image,'bottom')
-
-    %Color bar
-    CBar_Handle = colorbar('West');
+    CBar_Handle = colorbar('eastoutside');
+    colormap(colors);
     caxis(clim);
     set(get(CBar_Handle, 'YLabel'), 'String', 'Spearman''s p',...
         'FontSize', 10, 'FontName', 'Arial');
-    set(CBar_Handle,'Location','eastoutside');
 
     %Save image for the colorbar 
     keyboard; %make fullscreen
@@ -145,6 +139,14 @@ for conditions = 1:3
     if ~exist(filename_colorbar,'file')
         saveas(gcf,filename_colorbar); %save as svg
     end
+    close(gcf);
+    
+    %Plot - Monika/Ben Ehniger's code for good figures
+    figure;
+    topo_init = gca;
+    [~,cdata]=topoplot(searchlight_patterns,c,'colormap',colors,'style','map','electrodes','labels','whitebk','on');
+    topo_image = axes('Position',get(topo_init,'Position')); %from Monika/Ben Ehnigers - somehow works better for making figures
+    uistack(topo_image,'bottom')
 
     %continue without colorbar because it screws everything up 
     delete(findobj(topo_init,'Type','surface'));
