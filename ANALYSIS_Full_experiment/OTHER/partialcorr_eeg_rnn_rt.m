@@ -1,9 +1,9 @@
-function partialcorr_eeg_rnn_rt(conditions,with_stats)
+function partialcorr_eeg_rnn_rt(conditions,with_stats,with_rcnn)
 %PARTIALCORR_EEG_RNN_RT Calculate the partial correlations of EEG-RT and
 %RNN-RT.
 %
 %Input: conditions ('artificial','natural' or 'both'), with/without stats
-%(1/0)
+%(1/0), with or without average rCNN unique variance (1/0)
 %
 %Output: results from the GLM analysis.
 %
@@ -97,25 +97,25 @@ partial_corr.shared = squeeze(mean(sign(shared_rt_eeg).*sqrt(abs(shared_rt_eeg))
 
 %% Plot
 legend_names = cell(3,1);
-for c = 1:3 %EEG, rCNN and shared 
+for c = [1,3] % don't plot rcnn rt unjique variance - looks weird %EEG, rCNN and shared 
     switch c
         case 1
             for_stats_data = r_eeg_unique;
-            plot_location = -0.175;
+            plot_location = -0.15;
             color_data = color_eeg;
             data = partial_corr.eeg;
             legend_entry = 'EEG unique variance';
             variable_name = 'eeg_unique';
         case 2
             for_stats_data = r_rcnn_unique;
-            plot_location = -0.2;
+            plot_location = -0.16;
             color_data = color_rcnn;
             data = partial_corr.rcnn;
             legend_entry = 'rCNN RTs unique variance';
             variable_name = 'rcnn_unique';
         case 3
             for_stats_data = shared_rt_eeg;
-            plot_location = -0.225;
+            plot_location = -0.17;
             color_data = color_shared;
             data = partial_corr.shared;
             legend_entry = 'Shared variance';
@@ -162,21 +162,29 @@ for c = 1:3 %EEG, rCNN and shared
     legend_names{c} = plot(data,'LineWidth',2,'Color',color_data,'DisplayName',legend_entry);
 end   
 
+%% Plot the average rCNN RT-human RT unique variance as a dot
+if with_rcnn
+    scatter(200,mean(partial_corr.rcnn),100,color_rcnn,'filled');
+end
 %% Plot parameters
 set(gca,'FontName','Arial','FontSize',12);
 xticks(0:20:200);
 xticklabels(-200:100:800);   
-ylim([-0.3,0.5]);
+ylim([-0.2,0.5]);
 onset_time = 40;
 xline(onset_time,'--');
 ylabel('Commonality coefficient');% ylabel('R^{2}');
 xlabel('Time (ms)');
-legend([legend_names{1},legend_names{2},legend_names{3}],'Location','best');
+% legend([legend_names{1},legend_names{2},legend_names{3}],'Location','best');
 
 %Save results & plot 
-save(fullfile(results_avg_dir,sprintf('partial_corr_eeg_rcnn_rt_%s_scenes_modif',conditions)),'partial_corr');
-saveas(gcf,fullfile(results_avg_dir,sprintf('partial_corr_eeg_rcnn_rt_%s_scenes_modif.fig',conditions))); 
-saveas(gcf,fullfile(results_avg_dir,sprintf('partial_corr_eeg_rcnn_rt_%s_scenes_modif.svg',conditions))); 
+filename_save = sprintf('partial_corr_eeg_rcnn_rt_%s_scenes_modif',conditions);
+if with_rcnn
+    filename_fig = sprintf('with_rcnn_%s',filename_save);
+end
+save(fullfile(results_avg_dir,filename_save),'partial_corr');
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s.fig',filename_fig))); 
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s.svg',filename_fig))); 
 close(gcf); 
 
 end
