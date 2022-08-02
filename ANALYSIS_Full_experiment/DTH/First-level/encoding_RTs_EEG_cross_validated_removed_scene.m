@@ -49,10 +49,8 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 
 %% Define the required variables
 numConditionsAll = 60;
-% conditions_art = 1:numConditionsAll/2;
-% conditions_nat = (numConditionsAll/2)+1:numConditionsAll; 
 numTimepoints = size(timelock_data,3);
-numPermutations=1; 
+numPermutations=100; 
 
 %Num trials  
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
@@ -61,15 +59,7 @@ numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
 missing_condition = find(trials_per_condition==min(trials_per_condition));
 conditions_all = 1:numConditionsAll;
 conditions_included = conditions_all(conditions_all~=missing_condition);
-% 
-% %for indexing purposes, this is how it should look
-% if any(ismember(conditions_art,missing_condition))
-%     conditions_art_included = 1:(numConditionsAll/2)-1; %1:29
-%     conditions_nat_included = numConditionsAll/2:numConditionsAll-1; %30:59
-% elseif any(ismember(conditions_nat,missing_condition))
-%     conditions_art_included = conditions_art; %1:30
-%     conditions_nat_included = (numConditionsAll/2)+1:numConditionsAll-1; %31:59
-% end
+
 %Preallocate
 encodingAccuracy=NaN(numPermutations,numTimepoints);
 
