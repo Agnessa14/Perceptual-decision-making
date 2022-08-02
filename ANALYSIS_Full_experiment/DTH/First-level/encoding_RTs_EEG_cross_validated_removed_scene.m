@@ -1,4 +1,4 @@
-function encoding_RTs_EEG_cross_validated(subject,task)
+function encoding_RTs_EEG_cross_validated_removed_scene(subject,task)
 %encoding_RTs_EEG_cross_validated
 %Performs the regression RT analysis using ridge regression to map eeg
 %features on to RTs 
@@ -49,19 +49,29 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 
 %% Define the required variables
 numConditionsAll = 60;
-conditions_art = 1:numConditionsAll/2;
-conditions_nat = (numConditionsAll/2)+1:numConditionsAll; 
+% conditions_art = 1:numConditionsAll/2;
+% conditions_nat = (numConditionsAll/2)+1:numConditionsAll; 
 numTimepoints = size(timelock_data,3);
-numPermutations=100; 
+numPermutations=1; 
 
-%Preallocate 
+%Num trials  
 [~, trials_per_condition] = min_number_trials(timelock_triggers, numConditionsAll); %minimum number of trials per scene
 low_minnumtrials = min(trials_per_condition);
 numTrials = min(trials_per_condition(trials_per_condition>low_minnumtrials));
-
-%Preallocate 
+missing_condition = find(trials_per_condition==min(trials_per_condition));
+conditions_all = 1:numConditionsAll;
+conditions_included = conditions_all(conditions_all~=missing_condition);
+% 
+% %for indexing purposes, this is how it should look
+% if any(ismember(conditions_art,missing_condition))
+%     conditions_art_included = 1:(numConditionsAll/2)-1; %1:29
+%     conditions_nat_included = numConditionsAll/2:numConditionsAll-1; %30:59
+% elseif any(ismember(conditions_nat,missing_condition))
+%     conditions_art_included = conditions_art; %1:30
+%     conditions_nat_included = (numConditionsAll/2)+1:numConditionsAll-1; %31:59
+% end
+%Preallocate
 encodingAccuracy=NaN(numPermutations,numTimepoints);
-
 
 %% Running the MVPA
 rng('shuffle');
@@ -69,30 +79,30 @@ for perm = 1:numPermutations
     tic   
     disp('Creating the data matrix');
     data = create_data_matrix(numConditionsAll,timelock_triggers,numTrials,timelock_data);
-
+    data = data(conditions_included,:,:,:);
+   
     disp('Performing MVNN');
     data = multivariate_noise_normalization(data);
     
     disp('Split into pseudotrials'); 
     numTrialsPerBin = 5; %try different combinations of bins/numTrialsPerBin
-    [bins,~] = create_pseudotrials(numTrialsPerBin,data);
+    [bins,~] = create_pseudotrials(numTrialsPerBin,data); %does not contain data from the excluded condition - size = 59x...x...
     
-   
+    % get the indices to split the behavioral RTs into two random
+    % halfs (15 subjects in train, 15 subjects in test) 
+    itrain_RTs = randperm(size(RTs,1),size(RTs,1)/2);
+    itest_RTs  = setdiff(1:size(RTs,1),itrain_RTs); 
+    
+    % split the behavioral RTs into train and test
+    train_RTs = squeeze(nanmean(RTs(itrain_RTs,conditions_included))); %here using nanmean bcs some participants dont have RTs for some scenes 
+    test_RTs = squeeze(nanmean(RTs(itest_RTs,conditions_included)));
+
     for t = 1:numTimepoints
         % need to average training data across pseudotrials such that the
         % output shape is 60xn_channels
-        training_data = [squeeze(mean(bins(conditions_art,1:end-1,:,t),2)); squeeze(mean(bins(conditions_nat,1:end-1,:,t),2))];  %train on all pseudotrials
-        testing_data = [squeeze(bins(conditions_art,end,:,t)); squeeze(bins(conditions_nat,end,:,t))];  %train on all pseudotrials
-        
-        % get the indices to split the behavioral RTs into two random
-        % halfs (15 subjects in train, 15 subjects in test) 
-        itrain_RTs = randperm(size(RTs,1),size(RTs,1)/2);
-        itest_RTs  = setdiff([1:size(RTs,1)],itrain_RTs); 
-        
-        % split the behavioral RTs into train and test
-        train_RTs = squeeze(nanmean(RTs(itrain_RTs,:)));
-        test_RTs = squeeze(nanmean(RTs(itest_RTs,:)));
-
+        training_data = squeeze(mean(bins(:,1:end-1,:,t),2));  %train on all pseudotrials
+        testing_data = squeeze(bins(:,end,:,t));  %test on all pseudotrials
+             
         % regress the eeg patterns onto the RTs and obtain weights
         weights = ridge(train_RTs',training_data,0.01,0);
         % get predicted RTs
@@ -106,7 +116,7 @@ for perm = 1:numPermutations
 end
 
 %% Save the decision values + decoding accuracy
-encodingAccuracy_avg = squeeze(nanmean(encodingAccuracy,1));
+encodingAccuracy_avg = squeeze(mean(encodingAccuracy,1));
 filename = 'cross_validated_regression_RTs';
 save(fullfile(results_dir,sprintf('%s_encodingAccuracy_%s.mat',filename,task_name)),'encodingAccuracy_avg');
 
