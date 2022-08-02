@@ -49,12 +49,10 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:);
 
 %% Define the required variables
 numConditions = 60;
-conditions_art = 1:numConditions/2;
-conditions_nat = (numConditions/2)+1:numConditions; 
 
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); 
 numTimepoints = size(timelock_data,3);
-numPermutations=100; 
+numPermutations=1; 
 
 %Preallocate 
 encodingAccuracy=NaN(numPermutations,numTimepoints);
@@ -73,22 +71,21 @@ for perm = 1:numPermutations
     numTrialsPerBin = 5; %try different combinations of bins/numTrialsPerBin
     [bins,~] = create_pseudotrials(numTrialsPerBin,data);
     
-   
+    % get the indices to split the behavioral RTs into two random
+    % halfs (15 subjects in train, 15 subjects in test) 
+    itrain_RTs = randperm(size(RTs,1),size(RTs,1)/2);
+    itest_RTs  = setdiff(1:size(RTs,1),itrain_RTs); 
+    
+    % split the behavioral RTs into train and test
+    train_RTs = squeeze(nanmean(RTs(itrain_RTs,:))); %here using nanmean bcs some participants dont have RTs for some scenes 
+    test_RTs = squeeze(nanmean(RTs(itest_RTs,:)));
+
     for t = 1:numTimepoints
         % need to average training data across pseudotrials such that the
         % output shape is 60xn_channels
-        training_data = [squeeze(mean(bins(conditions_art,1:end-1,:,t),2)); squeeze(mean(bins(conditions_nat,1:end-1,:,t),2))];  %train on all pseudotrials
-        testing_data = [squeeze(bins(conditions_art,end,:,t)); squeeze(bins(conditions_nat,end,:,t))];  %train on all pseudotrials
-        
-        % get the indices to split the behavioral RTs into two random
-        % halfs (15 subjects in train, 15 subjects in test) 
-        itrain_RTs = randperm(size(RTs,1),size(RTs,1)/2);
-        itest_RTs  = setdiff([1:size(RTs,1)],itrain_RTs); 
-        
-        % split the behavioral RTs into train and test
-        train_RTs = squeeze(nanmean(RTs(itrain_RTs,:)));
-        test_RTs = squeeze(nanmean(RTs(itest_RTs,:)));
-
+        training_data = squeeze(mean(bins(:,1:end-1,:,t),2));  %train on all pseudotrials
+        testing_data = squeeze(bins(:,end,:,t));  %test on all pseudotrials
+             
         % regress the eeg patterns onto the RTs and obtain weights
         weights = ridge(train_RTs',training_data,0.01,0);
         % get predicted RTs
@@ -102,7 +99,7 @@ for perm = 1:numPermutations
 end
 
 %% Save the decision values + decoding accuracy
-encodingAccuracy_avg = squeeze(nanmean(encodingAccuracy,1)); 
+encodingAccuracy_avg = squeeze(mean(encodingAccuracy,1)); 
 filename = 'cross_validated_regression_RTs';
 
 save(fullfile(results_dir,sprintf('%s_encodingAccuracy_%s.mat',filename,task_name)),'encodingAccuracy_avg');
