@@ -52,7 +52,7 @@ numConditions = 60;
 
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); 
 numTimepoints = size(timelock_data,3);
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 encodingAccuracy=NaN(numPermutations,numTimepoints);
