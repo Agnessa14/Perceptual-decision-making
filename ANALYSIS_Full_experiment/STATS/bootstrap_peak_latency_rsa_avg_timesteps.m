@@ -66,10 +66,18 @@ for layer = layers_idx
                 end
             end
         end
-        %RSA results: get ground truth peak latency (for each timepoint)
+        %RSA results: get ground truth peak latency (for each time step) -
+        %just to know, no further calculation needed with this
         rsa_results_temp = squeeze(rsa_results(index_layer,t,:))';
         peak_latency_ground_truth(index_layer,t) = (find(squeeze(rsa_results_temp)==max(rsa_results_temp))-40)*5;    
     end
+end
+
+%Get the true peak latency for the plot (the median curve over time steps)
+rsa_median_tps = squeeze(median(rsa_results,2));
+peak_latency_ground_truth_median = NaN(numel(layers_idx),1);
+for lr=1:3   
+    peak_latency_ground_truth_median(lr) = (find(max(rsa_median_tps(lr,:))==rsa_median_tps(lr,:))-40)*5;
 end
 
                                   %%%%% BOOTSTRAPPING %%%%%
@@ -104,7 +112,7 @@ for bs = 1:num_bootstrap_samples
     avg_rsa_datasets = squeeze(mean(rsa,1)); %avg over datasets
     avg_rsa_tps = squeeze(median(avg_rsa_datasets,2)); %avg over timepoints
     
-    %calculate sample peak latency
+    %calculate sample peak latency - again, timepoint-wise, just to know
     for layer = layers_idx
         index_layer = find(layers_idx==layer);            
         peak_latency_median_tps(index_layer,bs) = (find(avg_rsa_tps(index_layer,:)==max(avg_rsa_tps(index_layer,:)),1)-40)*5;
@@ -126,7 +134,7 @@ layer4_layer7_median_tps = abs(squeeze(peak_latency_median_tps(2,:))-squeeze(pea
 layer1_layer7_median_tps = abs(squeeze(peak_latency_median_tps(1,:))-squeeze(peak_latency_median_tps(3,:)));
 
 %% 3) Get 95% confidence interval for peaks and for peak difference
-%all timepoints
+%all time steps
 %peaks 
 CI_peaks_all_tps = NaN(numel(layers_idx),numTimepointsRNN,2);
 
@@ -152,7 +160,7 @@ for t = 1:numTimepointsRNN
     CI_diff_l1_l7_all_tps(t,2) = prctile(squeeze(layer1_layer7_all_tps(t,:)),97.5);        
 end
 
-%median of timepoints
+%median of time steps
 %peaks
 CI_peaks_median_tps = NaN(numel(layers_idx),2);
 
@@ -179,7 +187,7 @@ CI_diff_l1_l7_median_tps(2) = prctile(layer1_layer7_median_tps,97.5);
 bootstrap_peak_latencies_rsa.peak_latency_bs_all_tps = squeeze(mean(peak_latency,3));
 bootstrap_peak_latencies_rsa.peak_latency_bs_median_tps = squeeze(mean(peak_latency_median_tps,2));
 bootstrap_peak_latencies_rsa.peak_latency_true_all_tps = peak_latency_ground_truth;
-bootstrap_peak_latencies_rsa.peak_latency_true_median_tps = median(peak_latency_ground_truth,2);
+bootstrap_peak_latencies_rsa.peak_latency_true_median_tps = peak_latency_ground_truth_median;
 
 bootstrap_peak_latencies_rsa.CI_peaks_all_tps = CI_peaks_all_tps;
 bootstrap_peak_latencies_rsa.CI_diff_l1_l4_all_tps = CI_diff_l1_l4_all_tps;
