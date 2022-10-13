@@ -30,14 +30,14 @@ load(fullfile(main_path,'OTHER/adult_63channels.mat'),'channelloc');
 % numChannels = 63; 
 task_distance_name = get_task_name(task_distance);
 file_name = 'dth_searchlight_peak';
-if isequal(task_distance,task_RT)
+if ~isequal(task_distance,task_RT)
     file_name = sprintf('%s_cross_task',file_name);
 end
 file_name_full = sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_distance_name);
 load(fullfile(results_avg_dir,file_name_full),'dth_results');
 
 %% Stats
-for conditions = 1:3
+for conditions = 3
     if conditions == 1
         conds_name = 'artificial';    
         for_stats_data = dth_results.for_stats_corr_artificial(subjects,:);
@@ -88,7 +88,7 @@ for conditions = 1:3
             filename = sprintf('%s_cross_task',filename);
         end
         filename = sprintf('%s.mat',filename);
-        if exist(filename,'file')
+        if exist('filename','file')
             load(filename,'stats_dth_sl');
         else
             stats_dth_sl.num_perms = 10000;
