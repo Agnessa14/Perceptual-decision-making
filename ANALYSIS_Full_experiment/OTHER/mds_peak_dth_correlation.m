@@ -61,10 +61,10 @@ for c = 1:numConditions
 end
 
 % %% Save the plot
-filename = 'images_mds_object_decoding_subjects';
-saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
-saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg    
-close(gcf);
+% filename = 'mds_object_decoding_subjects';
+% saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
+% saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg    
+% close(gcf);
 
 %% Plot with images
 figure(abs(round(randn*10))); %Random figure number
@@ -77,5 +77,9 @@ for c = 1:numConditions
     drawnow
 end
 
+filename = 'images_mds_object_decoding_subjects';
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s',filename,subjects(1),subjects(end),task_name))); %save as matlab figure
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s_%d_%d_%s.svg',filename,subjects(1),subjects(end),task_name))); %save as svg    
+close(gcf);
 
 end
