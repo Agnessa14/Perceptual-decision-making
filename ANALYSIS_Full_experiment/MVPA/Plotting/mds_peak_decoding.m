@@ -92,9 +92,17 @@ if strcmp(filetype,'image')
     close(gcf);
     
 elseif strcmp(filetype,'video')
+    
     %% 2) Plot over the whole time course and record video
     figure(abs(round(randn*10))); %Random figure number
     keyboard; %here start screen recording
+    check_with_nontr = 0; %plot the procr transformed vs non transformed
+    procrustes_points_art=NaN(numConditions/2,2,numTimepoints);
+    procrustes_points_nat=NaN(numConditions/2,2,numTimepoints);
+    points_art=NaN(numConditions/2,2,numTimepoints);
+    points_nat=NaN(numConditions/2,2,numTimepoints);
+    
+    %Do procrustes transform
     for t = 1:numTimepoints
         data_tp = squeeze(avg_over_conditions_all_subjects(:,:,t));
 
@@ -104,16 +112,33 @@ elseif strcmp(filetype,'video')
 
         %mds
         mds = cmdscale(data_tp_symm,2);    
-        points_art = mds(conds_art,:);
-        points_nat = mds(conds_nat,:);
-        scatter(points_art(:,1),points_art(:,2),dotsize,color_art,'filled'); %only way that worked to plot in diff colours
+        points_art(:,:,t) = mds(conds_art,:);
+        points_nat(:,:,t) = mds(conds_nat,:);
+        if t==1
+            procrustes_points_art(:,:,t) = points_art(:,:,t); %no transform needed
+            procrustes_points_nat(:,:,t) = points_nat(:,:,t);
+        else
+            [~,procrustes_points_art(:,:,t)] = procrustes(points_art(:,:,t-1),points_art(:,:,t));
+            [~,procrustes_points_nat(:,:,t)] = procrustes(points_nat(:,:,t-1),points_nat(:,:,t));
+        end
+    end
+    
+    %Plot
+    for t = 1:numTimepoints  
+        if check_with_nontr == 1          
+            scatter(points_art(:,1,t),points_art(:,2,t),dotsize,'b','filled'); %only way that worked to plot in diff colours
+            hold on;
+            scatter(points_nat(:,1,t),points_nat(:,2,t),dotsize,'k','filled');  
+        end
+        scatter(procrustes_points_art(:,1,t),procrustes_points_art(:,2,t),dotsize,color_art,'filled'); %only way that worked to plot in diff colours
         hold on;
-        scatter(points_nat(:,1),points_nat(:,2),dotsize,color_nat,'filled');    
+        scatter(procrustes_points_nat(:,1,t),procrustes_points_nat(:,2,t),dotsize,color_nat,'filled');    
         title(sprintf('%d ms',(t-40)*5));
         legend({'Man-made scenes','Natural scenes'},'FontSize',12,'Location','southoutside');
         axis off;
         hold off;
-        saveas(gcf,fullfile(results_avg_dir,'MDS',sprintf('mds_timepoint_%d_%s_%s',t,analysis,task_name)));
+        pause(0.1);
+%         saveas(gcf,fullfile(results_avg_dir,'MDS',sprintf('mds_procrustes_timepoint_%d_%s_%s',t,analysis,task_name)));
     end
     close;
 end
