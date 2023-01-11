@@ -1,5 +1,5 @@
 function plot_decoding_full_experiment(subjects,task,analysis)
-%PLOT_OBJECT_DECODING_FULL_EXPERIMENT Plot the results from object decoding, averaged over
+%PLOT_DECODING_FULL_EXPERIMENT Plot the results from decoding, averaged over
 %all participants and subject-specific.
 %
 %Input: subject IDs, task (1=categorization,2=distraction), analysis
@@ -89,7 +89,7 @@ legend_cell{numel(subjects)+2} = 'Stimulus onset'; %last legend element
 legend_boolean = 0;
 legend_location = 'best';
 font_size = 8;
-set(gca,'FontName','Arial');
+set(gca,'FontName','Arial','FontSize',18);
 ylim([-10 50]);
 y_label = 'Decoding accuracy-50 (%)';
 plotting_parameters(plot_title,title_boolean,legend_cell,...
