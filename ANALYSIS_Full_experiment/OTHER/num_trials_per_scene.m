@@ -28,12 +28,6 @@ for s = subjects
     load(fullfile(data_dir,subname,sprintf('timelock_%s',task_name)));
     load(fullfile(data_dir,subname,sprintf('preprocessed_behavioural_data_%s',task_name)));
     timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); 
-%     if task_name == 2 && ismember(subname,1:4)
-%         num_conditions = 58;
-%     else
-%         num_conditions = num_conditions_used;
-%     end
-    
     [num_trials_used(s),num_trials_condition(s,:)] = min_number_trials(timelock_triggers, num_conditions_max); %minimum number of trials per scene   
 end
 

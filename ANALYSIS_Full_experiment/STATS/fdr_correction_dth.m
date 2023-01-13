@@ -85,7 +85,7 @@ for p = pv
     if p_sorted_descending(p) < critical_value_descending(p)
         rank_largest = p;
     else
-        break
+        continue
     end
 end
 

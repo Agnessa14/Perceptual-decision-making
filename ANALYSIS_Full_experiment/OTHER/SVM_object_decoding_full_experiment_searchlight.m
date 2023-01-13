@@ -40,8 +40,13 @@ timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
 timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 
 %% Define the required variables
-times = -195:100:705;
-time_2_idx = (times/5)+40;
+% times = -195:100:705;
+% time_2_idx = (times/5)+40;
+if task == 1
+    peak_time = 64;
+elseif task == 2
+    peak_time = 62;
+end
 
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
@@ -53,10 +58,11 @@ chanIdx = 1:numChannels; % select all channels
 % decodingAccuracy=NaN(numPermutations,numConditions,numConditions,numel(times),numChannels);
 
 %Preallocate: for memory purposes, two matrices for 50 permutations each
-decodingAccuracy_1 = NaN(round(numPermutations/2),numConditions,numConditions,numel(times),numChannels);
-decodingAccuracy_2 = NaN(round(numPermutations/2),numConditions,numConditions,numel(times),numChannels);
+decodingAccuracy_1 = NaN(round(numPermutations/2),numConditions,numConditions,numChannels);
+decodingAccuracy_2 = NaN(round(numPermutations/2),numConditions,numConditions,numChannels);
 
 %% Decoding
+t = peak_time;
 for perm = 1:numPermutations
     tic
     disp('Creating the data matrix');
@@ -75,10 +81,10 @@ for perm = 1:numPermutations
     %only get the upper diagonal
     for condA=1:numConditions-1 %1:59
         for condB = condA+1:numConditions %2:60
-            for timePoint = 1:numel(time_2_idx)
-                t = time_2_idx(timePoint);
-                disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
-                    ', timepoint ->',num2str(timePoint)]);
+%             for timePoint = 1:numel(time_2_idx)
+%                 t = time_2_idx(timePoint);
+%                 disp(['Running the classification: 1st sample ->', num2str(condA), ', 2nd sample ->',num2str(condB),...
+%                     ', timepoint ->',num2str(timePoint)]);
                 for iChan = chanIdx
                     if ~ismember(iChan,missing_channel_ids) || isempty(missing_channel_ids)                        
                         neighbours = neighbourhoods(iChan , :);
@@ -97,14 +103,14 @@ for perm = 1:numPermutations
                         [~, accuracy, ~,] = svmpredict(labels_test',testing_data,model);
 %                         decodingAccuracy(perm,condA,condB,timePoint,iChan)=accuracy(1);
                         if perm <= 50
-                            decodingAccuracy_1(perm,condA,condB,timePoint,iChan)=accuracy(1);
+                            decodingAccuracy_1(perm,condA,condB,iChan)=accuracy(1);
                         else
-                            decodingAccuracy_2(perm-50,condA,condB,timePoint,iChan)=accuracy(1);
+                            decodingAccuracy_2(perm-50,condA,condB,iChan)=accuracy(1);
                         end
 
                     end
                 end
-            end
+%             end
         end
     end
     toc
@@ -113,11 +119,11 @@ end
 %% Save the decoding accuracies
 % decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
 
-decodingAccuracy_avg_both = NaN(2,numConditions,numConditions,numel(times),numChannels);
-decodingAccuracy_avg_both(1,:,:,:,:) = squeeze(mean(decodingAccuracy_1,1));
-decodingAccuracy_avg_both(2,:,:,:,:) = squeeze(mean(decodingAccuracy_2,1));
+decodingAccuracy_avg_both = NaN(2,numConditions,numConditions,numChannels);
+decodingAccuracy_avg_both(1,:,:,:) = squeeze(mean(decodingAccuracy_1,1));
+decodingAccuracy_avg_both(2,:,:,:) = squeeze(mean(decodingAccuracy_2,1));
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy_avg_both,1));
-save(fullfile(results_dir,subname,sprintf('svm_searchlight_object_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');    
+save(fullfile(results_dir,subname,sprintf('svm_searchlight_object_decoding_accuracy_peak_%s.mat',task_name)),'decodingAccuracy_avg');    
 
 end
 

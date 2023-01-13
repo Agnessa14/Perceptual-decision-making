@@ -42,7 +42,7 @@ timelock_data = timelock.trial(behav.RT>0 & behav.points==1,:,:); %actual data
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
 numTimepoints = size(timelock_data,3); %number of timepoints
-numPermutations=1; 
+numPermutations=100; 
 
 %Preallocate 
 numTrialsPerBin = 5;
@@ -50,7 +50,7 @@ numPseudotrials = round(numTrials/numTrialsPerBin);
 rdm=NaN(numPermutations,numPseudotrials,numConditions,numConditions,numTimepoints);
     
 %% Decoding
-for perm = 1:numPermutations
+for perm = 1:50%numPermutations
     tic   
     disp('Creating the data matrix');
     data = create_data_matrix(numConditions,timelock_triggers,numTrials,timelock_data);
@@ -67,14 +67,19 @@ for perm = 1:numPermutations
             for tp = 1:numTimepoints 
                 for pt = 1:numPseudotrials
                     rdm(perm,pt,condA,condB,tp) = 1-corr(squeeze(pseudoTrials(condA,pt,:,tp)),squeeze(pseudoTrials(condB,pt,:,tp)),'type','Pearson');
+%                     disp( 1-corr(squeeze(pseudoTrials(condA,pt,:,tp)),squeeze(pseudoTrials(condB,pt,:,tp)),'type','Pearson'));
                 end
             end 
         end 
     end 
     toc
+    plot(squeeze(nanmean(nanmean(mean(rdm(perm,:,:,:,:),2),3),4)));
+    hold on;
 end
 
+
+keyboard;
 %% Save the representational dissimilarity matrix
-rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
-save(fullfile(results_dir,subname,sprintf('rdm_pearson_%s.mat',task_name)),'rdm_avg');
+% rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
+% save(fullfile(results_dir,subname,sprintf('rdm_pearson_%s.mat',task_name)),'rdm_avg');
 

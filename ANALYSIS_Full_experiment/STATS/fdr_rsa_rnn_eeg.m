@@ -29,11 +29,13 @@ for perm = 2:numPermutations
         fprintf('Calculating the correlation %d \n',perm);
     end
     %flatten and permute EEG RDM
-    rdm_1(isnan(rdm_1)) = 0;
-    rdm_flattened_cell_1 = arrayfun(@(x) squareform(rdm_1(:,:,x)+(rdm_1(:,:,x))'),...
-        1:numTimepoints,'UniformOutput',false);
-    rdm_flattened_1 = reshape(cell2mat(rdm_flattened_cell_1),[],numTimepoints);
-    permuted_rdm_1 = rdm_flattened_1(randperm(size(rdm_flattened_1,1)),:);
+%     rdm_1(isnan(rdm_1)) = 0;
+%     rdm_flattened_cell_1 = arrayfun(@(x) squareform(rdm_1(:,:,x)+(rdm_1(:,:,x))'),...
+%         1:numTimepoints,'UniformOutput',false);
+%     rdm_flattened_1 = reshape(cell2mat(rdm_flattened_cell_1),[],numTimepoints);
+%     permuted_rdm_1 = rdm_flattened_1(randperm(size(rdm_flattened_1,1)),:);
+    random_order = randperm(size_rdm_1,1);
+    permuted_rdm_1 = rdm_1(random_order,random_order,:);
     
     %RSA
     all_rsa_rdm(perm,:) = representational_SA_rnn(permuted_rdm_1,rdm_2); %modify the RSA function    

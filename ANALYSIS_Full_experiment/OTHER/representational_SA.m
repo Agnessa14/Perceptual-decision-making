@@ -2,9 +2,9 @@ function [rdm_rsa,rdm_1_flattened,rdm_2_flattened] = representational_SA(rdm_1,r
 %REPRESENTATIONAL_SA Perform the representational similarity analysis on
 %two representational dissimilarity matrices of choice, over time.
 %
-%Input: rdm_1, rdm_2 (NxNxP matrices containing 1-Pearson's coefficient
+%Input: rdm_1, rdm_2 (either as NxNxP matrices containing 1-Pearson's coefficient
 %values, where N is the number of conditions and P is the number of
-%timepoints), numTimepoints is P 
+%timepoints, or as flattened versions of said matrices), numTimepoints is P
 %
 %Output: rdm_rsa, a PxP matrix of 1-Spearman's coefficient values
 %
@@ -13,16 +13,26 @@ function [rdm_rsa,rdm_1_flattened,rdm_2_flattened] = representational_SA(rdm_1,r
 %
 
 %%  Reshape the matrices: take only the upper diagonal, in vector form
-rdm_1(isnan(rdm_1)) = 0;
-rdm_2(isnan(rdm_2)) = 0;
-
-rdm_1_flattened_cell = arrayfun(@(x) squareform(rdm_1(:,:,x)+(rdm_1(:,:,x))'),...
-    1:numTimepoints,'UniformOutput',false);
-rdm_2_flattened_cell = arrayfun(@(x) squareform(rdm_2(:,:,x)+(rdm_2(:,:,x))'),...
-    1:numTimepoints,'UniformOutput',false);
-
-rdm_1_flattened = reshape(cell2mat(rdm_1_flattened_cell),[],numTimepoints);
-rdm_2_flattened = reshape(cell2mat(rdm_2_flattened_cell),[],numTimepoints);
+for r = 1:2
+    if r == 1
+        rdm = rdm_1;
+    elseif r == 2
+        rdm = rdm_2;
+    end
+    if find(isnan(rdm)) >0 
+        rdm(isnan(rdm)) = 0;
+        rdm_flattened_cell = arrayfun(@(x) squareform(rdm(:,:,x)+(rdm(:,:,x))'),...
+            1:numTimepoints,'UniformOutput',false);
+        rdm_flattened = reshape(cell2mat(rdm_flattened_cell),[],numTimepoints);
+    elseif numel(size(rdm)) == 2 && (size(rdm,2) == numTimepoints) %if it's a flattened rdm 
+        rdm_flattened = rdm;
+    end
+    if r == 1 
+        rdm_1_flattened = rdm_flattened;
+    elseif r == 2
+        rdm_2_flattened = rdm_flattened;
+    end
+end
 
 %% Perfom RSA at each combination of timepoints
 rdm_rsa = NaN(numTimepoints,numTimepoints);

@@ -20,12 +20,25 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
-%% 1) Sign permutation test: randomly multiply by 1/-1 the subject-level RSA results and calculate the t-statistic
+%% 1) Sign permutation test: randomly multiply by 1/-1 the subject-level RDMs and calculate the t-statistic
 numTimepoints = size(true_rsa_results,2);
-samples_plus_ground_tstatistic = NaN(numPermutations,numTimepoints);
+% size_data = size(subject_rdms);
 
-%first perm is ground test statistic
-samples_plus_ground_tstatistic(1,:) = mean(true_rsa_results,1) ./ std(true_rsa_results); 
+% %Make sure the RDM is symmetric
+% rdm_symmetric = NaN(size(true_rsa_results));
+% for subject = 1:size(true_rsa_results,1)
+%     rdm = squeeze(true_rsa_results(subject,:,:,:));
+%     if find(isnan(rdm))>0
+%         rdm(isnan(rdm)) = 0;
+%         for t = 1:numTimepoints
+%             rdm_symmetric(subject,:,:,t) = rdm(:,:,t)+rdm(:,:,t)';
+%         end
+%     end
+% end
+
+%calculate ground tstat 
+samples_plus_ground_tstatistic = NaN(numPermutations,numTimepoints);
+samples_plus_ground_tstatistic(1,:) = mean(true_rsa_results,1)./ std(true_rsa_results); 
 
 for perm = 2:numPermutations    
     if ~mod(perm,100)
@@ -33,10 +46,10 @@ for perm = 2:numPermutations
     end   
     
     %create samples by randomly multiplying each subject's data by 1 or -1
-    random_vector = single(sign(rand(30,1)-0.5));
+    random_vector = single(sign(rand(size(true_rsa_results,1),1)-0.5));
     sample = repmat(random_vector,1,numTimepoints).*true_rsa_results;
-    
-    %get the  test statistic (mean ./ std) of each sample
+
+    %get the test statistic (mean ./ std) of each sample
     samples_plus_ground_tstatistic(perm,:) = mean(sample,1) ./ std(sample);
     
 end

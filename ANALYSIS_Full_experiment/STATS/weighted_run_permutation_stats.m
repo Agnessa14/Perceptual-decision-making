@@ -23,21 +23,21 @@ task_distance_name = get_task_name(task_distance);
 [significantVarWeight,pValWeight,significantVarSize,pValSize] = permutation_cluster_1sample_weight_alld(for_stats,nperm,cluster_threshold,significance_threshold,tail); 
 
 %% Save 
-permutation_stats.SignificantMaxClusterSize = significantVarSize;
-permutation_stats.SignificantMaxClusterWeight = significantVarWeight;
-permutation_stats.pValueClusterSize = pValSize;
-permutation_stats.pValueWeight = pValWeight;
-permutation_stats.info.num_permutations = nperm;
-permutation_stats.info.cluster_th = cluster_threshold;
-permutation_stats.info.significance_th = significance_threshold;
-permutation_stats.info.tail = tail;
-
-if task_distance==task_RT
-    filename = 'dth_permutation_stats';
-else
-    filename = 'dth_permutation_stats_crosstask';
-end
-
-save(fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s',...
-    filename,subjects(1),subjects(end),task_distance_name,analysis,category)),'permutation_stats');
+% permutation_stats.SignificantMaxClusterSize = significantVarSize;
+% permutation_stats.SignificantMaxClusterWeight = significantVarWeight;
+% permutation_stats.pValueClusterSize = pValSize;
+% permutation_stats.pValueWeight = pValWeight;
+% permutation_stats.info.num_permutations = nperm;
+% permutation_stats.info.cluster_th = cluster_threshold;
+% permutation_stats.info.significance_th = significance_threshold;
+% permutation_stats.info.tail = tail;
+% 
+% if task_distance==task_RT
+%     filename = 'dth_permutation_stats';
+% else
+%     filename = 'dth_permutation_stats_crosstask';
+% end
+% 
+% save(fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s',...
+%     filename,subjects(1),subjects(end),task_distance_name,analysis,category)),'permutation_stats');
 end

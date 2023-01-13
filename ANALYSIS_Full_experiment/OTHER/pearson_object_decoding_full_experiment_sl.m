@@ -44,7 +44,7 @@ times = -195:100:705;
 time_2_idx = (times/5)+40;
 numConditions = 60;
 [numTrials, ~] = min_number_trials(timelock_triggers, numConditions); %minimum number of trials per scene
-numPermutations=1%00;
+numPermutations=100;
 numChannels = 63;
 chanIdx = 1:numChannels;
 

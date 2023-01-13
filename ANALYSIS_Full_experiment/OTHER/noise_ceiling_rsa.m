@@ -45,7 +45,8 @@ rdm_subjects = rdm_all_subjects(subjects,:,:,:);
 lower_noise_ceiling = NaN(numSubjects,numTimepoints);
 upper_noise_ceiling = NaN(numSubjects,numTimepoints);
 
-%% Average over N-1 subjects and correlate with the left-out subject 
+%% Average over N-1 subjects and correlate with the left-out subject
+figure;
 for s = 1:numSubjects
     leftout_subject = squeeze(rdm_subjects(s,:,:,:));
     other_subjects = squeeze(nanmean(rdm_subjects(1:end~=s,:,:,:),1)); %avg over remaining subjects
@@ -70,6 +71,11 @@ for s = 1:numSubjects
         lower_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),other_flattened(:,tp),'type','Spearman');
         upper_noise_ceiling(s,tp) = corr(leftout_flattened(:,tp),all_flattened(:,tp),'type','Spearman');
     end
+    
+    ls = squeeze(nanmean(nanmean(leftout_subject,1),2));
+    plot(ls);
+    keyboard;
+    hold on;
 end
 
 %% Average over iterations

@@ -133,7 +133,7 @@ dth_results.for_stats_corr_natural = correlation_nat;
 save_path = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 file_name = 'dth_searchlight_peak';
 
-if isequal(task_distance,task_RT)
+if ~isequal(task_distance,task_RT)
     file_name = sprintf('%s_cross_task',file_name);
 end
 save(fullfile(save_path,sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjects(end),task_name_distance)),'dth_results');

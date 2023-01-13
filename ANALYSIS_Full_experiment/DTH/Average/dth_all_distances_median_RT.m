@@ -154,9 +154,10 @@ for c = 1:3
         else
             filename_sign = 'dth_permutation_stats_crosstask';
         end     
-        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_%s_task_%s_%s.mat',filename_sign,...
+
+        filename = fullfile(results_avg_dir,sprintf('%s_%s_%d_%d_%s_task_%s_%s.mat',stats_type,filename_sign,...
             subjects(1),subjects(end),task_name_distance,analysis,category));
-        if exist('filename','file')
+        if exist(filename,'file')
             if strcmp(stats_type,'cluster')
                 load(filename,'permutation_stats');
             elseif strcmp(stats_type,'fdr')

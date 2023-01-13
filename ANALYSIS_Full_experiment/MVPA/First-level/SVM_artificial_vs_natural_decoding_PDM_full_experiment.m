@@ -5,7 +5,7 @@ function SVM_artificial_vs_natural_decoding_PDM_full_experiment(subject,task)
 %
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
-%
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -28,8 +28,8 @@ end
  
 %% Prepare data
 data_dir = sprintf('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT/%s/',subname);
-load(fullfile(data_dir,sprintf('timelock_%s',task_name))); %eeg
-load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)));
+load(fullfile(data_dir,sprintf('timelock_%s',task_name)),'timelock'); %eeg
+load(fullfile(data_dir,sprintf('preprocessed_behavioural_data_%s',task_name)),'behav');
 
 %only keep the trials with a positive RT & correct response
 timelock_triggers = timelock.trialinfo(behav.RT>0 & behav.points==1); %triggers
@@ -96,12 +96,13 @@ for perm = 1:numPermutations
 
         disp('Test the SVM');
         [~, accuracy, ~] = svmpredict(labels_test,testing_data,model);
-        decodingAccuracy(perm,t)=accuracy(1);         
+        decodingAccuracy(perm,t)=accuracy(1);        
     end   
     toc
 end
 
-%% Save the decoding accuracy
+%% Save the decoding accuracy and decision values
 decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutations
 save(fullfile(results_dir,subname,sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
 
+end

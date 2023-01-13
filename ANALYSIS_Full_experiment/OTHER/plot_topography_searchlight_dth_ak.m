@@ -37,7 +37,7 @@ file_name_full = sprintf('%s_subjects_%d_%d_%s.mat',file_name,subjects(1),subjec
 load(fullfile(results_avg_dir,file_name_full),'dth_results');
 
 %% Stats
-for conditions = 3
+for conditions = 1:3
     if conditions == 1
         conds_name = 'artificial';    
         for_stats_data = dth_results.for_stats_corr_artificial(subjects,:);
@@ -88,7 +88,7 @@ for conditions = 3
             filename = sprintf('%s_cross_task',filename);
         end
         filename = sprintf('%s.mat',filename);
-        if exist('filename','file')
+        if exist(filename,'file')
             load(filename,'stats_dth_sl');
         else
             stats_dth_sl.num_perms = 10000;
