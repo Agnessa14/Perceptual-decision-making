@@ -19,7 +19,6 @@ function [SignificantVariables, crit_p, adjusted_pvalues] = fdr_rsa_random_effec
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
-
 %% 1) Sign permutation test: randomly multiply by 1/-1 the subject-level RDMs and calculate the t-statistic
 numTimepoints = size(true_rsa_results,2);
 % size_data = size(subject_rdms);

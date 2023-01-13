@@ -77,9 +77,11 @@ for perm = 1:50%numPermutations
     hold on;
 end
 
-
 keyboard;
+
 %% Save the representational dissimilarity matrix
-% rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
-% save(fullfile(results_dir,subname,sprintf('rdm_pearson_%s.mat',task_name)),'rdm_avg');
+rdm_avg = squeeze(mean(mean(rdm,1),2)); %average over permutations and pseudotrials
+save(fullfile(results_dir,subname,sprintf('rdm_pearson_%s.mat',task_name)),'rdm_avg');
+
+end
 

@@ -34,6 +34,7 @@ for r = 1:2
     end
 end
 
+
 %% Perfom RSA at each combination of timepoints
 rdm_rsa = NaN(numTimepoints,numTimepoints);
 for tp1 = 1:numTimepoints

@@ -47,6 +47,7 @@ upper_noise_ceiling = NaN(numSubjects,numTimepoints);
 
 %% Average over N-1 subjects and correlate with the left-out subject
 figure;
+
 for s = 1:numSubjects
     leftout_subject = squeeze(rdm_subjects(s,:,:,:));
     other_subjects = squeeze(nanmean(rdm_subjects(1:end~=s,:,:,:),1)); %avg over remaining subjects
@@ -76,6 +77,7 @@ for s = 1:numSubjects
     plot(ls);
     keyboard;
     hold on;
+
 end
 
 %% Average over iterations

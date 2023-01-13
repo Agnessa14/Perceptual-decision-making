@@ -4,7 +4,8 @@ function [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_rsa_rnn
 %over subjects.
 %
 %Input: 
-% - rdm 1 & rdm 2: the data that goes into RSA (num conditions x num conditions x num timepoints)
+% - rdm 1 & rdm 2: the data that goes into RSA (num subjects x num pairwise
+% combinations x num timepoints)
 % - true_rsa_rdm: the true correlation between rdm1&rdm2
 % - number of permutations for the stats (ex:10000)
 % - tail: 'both', 'right' or 'left' (default right)
@@ -21,19 +22,20 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 
 %% 1)Permute the subject-level RDMs N times and calculate the Spearman's correlation with the other RDM at each timepoint
-numTimepoints = size(rdm_1,3);
-all_rsa_rdm = NaN(numPermutations,numTimepoints);
-all_rsa_rdm(1,:) = true_rsa_rdm;
+numTimepoints = size(true_rsa_rdm,1);
+all_rsa_rdm = NaN(numPermutations,numTimepoints,numTimepoints);
+all_rsa_rdm(1,:,:) = true_rsa_rdm;
 for perm = 2:numPermutations
     if ~mod(perm,100)
         fprintf('Calculating the correlation %d \n',perm);
     end
-    %flatten and permute EEG RDM
-    random_order = randperm(size_rdm_1,1);
-    permuted_rdm_1 = rdm_1(random_order,random_order,:);
-    
-    %RSA
-    all_rsa_rdm(perm,:) = representational_SA_rnn(permuted_rdm_1,rdm_2); %modify the RSA function    
+    rdm_1(isnan(rdm_1)) = 0;
+    rdm_flattened_cell_1 = arrayfun(@(x) squareform(rdm_1(:,:,x)+(rdm_1(:,:,x))'),...
+        1:numTimepoints,'UniformOutput',false);
+    rdm_flattened_1 = reshape(cell2mat(rdm_flattened_cell_1),[],numTimepoints);
+
+    permuted_rdm_1 = rdm_flattened_1(randperm(size(rdm_flattened_1,1)),:);
+    all_rsa_rdm(perm,:,:) = representational_SA(permuted_rdm_1,rdm_2,numTimepoints);     
 end
 
 %% 2) Calculate the p-value of the ground truth and of the permuted samples

@@ -6,6 +6,8 @@ function SVM_artificial_vs_natural_decoding_PDM_full_experiment(subject,task)
 %Output: NxNxP vector of accuracies in %, where N is the number of conditions and
 %P is the number of timepoints. 
 
+%%
+
 %% Set-up prereqs
 %add paths
 addpath(genpath('/scratch/agnek95/PDM/DATA/DATA_FULL_EXPERIMENT'));
@@ -106,3 +108,6 @@ decodingAccuracy_avg = squeeze(mean(decodingAccuracy,1)); %average over permutat
 save(fullfile(results_dir,subname,sprintf('svm_artificial_vs_natural_decoding_accuracy_%s.mat',task_name)),'decodingAccuracy_avg');
 
 end
+
+
+

@@ -116,6 +116,7 @@ end
 
 %% Plot stats if needed
 if with_stats
+
     if task < 3
         rdm_1 = squeeze(rdm_avg_subjects(1,:,:,:));
         rdm_2 = squeeze(rdm_avg_subjects(2,:,:,:));
@@ -123,6 +124,10 @@ if with_stats
         rdm_1 = squeeze(mean(rdm_avg_subjects(1,:,:,:,:),2)); %avg over halves
         rdm_2 = squeeze(mean(rdm_avg_subjects(2,:,:,:,:),2));
     end
+
+
+ 
+
     stats_decoding.num_perms = 1000;
     stats_decoding.qvalue = 0.01;
     stats_decoding.tail = 'right';

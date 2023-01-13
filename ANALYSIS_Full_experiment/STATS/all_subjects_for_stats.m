@@ -90,7 +90,7 @@ if strcmp(analysis,'rsa_time_object')
     size_final = [size(for_stats_cat,1) size_for_stats(2:end)];
     for_stats_cat = reshape(for_stats_cat,size_final);
     for_stats_dis = reshape(for_stats_dis,size_final);
-    
+end    
 
 %% Subtract 50 to get the difference with chance (needed for stats)
 if ~strcmp(analysis,'rsa_time_object') %only for analyses with SVM
@@ -98,8 +98,6 @@ if ~strcmp(analysis,'rsa_time_object') %only for analyses with SVM
     save(fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s',subjects(1),subjects(end),task_name,analysis)),'for_stats');
 else
     save(fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s',subjects(1),subjects(end),task_name,analysis)),'for_stats_cat');
-    save(fullfile(results_avg_dir,sprintf('for_stats_subjects_%d_%d_%s_task_%s',subjects(1),subjects(end),task_name,analysis)),'for_stats_cat');
-   
 end
 
 end
