@@ -5,7 +5,7 @@ This code was used for the project "Empirically linking and computationally mode
 To clone this repository, use
 
 ```
-git clone https://github.com/Neural-Dynamics-of-Visual-Cognition-FUB/Perceptual-decision-making.git
+git clone https://github.com/Agnessa14/Perceptual-decision-making.git
 ```
 
 
