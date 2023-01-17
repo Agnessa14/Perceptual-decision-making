@@ -1,6 +1,6 @@
-# Scene categorization: empirical analysis and modelling
+# Brain-behaviour relationship in scene categorization
 
-This code was used for the project "Empirically linking and computationally modelling the brain-behavior relationship for human scene categorization" by Karapetian et al. (2022). The code was written in Matlab 2021a, Python 3.6 and Tensorflow 2.7.  
+This code was used for the project "Empirically linking and computationally modelling the brain-behavior relationship for human scene categorization" by Karapetian et al. (2023). The code was written in Matlab 2021a, Python 3.6 and Tensorflow 2.7.  
 
 To clone this repository, use
 
