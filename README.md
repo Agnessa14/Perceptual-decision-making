@@ -80,7 +80,7 @@ Decoding and distance-to-hyperplane analyses were performed with the SVM from th
 ```
 import urllib
 _, msg = urllib.request.urlretrieve(
-    'https://osf.io/', 'model_02.11_2_weights.h5')
+    'https://osf.io/4fdky/download', 'model_02.11_2_weights.h5')
 print(msg)
 ```
 
