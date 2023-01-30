@@ -1,5 +1,5 @@
- function [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(data,nperm,tail,q_value,StatMapPermPV)
-
+ function [SignificantVariables, pvalues, crit_p, adjusted_pvalues] = fdr_permutation_stats(data,nperm,tail,q_value,StatMapPermPV)
+% previously: fdr_permutation_cluster_1sample_alld
 % Performs one-sided (>0) or two-sided pemutation test + FDR correction on the 'data'.
 % The data array can have any number of dimensions (1D, 2D, 3D, 4D etc) in
 % the order [observations x variable1 x variable2 x ...]
