@@ -115,7 +115,7 @@ print(msg)
 
 ## 5. Statistics examples
 
-* Permutation test and FDR correction: [fdr_permutation_cluster_1sample_alld.m](https://github.com/Neural-Dynamics-of-Visual-Cognition-FUB/Perceptual-decision-making/blob/master/ANALYSIS_Full_experiment/STATS/fdr_permutation_cluster_1sample_alld.m)
+* Permutation test and FDR correction: [fdr_permutation_stats.m](https://github.com/Neural-Dynamics-of-Visual-Cognition-FUB/Perceptual-decision-making/blob/master/ANALYSIS_Full_experiment/STATS/fdr_permutation_stats.m)
 
 * Bootstrapping: [bootstrap_peak_latency.m](https://github.com/Neural-Dynamics-of-Visual-Cognition-FUB/Perceptual-decision-making/blob/master/ANALYSIS_Full_experiment/STATS/bootstrap_peak_latency.m)
 
