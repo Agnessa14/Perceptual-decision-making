@@ -71,10 +71,10 @@ for c = 1:3 %artificial,natural,all
     cmap = getPyPlot_cMap(colormap_plot,10); %randomly generate 10 colours
          
     %load noise ceilings (lower and upper bound)
-%     filename_ceiling_l = sprintf('lower_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
-%     load(fullfile(results_avg_dir,filename_ceiling_l),'noise_ceiling_lower_bound');    
-%     filename_ceiling_u = sprintf('upper_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
-%     load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');  
+    filename_ceiling_l = sprintf('lower_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
+    load(fullfile(results_avg_dir,filename_ceiling_l),'noise_ceiling_lower_bound');    
+    filename_ceiling_u = sprintf('upper_noise_ceiling_rsa_subjects_%d_%d_%s_scenes',subjects(1),subjects(end),conditions);
+    load(fullfile(results_avg_dir,filename_ceiling_u),'noise_ceiling_upper_bound');  
     figure;
     
     %preallocate
@@ -83,19 +83,19 @@ for c = 1:3 %artificial,natural,all
     for l=layers_idx
         index_layer = layers_idx==l;
         color = cmap(find(index_layer==1)*3,:);
-%         %plot the noise ceilings as a shaded area
-%         dark_grey = [0.5 0.5 0.5];
-%         light_grey = [0.8 0.8 0.8];
-%         x_var = [1:numTimepointsEEG, fliplr(1:numTimepointsEEG)];
-%         shaded_area = [noise_ceiling_upper_bound, fliplr(noise_ceiling_lower_bound)];
-%         fill(x_var, shaded_area, light_grey,'FaceAlpha',0.3);
-%         hold on;
-%         plot(noise_ceiling_lower_bound,'LineWidth',2,'Color',dark_grey);
-%         plot(noise_ceiling_upper_bound,'LineWidth',2,'Color',dark_grey);
-%         hold on;
-%         legend_plot = cell(numTimepointsDNN,1);
+        %plot the noise ceilings as a shaded area
+        dark_grey = [0.5 0.5 0.5];
+        light_grey = [0.8 0.8 0.8];
+        x_var = [1:numTimepointsEEG, fliplr(1:numTimepointsEEG)];
+        shaded_area = [noise_ceiling_upper_bound, fliplr(noise_ceiling_lower_bound)];
+        fill(x_var, shaded_area, light_grey,'FaceAlpha',0.3);
+        hold on;
+        plot(noise_ceiling_lower_bound,'LineWidth',2,'Color',dark_grey);
+        plot(noise_ceiling_upper_bound,'LineWidth',2,'Color',dark_grey);
+        hold on;
+        %legend_plot = cell(numTimepointsDNN,1);
 
-        %load the RNN RDM
+        %load the DNN RDM
         load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Input_RDM_pearson.mat',...
             l-1)),'input_rdm');
         rdm_dnn = input_rdm(conds,conds);
@@ -119,7 +119,8 @@ for c = 1:3 %artificial,natural,all
         end  
   
         %Average over subjects & plot
-        rsa_results_avg = squeeze(mean(rsa_results_layer(subjects,:),1));
+        rsa_results_layer=rsa_results_layer(subjects,:);
+        rsa_results_avg = squeeze(mean(rsa_results_layer,1));
 %         rsa_results(index_layer,:) = rsa_results_avg;
         if ~with_stats
             plot(rsa_results_avg,'LineWidth',2,'Color',color);
@@ -128,9 +129,8 @@ for c = 1:3 %artificial,natural,all
         %Stats: FDR-corrected
         else 
             %Check if exist
-            filename_sign = sprintf('avg_tps_%s_rsa_rnn_eeg_stats_subject_level',model_name);   
-            filename = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d_layer_%d_tp_%d_10k_perms.mat',...
-                filename_sign,conditions,subjects(1),subjects(end),l,t));
+            filename = fullfile(results_avg_dir,sprintf('%s_net_rsa_stats_%s_subjects_%d_%d_layer_%d.mat',...
+                model_type,conditions,subjects(1),subjects(end),l));
             if exist(filename,'file')
                 load(filename,'fdr_stats');
             else %if not, run them
@@ -138,7 +138,7 @@ for c = 1:3 %artificial,natural,all
                 fdr_stats.tail = 'right';
                 fdr_stats.qvalue = 0.05;
                 [fdr_stats.significant_timepoints,fdr_stats.crit_p,fdr_stats.adjusted_pvalues] = ...
-                    fdr_rsa_random_effects_stats(all_subs,fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);                   
+                    fdr_rsa_random_effects_stats(rsa_results_layer,fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);                   
                 save(filename,'fdr_stats');
             end
 
@@ -151,8 +151,8 @@ for c = 1:3 %artificial,natural,all
             %if needed: error bars
             if with_error_bars
                 %calculate error bars
-                stdDM = std(all_subs); 
-                err = stdDM/sqrt(size(all_subs,1)); %standard deviation/sqrt of num subjects  
+                stdDM = std(rsa_results_layer); 
+                err = stdDM/sqrt(size(rsa_results_layer,1)); %standard deviation/sqrt of num subjects  
 
                 %plot as a shaded area
                 top_curve = rsa_results_avg + err;
@@ -167,41 +167,40 @@ for c = 1:3 %artificial,natural,all
             plot(rsa_results_avg,'LineWidth',2,'Color',color);
             hold on;
         end
-       
-        %Plot parameters
-        if legend_bool==1
-            legend(legend_plot,'Location','best');
-        end
-        ylim([-0.3 0.8]);
-        yticks(-0.2:0.2:0.8);
-        font_size = 18;
-        set(gca,'FontName','Arial','FontSize',font_size);
-        xticks(0:20:200);
-        xticklabels(-200:100:800);        
-        onset_time = 40;
-        xline(onset_time,'--');
-        
-        if ~plot_whole_epoch 
-            xlim([20 200]);
-        end
-        
-        %Save plot
-        filename_part = sprintf('rsa_%s_net',model_type);
-        if ~plot_whole_epoch 
-            filename_part = sprintf('%s_-100ms',filename_part);
-        end
-        if with_error_bars
-            filename_part = sprintf('error_bars_%s',filename_part);
-        end
-        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d',...
-            filename_part,conditions,subjects(1),subjects(end)));
-        saveas(gcf,sprintf('%s.svg',filename_plot)); 
-        saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
+    
+    %Plot parameters
+    if legend_bool==1
+        legend(legend_plot,'Location','best');
+    end
+    ylim([-0.3 0.8]);
+    yticks(-0.2:0.2:0.8);
+    font_size = 18;
+    set(gca,'FontName','Arial','FontSize',font_size);
+    xticks(0:20:200);
+    xticklabels(-200:100:800);        
+    onset_time = 40;
+    xline(onset_time,'--');
+
+    if ~plot_whole_epoch 
+        xlim([20 200]);
+    end
+
+    %Save plot
+    filename_part = sprintf('rsa_%s_net',model_type);
+    if ~plot_whole_epoch 
+        filename_part = sprintf('%s_-100ms',filename_part);
+    end
+    if with_error_bars
+        filename_part = sprintf('error_bars_%s',filename_part);
+    end
+    filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_subjects_%d_%d',...
+        filename_part,conditions,subjects(1),subjects(end)));
+    saveas(gcf,sprintf('%s.svg',filename_plot)); 
+    saveas(gcf,sprintf('%s.fig',filename_plot)); 
+    
     save(sprintf('%s',filename_plot),'rsa_results');
     rsa_all_subs = rsa_all_layers(subjects,:,:);
-%             rsa_all_layers_avg_subs = squeeze(mean(rsa_all_layers(subjects,:,:)));
-
     save(fullfile(results_avg_dir,sprintf('all_subjects_all_layers_rsa_%s_net_%s',model_type,conditions)),'rsa_all_subs');
 end
 
