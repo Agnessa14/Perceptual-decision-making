@@ -1,17 +1,16 @@
-function rsa_feedforward_eeg_subject_by_subject(subjects,model_type,with_stats,with_error_bars) 
+function rsa_feedforward_eeg_subject_by_subject(subjects,model_type,with_stats,with_error_bars,rsa_in_matlab) 
 %RSA_FEEDFORWARD_EEG_SUBJECT_BY_SUBJECT Compute and plot the RSA between DNN and EEG with stats, if desired.
 %RSA is computed by correlating each of the subject-specific EEG RDMs with
 %the RNN RDM and averaging over. Average over 3 layers
 %
 %Input: subjects' ID (e.g., 1:13), model_type ('b_d' or 'b'), add stats (1 with, 0 without), plot
-%with/without error bars (1/0)
+%with/without error bars (1/0),rsa_in_matlab (1 for performed in Matlab, 0
+%for Python)
 %
 %Author: Agnessa Karapetian, 2021
 
 %% Add paths
 addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment'));
-addpath(genpath('/scratch/agnek95/PDM/DATA/RNN_ACTIVATIONS'));
-addpath(genpath('/scratch/agnek95/PDM/DATA/RNN_RTs'));
 addpath(genpath('/home/agnek95/PyColormap4Matlab'));
 results_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS';
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG';
@@ -96,10 +95,15 @@ for c = 1:3 %artificial,natural,all
         %legend_plot = cell(numTimepointsDNN,1);
 
         %load the DNN RDM
-        load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Input_RDM_pearson.mat',...
-            l-1)),'input_rdm');
-        rdm_dnn = input_rdm(conds,conds);
-
+        if rsa_in_matlab
+            load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Input_RDM_pearson.mat',...
+                l-1)),'input_rdm');
+            rdm_dnn = input_rdm(conds,conds);
+        else
+            load(fullfile(rdm_dir,sprintf('ReLU_Layer_%d_Input_RDM_pearson.mat',...
+                l-1)),'data');
+            rdm_dnn = data(conds,conds);
+        end
         %Make sure the diagonal is all 0
         for c1 = 1:numel(conds)
             for c2 = 1:numel(conds)
