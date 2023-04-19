@@ -1,11 +1,10 @@
-function plot_RT_rnn_vs_human
+function plot_RT_rnn_vs_human(model_type)
 %PLOT_RT_RNN_VS_HUMAN Create a scatterplot of reaction times.
 %
 %Returns a scatterplot of human reaction times in the categorization task vs
 %RNN reaction times. 
 %
-%Input: subject IDs (e.g., 1:13), conditions ('all', 'artificial' or
-%'natural'), with or without stats (1/0)
+%Input: model_type ('b', b_d' or 'bl')
 %
 %Author: Agnessa Karapetian, 2021
 %
@@ -15,8 +14,15 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %% Load the correlations and the RTs for the noise ceiling calculation
-load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
 load(fullfile(results_avg_dir,'RT_all_subjects_5_35_categorization.mat'),'RTs');
+if strcmp(model_type,'bl')
+    load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
+elseif strcmp(model_type,'b_d')
+    load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_d_net_7_layers_cross-validated.mat'),'data');
+elseif strcmp(model_type,'b')
+    load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_net_cross-validated.mat'),'data');
+end
+
 correlations_RT = data;
 num_subjects = size(correlations_RT,1);
 RT_noise_ceiling_lower = NaN(3,1);
@@ -70,6 +76,7 @@ end
 % xlabel('Corr human-RNN RTs (Pearson''s r)');
 % ylabel('Conditions');
 xlim([0.2 3]);
+ylim([-0.3 0.7])
 legend(h(1,:),'Location','southeast');
 % set(gca,'xtick',location_x,'xticklabel',xticklabels);
 set(gca,'xtick',label_x,'xticklabel','');
@@ -78,11 +85,11 @@ set(gca,'FontName','Arial','FontSize',font_size);
 
 %% Save
 %RT plots
-saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.fig'));
-saveas(gcf,fullfile(results_avg_dir,'corr_RT_human_RNN.svg'));
+saveas(gcf,fullfile(results_avg_dir,sprintf('corr_RT_human_%s.fig',model_type)));
+saveas(gcf,fullfile(results_avg_dir,sprintf('corr_RT_human_%s.svg',model_type)));
 close(gcf);
 
 %Noise ceilings
-save(fullfile(results_avg_dir,'corr_RT_RNN_human_noise_ceiling_lower'),'RT_noise_ceiling_lower');
+% save(fullfile(results_avg_dir,'corr_RT_RNN_human_noise_ceiling_lower'),'RT_noise_ceiling_lower');
 
 end
