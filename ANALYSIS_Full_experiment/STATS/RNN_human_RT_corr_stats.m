@@ -1,11 +1,11 @@
-function RNN_human_RT_corr_stats(numPermutations,alpha)
+function RNN_human_RT_corr_stats(numPermutations,alpha,model_type)
 %RNN_HUMAN_RT_CORR_STATS Run the stats for the correlation between human
 %and RNN reaction times (right-tailed). 
 %
 %Returns a correlation value and whether it's significant or not. 
 %
-%Input: subject IDs (e.g., 1:13), conditions ('all', 'artificial' or
-%'natural'), with or without stats (1/0)
+%Input: numPermutations (e.g., 1000), alpha value for the FDR correction
+%(e.g., 0.05), model_type ('b', 'bl' or b_d')
 %
 %Author: Agnessa Karapetian, 2021
 %
@@ -15,7 +15,14 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
 results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %% Load subject-level RNN-human correlations
-load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
+if strcmp(model_type,'bl')
+    load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
+elseif strcmp(model_type,'b_d')
+    load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_d_net_7_layers_cross-validated.mat'),'data');
+elseif strcmp(model_type,'b')
+    load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_net_cross-validated.mat'),'data');
+end
+
 rnn_human_corr_all = data;
 rng('shuffle');
 pvalues = NaN(3,1);
@@ -51,6 +58,6 @@ stats_RT_corr.pvalues = pvalues;
 stats_RT_corr.significance = significance;
 stats_RT_corr.correlation = mean(rnn_human_corr_all,1);
 stats_RT_corr.crit_p = crit_p;
-save(fullfile(results_avg_dir,'stats_RNN_human_RT_correlation'),'stats_RT_corr');
+save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation',model_type)),'stats_RT_corr');
 
 end
