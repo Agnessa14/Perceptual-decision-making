@@ -1,4 +1,4 @@
-function rnn_dth_all_distances_median_RT(subjects,with_stats,with_error_bars,varargin) %distance art, distance nat, RT
+function rnn_dth_all_distances_median_RT(subjects,with_stats,with_error_bars,model_type,varargin) %distance art, distance nat, RT
 %RNN_DTH_ALL_DISTANCES_MEDIAN_RT Performs the cross-modal distance-to-hyperplane analysis using
 %the distances-to-hyperplane from each subject and the RTs from the RNN.
 %
@@ -23,8 +23,8 @@ numTimepoints = 200;
 numConditions = 60;
 artificial_conditions = 1:numConditions/2;
 natural_conditions = (numConditions/2)+1:numConditions;  
-entropy_thresh = '0.02';
-model_name = 'model_02.11_2';
+% entropy_thresh = '0.02';
+% model_name = 'model_02.11_2';
 
 %load distances
 distances = NaN(max(subjects),numConditions,numTimepoints);   
@@ -37,8 +37,14 @@ for subject = subjects
 end
 
 %load RTs
-load(sprintf('/scratch/agnek95/PDM/DATA/RNN_RTs/RNN_RTs_entropy_threshold_%s.mat',...
-    entropy_thresh),'data');
+if strcmp(model_type,'bl')
+    load('/scratch/agnek95/PDM/DATA/RNN_RTs/RNN_RTs_entropy_threshold_0.02.mat','data');
+elseif strcmp(model_type,'b_d')
+    load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/b_d_net_RTs_7_layers_entropy_threshold_3.99.mat','data');
+elseif strcmp(model_type,'b')
+    load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/b_net_RTs_entropy_threshold_3.93.mat','data');
+end
+
 RT = data';
 RT_art = RT(artificial_conditions);
 RT_nat = RT(natural_conditions);
@@ -124,7 +130,7 @@ if with_stats
             end
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.24;
+            plot_location = -0.26; %for b; for bl: -0.24 
             color = color_nat;
             if with_error_bars
                 for_stats = correlation_nat(subjects,:);
@@ -132,17 +138,17 @@ if with_stats
             end
         elseif c == 3
             category = 'both'; 
-            plot_location = -0.26;
+            plot_location = -0.28; % for b; for bl: -0.28
             color = 'k';
             if with_error_bars
-                for_stats = correlation_both(subjects,:);
+                for_stats = correlation_both(subjects,:); 
                 data = avg_corr_both;
             end
         end
 
         %Check if stats already exist, otherwise run the stats script
         distances_str = 'eeg';
-        filename_sign = sprintf('separate_fitting_cv_%s_rnn_dth_eeg_distances_permutation_stats',model_name);       
+        filename_sign = sprintf('separate_fitting_cv_%s_net_dth_eeg_distances_permutation_stats',model_type);       
         filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s.mat',filename_sign,...
             subjects(1),subjects(end),distances_str,analysis,category));
         if exist(filename,'file')
@@ -161,7 +167,7 @@ if with_stats
             elseif strcmp(stats_type,'fdr')
                 [fdr_stats.significant_timepoints,fdr_stats.pvalues,...
                     fdr_stats.crit_p, fdr_stats.adjusted_pvalues]...
-                    = fdr_permutation_cluster_1sample_alld(for_stats,...
+                    = fdr_permutation_stats(for_stats,...
                     fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
                 save(filename,'fdr_stats');
             end
@@ -234,9 +240,11 @@ if ~isempty(varargin)
         file_name = sprintf('%s_fdr',file_name);
     end
 end
-save(fullfile(save_path,sprintf('separate_fitting_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.mat',subjects(1),subjects(end),file_name,model_name,entropy_thresh)),'dth_results');
-saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.svg',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
-saveas(gcf,fullfile(save_path,sprintf('sf_cv_rnn_dth_subjects_%d_%d_%s_%s_entropy_%s.fig',subjects(1),subjects(end),file_name,model_name,entropy_thresh))); 
+
+%Save
+save(fullfile(save_path,sprintf('separate_fitting_cv_%s_net_dth_subjects_%d_%d_%s.mat',model_type,subjects(1),subjects(end),file_name)),'dth_results');
+saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.svg',model_type,subjects(1),subjects(end),file_name))); 
+saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.fig',model_type,subjects(1),subjects(end),file_name))); 
 
 close(gcf);
 
