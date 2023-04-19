@@ -48,7 +48,7 @@ for c = 1:3
 end
 
 %% 3) Add FDR correction and check significance
-qvalue = 0.05;
+qvalue = alpha;
 [significance,crit_p,~,~] = fdr_bh(pvalues,qvalue,'pdep');
 
 %% Save
