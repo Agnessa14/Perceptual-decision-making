@@ -34,8 +34,9 @@ for c=1:3
     %Plot diff wave
     diff_waves=rsa_bl_net_all_subs-rsa_ff_model_all_subs;
     diff_waves_avg=squeeze(mean(diff_waves,1));
-    figure;
     
+    figure;
+     
     for layer=1:numLayers
         if layer==1
             color=[0.8 0.8 0.8];
@@ -46,7 +47,9 @@ for c=1:3
         end
         diff_l=squeeze(diff_waves(:,layer,:));
         diff_l_avg=squeeze(diff_waves_avg(layer,:));
-        
+        peak_value=max(diff_l_avg);
+        peak_latency=find(diff_l_avg==max(diff_l_avg));
+        fprintf('The peak value is %f at %d ms \n',peak_value,(peak_latency-40)*5);
         %Perform and plot stats if needed
         if ~with_stats
             plot(diff_l_avg,'LineWidth',2,'Color',color);
