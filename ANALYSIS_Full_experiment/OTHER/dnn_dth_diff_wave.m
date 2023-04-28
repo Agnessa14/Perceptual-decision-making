@@ -52,22 +52,21 @@ for c=1:3
     hold on;
     
     %Stats if needed
-    if with_stats
-        fdr_stats.num_perms = 10000;
-        fdr_stats.tail = 'right';
-        fdr_stats.qvalue = 0.05;
-  
+    if with_stats  
         %Check if stats already exist, otherwise run the stats script
-        filename = sprintf('dth_diff_wave_bl_net_minus_%s_net_%s',model_type,conditions);       
-        filename_full = fullfile(results_avg_dir,sprintf('%s_stats',filename));
-        if exist(filename_full,'file')
-            load(filename_full,'fdr_stats');
+        filename = sprintf('dth_diff_wave_bl_net_minus_%s_net',model_type);       
+        filename_stats = fullfile(results_avg_dir,sprintf('%s_%s_stats.mat',filename,conditions));
+        if exist(filename_stats,'file')
+            load(filename_stats,'fdr_stats');
         else
+            fdr_stats.num_perms = 10000;
+            fdr_stats.tail = 'right';
+            fdr_stats.qvalue = 0.05;
             [fdr_stats.significant_timepoints,fdr_stats.pvalues,...
                 fdr_stats.crit_p, fdr_stats.adjusted_pvalues]...
                 = fdr_permutation_stats(diff_wave_all_subs_cond,...
                 fdr_stats.num_perms,fdr_stats.tail,fdr_stats.qvalue);
-            save(filename_full,'fdr_stats');
+            save(filename_stats,'fdr_stats');
         end
        
         % Plot significance
@@ -91,9 +90,9 @@ xlabel('Time (ms)');
 ylabel('Difference (Spearman''s p)');
 
 %% Save difference wave and figures
-save(filename_full,'diff_wave_all_subs');
-saveas(gcf,sprintf('%s.fig',filename_full))
-saveas(gcf,sprintf('%s.svg',filename_full))
+save(fullfile(results_avg_dir,filename),'diff_wave_all_subs');
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s.fig',filename)));
+saveas(gcf,fullfile(results_avg_dir,sprintf('%s.svg',filename)));
 close(gcf);
 
 end
