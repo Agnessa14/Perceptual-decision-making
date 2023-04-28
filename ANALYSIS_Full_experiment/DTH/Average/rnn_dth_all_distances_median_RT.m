@@ -83,6 +83,11 @@ for subject = subjects
         RT(all_conditions_subject),'type','Spearman'), t);
 end
 
+%% Save the data for all subjects
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_artificial',model_type)),'correlation_art');
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_natural',model_type)),'correlation_nat');
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_both',model_type)),'correlation_both');
+
 %% Average over participants
 avg_corr_art = squeeze(nanmean(correlation_art,1));
 avg_corr_nat = squeeze(nanmean(correlation_nat,1));
