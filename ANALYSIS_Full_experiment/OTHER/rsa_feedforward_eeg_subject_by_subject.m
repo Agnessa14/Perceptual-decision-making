@@ -125,7 +125,7 @@ for c = 1:3 %artificial,natural,all
         %Average over subjects & plot
         rsa_results_layer=rsa_results_layer(subjects,:);
         rsa_results_avg = squeeze(mean(rsa_results_layer,1));
-%         rsa_results(index_layer,:) = rsa_results_avg;
+        rsa_results(index_layer,:) = rsa_results_avg;
         if ~with_stats
             plot(rsa_results_avg,'LineWidth',2,'Color',color);
             hold on;
