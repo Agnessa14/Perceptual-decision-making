@@ -21,19 +21,6 @@ addpath(genpath('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/'));
                  %%%%% CALCULATING THE GROUND TRUTH AND PERMUTATION SAMPLES P-VALUES %%%%%
 %% 1) Sign permutation test: randomly multiply by 1/-1 the subject-level RDMs and calculate the t-statistic
 numTimepoints = size(true_rsa_results,2);
-% size_data = size(subject_rdms);
-
-% %Make sure the RDM is symmetric
-% rdm_symmetric = NaN(size(true_rsa_results));
-% for subject = 1:size(true_rsa_results,1)
-%     rdm = squeeze(true_rsa_results(subject,:,:,:));
-%     if find(isnan(rdm))>0
-%         rdm(isnan(rdm)) = 0;
-%         for t = 1:numTimepoints
-%             rdm_symmetric(subject,:,:,t) = rdm(:,:,t)+rdm(:,:,t)';
-%         end
-%     end
-% end
 
 %calculate ground tstat 
 samples_plus_ground_tstatistic = NaN(numPermutations,numTimepoints);
@@ -56,6 +43,8 @@ end
 %% 2) Calculate the p-value of the ground truth and of the permuted samples
 if strcmp(tail,'right')
     p_ground_and_samples = (numPermutations+1 - tiedrank(samples_plus_ground_tstatistic)) / numPermutations;
+elseif strcmp(tail,'both')
+    p_ground_and_samples = (numPermutations+1 - tiedrank(abs(samples_plus_ground_tstatistic))) / numPermutations;
 else
     error('Wrong tail');
 end 
