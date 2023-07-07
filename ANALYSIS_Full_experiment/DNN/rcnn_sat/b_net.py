@@ -31,19 +31,24 @@ def b_layer(x, filters, kernel, layer_num, pooling=True):
     return x
 
 
-def readout(x, classes):
+def readout(x, classes_scenes):
     '''Readout layer
     '''
     x = tf.keras.layers.GlobalAvgPool2D(name='GlobalAvgPool')(x)
+    # x = tf.keras.layers.Dense(
+    #     classes, kernel_initializer='glorot_uniform',
+    #     kernel_regularizer=tf.keras.regularizers.l2(1e-6),
+    #     name='ReadoutDense')(x)
     x = tf.keras.layers.Dense(
-        classes, kernel_initializer='glorot_uniform',
-        kernel_regularizer=tf.keras.regularizers.l2(1e-6),
-        name='ReadoutDense')(x)
+    classes_scenes, kernel_initializer='glorot_uniform',
+    kernel_regularizer=tf.keras.regularizers.l2(1e-6),
+    bias_initializer='zeros',
+    name='ReadoutDense_Scenes')(x)
     x = tf.keras.layers.Activation('softmax', name='Softmax')(x)
     return x
 
 
-def b_net(input_tensor, classes):
+def b_net(input_tensor, classes_scenes):
     '''Defines a B model
     '''
     x = b_layer(input_tensor, 96, 7, 0, pooling=False)
@@ -53,12 +58,12 @@ def b_net(input_tensor, classes):
     x = b_layer(x, 512, 3, 4)
     x = b_layer(x, 1024, 3, 5)
     x = b_layer(x, 2048, 1, 6)
-    output_tensor = readout(x, classes)
+    output_tensor = readout(x, classes_scenes)
 
     return tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
 
 
-def b_k_net(input_tensor, classes):
+def b_k_net(input_tensor, classes_scenes):
     '''Defines a B-K model
     '''
     x = b_layer(input_tensor, 96, 11, 0, pooling=False)
@@ -68,12 +73,12 @@ def b_k_net(input_tensor, classes):
     x = b_layer(x, 512, 5, 4)
     x = b_layer(x, 1024, 5, 5)
     x = b_layer(x, 2048, 3, 6)
-    output_tensor = readout(x, classes)
+    output_tensor = readout(x, classes_scenes)
 
     return tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
 
 
-def b_f_net(input_tensor, classes):
+def b_f_net(input_tensor, classes_scenes):
     '''Defines a B-F model
     '''
     x = b_layer(input_tensor, 192, 7, 0, pooling=False)
@@ -83,12 +88,12 @@ def b_f_net(input_tensor, classes):
     x = b_layer(x, 1024, 3, 4)
     x = b_layer(x, 2048, 3, 5)
     x = b_layer(x, 4096, 1, 6)
-    output_tensor = readout(x, classes)
+    output_tensor = readout(x, classes_scenes)
 
     return tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
 
 
-def b_d_net(input_tensor, classes):
+def b_d_net(input_tensor, classes_scenes):
     '''Defines a B-D model
     '''
 
@@ -106,6 +111,6 @@ def b_d_net(input_tensor, classes):
     x = b_layer(x, 1024, 3, 11, pooling=False)
     x = b_layer(x, 2048, 1, 12)
     x = b_layer(x, 2048, 1, 13, pooling=False)
-    output_tensor = readout(x, classes)
+    output_tensor = readout(x, classes_scenes)
 
     return tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
