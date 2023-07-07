@@ -186,23 +186,24 @@ for c = 1:3 %artificial,natural,all
         if ~plot_whole_epoch 
             xlim([20 200]);
         end
-        
-        %Save plot
-        filename_part = 'avg_tps_rsa_plus_noise_ceilings_subject_level';
-        if ~plot_whole_epoch 
-            filename_part = sprintf('%s_-100ms',filename_part);
-        end
-        if with_error_bars
-            filename_part = sprintf('error_bars_%s',filename_part);
-        end
-        filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d',...
-            model_name,filename_part,conditions,subjects(1),subjects(end)));
-        saveas(gcf,sprintf('%s.svg',filename_plot)); 
-        saveas(gcf,sprintf('%s.fig',filename_plot)); 
     end
+    
+    %Save plot
+    filename_part = 'avg_tps_rsa_plus_noise_ceilings_subject_level';
+    if ~plot_whole_epoch 
+        filename_part = sprintf('%s_-100ms',filename_part);
+    end
+    if with_error_bars
+        filename_part = sprintf('error_bars_%s',filename_part);
+    end
+    filename_plot = fullfile(results_avg_dir,sprintf('%s_%s_%s_subjects_%d_%d',...
+        model_name,filename_part,conditions,subjects(1),subjects(end)));
+    saveas(gcf,sprintf('%s.svg',filename_plot)); 
+    saveas(gcf,sprintf('%s.fig',filename_plot)); 
+
     save(sprintf('%s',filename_plot),'rsa_results');
     rsa_all_subs = rsa_all_layers_tps_subs(subjects,:,:,:);
-    save(fullfile(results_avg_dir,sprintf('all_subjects_all_tps_rsa_rnn_%s_10k_perms',conditions)),'rsa_all_subs');
+    save(sprintf('all_subs_%s',filename_plot),'rsa_all_subs');
 end
 
 end
