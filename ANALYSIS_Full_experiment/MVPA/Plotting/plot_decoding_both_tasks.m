@@ -124,14 +124,14 @@ for task = 1:3
         if exist(filename,'file')
             load(filename,'stats_decoding');
         else
-            peak_latency_true = find(data==max(data));
-            stats_decoding.peak_latency_ground_ms = (peak_latency_true-40)*5;
+            stats_decoding.peak_latency_true = find(data==max(data));
+            stats_decoding.peak_latency_ground_ms = (stats_decoding.peak_latency_true-40)*5;
             stats_decoding.num_perms = 10000;
             stats_decoding.tail = 'right';
-            stats_decoding.qvalue = 0.05;
+            stats_decoding.qvalue = 0.01;
             [stats_decoding.significant_timepoints,stats_decoding.pvalues,...
                 stats_decoding.crit_p, stats_decoding.adjusted_pvalues]...
-                = fdr_permutation_cluster_1sample_alld(for_stats_data,...
+                = fdr_permutation_stats(for_stats_data,...
                 stats_decoding.num_perms,stats_decoding.tail,stats_decoding.qvalue);
             [stats_decoding.peak_latency_bs, stats_decoding.CI] = bootstrap_peak_latency(for_stats_data);
             save(filename,'stats_decoding');
@@ -195,13 +195,13 @@ for task = 1:3
         quiver(stats_decoding.CI(1),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2); 
         quiver(stats_decoding.CI(2),height,0,-2,0,'Color',color_data,'ShowArrowHead','off','LineStyle',':','LineWidth',2);
         if task_plot == 2
-            arrow_x = peak_latency_true+8;
+            arrow_x = stats_decoding.peak_latency_true+8;
             text(arrow_x,peak_acc,['\leftarrow',str_pl,' ms'],'Color',color_data,'FontSize',fontsize);
         elseif task_plot == 1
-            arrow_x = peak_latency_true-50;
+            arrow_x = stats_decoding.peak_latency_true-50;
             text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);
         elseif task_plot == 3
-            arrow_x = peak_latency_true-50;
+            arrow_x = stats_decoding.peak_latency_true-50;
             text(arrow_x,peak_acc,[str_pl,' ms \rightarrow'],'Color',color_data,'FontSize',fontsize);    
         end
         
