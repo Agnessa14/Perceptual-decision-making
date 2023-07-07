@@ -16,15 +16,15 @@ results_avg_dir = '/home/agnek95/SMST/PDM_FULL_EXPERIMENT/RESULTS_AVG/';
 
 %% Load subject-level RNN-human correlations
 if diff_models
-    load(fullfile(results_avg_dir,sprintf('diff_wave_corr_RT_human_%s_allsubs',model_type)),'diff_models'); 
+    load(fullfile(results_avg_dir,sprintf('diff_wave_corr_RT_human_%s_allsubs_readouts',model_type)),'diff_models'); 
     data=diff_models;
 else
     if strcmp(model_type,'bl')
         load(fullfile(results_avg_dir,'02.11_2_rnn/Model_RDM_redone','correlation_RT_human_RNN_cross-validated.mat'),'data');
     elseif strcmp(model_type,'b_d')
-        load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_d_net_7_layers_cross-validated.mat'),'data');
+        load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_d_net_7_layers_cross-validated_readouts.mat'),'data');
     elseif strcmp(model_type,'b')
-        load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_net_cross-validated.mat'),'data');
+        load(fullfile('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/','correlation_RT_human_b_net_cross-validated_readouts.mat'),'data');
     end
 end
 rng('shuffle');
@@ -41,7 +41,7 @@ for c = 1:3
         end   
         random_vector = single(sign(rand(size(correlations_conds,1),1)-0.5));  %create samples by randomly multiplying each subject's data by 1 or -1
         sample = random_vector.*correlations_conds;
-        samples_plus_ground_tstatistic(perm) = mean(sample) ./ std(sample);
+        samples_plus_ground_tstatistic(perm) = abs(mean(sample) ./ std(sample)); %two-tailed
 
     end
 
@@ -63,9 +63,13 @@ stats_RT_corr.significance = significance;
 stats_RT_corr.correlation = mean(data,1);
 stats_RT_corr.crit_p = crit_p;
 if diff_models
-    save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation_diff_wave',model_type)),'stats_RT_corr');
+    save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation_diff_wave_readouts',model_type)),'stats_RT_corr');       
 else
-    save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation',model_type)),'stats_RT_corr');
+    if ~strcmp(model_type,'bl')
+        save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation_readouts',model_type)),'stats_RT_corr');
+    else
+        save(fullfile(results_avg_dir,sprintf('stats_%s_human_RT_correlation',model_type)),'stats_RT_corr');
+    end        
 end
 
 end
