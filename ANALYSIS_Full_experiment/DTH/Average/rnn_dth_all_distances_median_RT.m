@@ -40,7 +40,7 @@ end
 if strcmp(model_type,'bl')
     load('/scratch/agnek95/PDM/DATA/RNN_RTs/RNN_RTs_entropy_threshold_0.02.mat','data');
 elseif strcmp(model_type,'b_d')
-    load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/b_d_net_RTs_7_layers_entropy_threshold_3.99.mat','data');
+    load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/b_d_net_RTs_7_layers_entropy_threshold_readouts_0.06.mat','data');
 elseif strcmp(model_type,'b')
     load('/home/agnek95/SMST/PDM_PILOT_2/ANALYSIS_Full_experiment/DNN/b_net_RTs_entropy_threshold_3.93.mat','data');
 end
@@ -84,9 +84,9 @@ for subject = subjects
 end
 
 %% Save the data for all subjects
-save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_artificial',model_type)),'correlation_art');
-save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_natural',model_type)),'correlation_nat');
-save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_both',model_type)),'correlation_both');
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_artificial_readouts',model_type)),'correlation_art');
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_natural_readouts',model_type)),'correlation_nat');
+save(fullfile(results_avg_dir,sprintf('dth_results_%s_net_all_subjects_both_readouts',model_type)),'correlation_both');
 
 %% Average over participants
 avg_corr_art = squeeze(nanmean(correlation_art,1));
@@ -135,7 +135,7 @@ if with_stats
             end
         elseif c == 2
             category = 'natural';            
-            plot_location = -0.26; %for b; for bl: -0.24 
+            plot_location = -0.24; %for b; for bl: -0.24 
             color = color_nat;
             if with_error_bars
                 for_stats = correlation_nat(subjects,:);
@@ -143,7 +143,7 @@ if with_stats
             end
         elseif c == 3
             category = 'both'; 
-            plot_location = -0.28; % for b; for bl: -0.28
+            plot_location = -0.26; % for b; for bl: -0.28
             color = 'k';
             if with_error_bars
                 for_stats = correlation_both(subjects,:); 
@@ -153,9 +153,14 @@ if with_stats
 
         %Check if stats already exist, otherwise run the stats script
         distances_str = 'eeg';
-        filename_sign = sprintf('separate_fitting_cv_%s_net_dth_eeg_distances_permutation_stats',model_type);       
-        filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s.mat',filename_sign,...
-            subjects(1),subjects(end),distances_str,analysis,category));
+        filename_sign = sprintf('readouts_%s_net_dth_eeg_distances_permutation_stats',model_type);       
+        if strcmp(model_type,'b_d')
+            filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s_redone.mat',filename_sign,...
+                subjects(1),subjects(end),distances_str,analysis,category));
+        else
+            filename = fullfile(results_avg_dir,sprintf('%s_%d_%d_distances_%s_%s_%s.mat',filename_sign,...
+                subjects(1),subjects(end),distances_str,analysis,category));
+        end
         if exist(filename,'file')
             if strcmp(stats_type,'cluster')
                 load(filename,'permutation_stats');
@@ -247,9 +252,15 @@ if ~isempty(varargin)
 end
 
 %Save
-save(fullfile(save_path,sprintf('separate_fitting_cv_%s_net_dth_subjects_%d_%d_%s.mat',model_type,subjects(1),subjects(end),file_name)),'dth_results');
-saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.svg',model_type,subjects(1),subjects(end),file_name))); 
-saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.fig',model_type,subjects(1),subjects(end),file_name))); 
+if strcmp(model_type,'b_d')
+    save(fullfile(save_path,sprintf('readouts_%s_net_dth_subjects_%d_%d_%s_redone.mat',model_type,subjects(1),subjects(end),file_name)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s_redone.svg',model_type,subjects(1),subjects(end),file_name))); 
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s_redone.fig',model_type,subjects(1),subjects(end),file_name))); 
+else
+    save(fullfile(save_path,sprintf('separate_fitting_cv_%s_net_dth_subjects_%d_%d_%s.mat',model_type,subjects(1),subjects(end),file_name)),'dth_results');
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.svg',model_type,subjects(1),subjects(end),file_name))); 
+    saveas(gcf,fullfile(save_path,sprintf('sf_cv_%s_net_dth_subjects_%d_%d_%s.fig',model_type,subjects(1),subjects(end),file_name)));   
+end
 
 close(gcf);
 
